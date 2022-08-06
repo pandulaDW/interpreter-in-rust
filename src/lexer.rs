@@ -41,12 +41,32 @@ impl Lexer {
 
         // get the matching token
         let tok = match self.ch {
-            '=' => new_token_from_ch(TokenType::Assign, self.ch),
+            '=' => {
+                if self.peek_char() == '=' {
+                    self.read_char();
+                    new_token_from_string(TokenType::Eq, "==")
+                } else {
+                    new_token_from_ch(TokenType::Assign, self.ch)
+                }
+            }
             ';' => new_token_from_ch(TokenType::Semicolon, self.ch),
             '(' => new_token_from_ch(TokenType::Lparen, self.ch),
             ')' => new_token_from_ch(TokenType::Rparen, self.ch),
             ',' => new_token_from_ch(TokenType::Comma, self.ch),
             '+' => new_token_from_ch(TokenType::Plus, self.ch),
+            '-' => new_token_from_ch(TokenType::Minus, self.ch),
+            '!' => {
+                if self.peek_char() == '=' {
+                    self.read_char();
+                    new_token_from_string(TokenType::NotEq, "!=")
+                } else {
+                    new_token_from_ch(TokenType::Bang, self.ch)
+                }
+            }
+            '*' => new_token_from_ch(TokenType::Asterisk, self.ch),
+            '/' => new_token_from_ch(TokenType::Slash, self.ch),
+            '<' => new_token_from_ch(TokenType::Lt, self.ch),
+            '>' => new_token_from_ch(TokenType::Gt, self.ch),
             '{' => new_token_from_ch(TokenType::Lbrace, self.ch),
             '}' => new_token_from_ch(TokenType::Rbrace, self.ch),
             NULL_CHAR => new_token_from_ch(TokenType::Eof, NULL_CHAR),
@@ -54,10 +74,10 @@ impl Lexer {
                 if is_letter(self.ch) {
                     let identifier = self.read_identifier();
                     let token_type = look_up_identifier(&identifier);
-                    new_token_from_string(token_type, identifier)
+                    new_token_from_string(token_type, &identifier)
                 } else if self.ch.is_ascii_digit() {
                     let num_literal = self.read_number();
-                    new_token_from_string(TokenType::Int, num_literal)
+                    new_token_from_string(TokenType::Int, &num_literal)
                 } else {
                     new_token_from_ch(TokenType::Illegal, self.ch)
                 }
@@ -105,6 +125,9 @@ impl Lexer {
 
     /// Returns the character corresponding to the read_position
     fn peek_char(&self) -> char {
+        if self.read_position >= self.input.len() {
+            return NULL_CHAR;
+        }
         self.input[self.read_position]
     }
 }
@@ -160,45 +183,92 @@ mod tests {
                     let add = fn(x, y) {
                         x + y;
                     };
-                    let result = add(five, ten);";
+                    let result = add(five, ten);
+                    
+                    !-/*5;
+                5 < 10 > 5;
+                if (5 < 10) {
+                    return true;
+                } else {
+                    return false;
+                }
+                10 == 10; 
+                10 != 9;";
         let mut l = lexer::Lexer::new(input);
 
         let test_cases = vec![
-            new_token_from_string(Let, "let".to_string()),
-            new_token_from_string(Ident, "five".to_string()),
+            new_token_from_string(Let, "let"),
+            new_token_from_string(Ident, "five"),
             new_token_from_ch(Assign, '='),
-            new_token_from_string(Int, "5".to_string()),
+            new_token_from_string(Int, "5"),
             new_token_from_ch(Semicolon, ';'),
-            new_token_from_string(Let, "let".to_string()),
-            new_token_from_string(Ident, "ten".to_string()),
+            new_token_from_string(Let, "let"),
+            new_token_from_string(Ident, "ten"),
             new_token_from_ch(Assign, '='),
-            new_token_from_string(Int, "10".to_string()),
+            new_token_from_string(Int, "10"),
             new_token_from_ch(Semicolon, ';'),
-            new_token_from_string(Let, "let".to_string()),
-            new_token_from_string(Ident, "add".to_string()),
+            new_token_from_string(Let, "let"),
+            new_token_from_string(Ident, "add"),
             new_token_from_ch(Assign, '='),
-            new_token_from_string(Function, "fn".to_string()),
+            new_token_from_string(Function, "fn"),
             new_token_from_ch(Lparen, '('),
-            new_token_from_string(Ident, "x".to_string()),
+            new_token_from_string(Ident, "x"),
             new_token_from_ch(Comma, ','),
-            new_token_from_string(Ident, "y".to_string()),
+            new_token_from_string(Ident, "y"),
             new_token_from_ch(Rparen, ')'),
             new_token_from_ch(Lbrace, '{'),
-            new_token_from_string(Ident, "x".to_string()),
+            new_token_from_string(Ident, "x"),
             new_token_from_ch(Plus, '+'),
-            new_token_from_string(Ident, "y".to_string()),
+            new_token_from_string(Ident, "y"),
             new_token_from_ch(Semicolon, ';'),
             new_token_from_ch(Rbrace, '}'),
             new_token_from_ch(Semicolon, ';'),
-            new_token_from_string(Let, "let".to_string()),
-            new_token_from_string(Ident, "result".to_string()),
+            new_token_from_string(Let, "let"),
+            new_token_from_string(Ident, "result"),
             new_token_from_ch(Assign, '='),
-            new_token_from_string(Ident, "add".to_string()),
+            new_token_from_string(Ident, "add"),
             new_token_from_ch(Lparen, '('),
-            new_token_from_string(Ident, "five".to_string()),
+            new_token_from_string(Ident, "five"),
             new_token_from_ch(Comma, ','),
-            new_token_from_string(Ident, "ten".to_string()),
+            new_token_from_string(Ident, "ten"),
             new_token_from_ch(Rparen, ')'),
+            new_token_from_ch(Semicolon, ';'),
+            new_token_from_ch(Bang, '!'),
+            new_token_from_ch(Minus, '-'),
+            new_token_from_ch(Slash, '/'),
+            new_token_from_ch(Asterisk, '*'),
+            new_token_from_ch(Int, '5'),
+            new_token_from_ch(Semicolon, ';'),
+            new_token_from_ch(Int, '5'),
+            new_token_from_ch(Lt, '<'),
+            new_token_from_string(Int, "10"),
+            new_token_from_ch(Gt, '>'),
+            new_token_from_ch(Int, '5'),
+            new_token_from_ch(Semicolon, ';'),
+            new_token_from_string(If, "if"),
+            new_token_from_ch(Lparen, '('),
+            new_token_from_ch(Int, '5'),
+            new_token_from_ch(Lt, '<'),
+            new_token_from_string(Int, "10"),
+            new_token_from_ch(Rparen, ')'),
+            new_token_from_ch(Lbrace, '{'),
+            new_token_from_string(Return, "return"),
+            new_token_from_string(True, "true"),
+            new_token_from_ch(Semicolon, ';'),
+            new_token_from_ch(Rbrace, '}'),
+            new_token_from_string(Else, "else"),
+            new_token_from_ch(Lbrace, '{'),
+            new_token_from_string(Return, "return"),
+            new_token_from_string(False, "false"),
+            new_token_from_ch(Semicolon, ';'),
+            new_token_from_ch(Rbrace, '}'),
+            new_token_from_string(Int, "10"),
+            new_token_from_string(Eq, "=="),
+            new_token_from_string(Int, "10"),
+            new_token_from_ch(Semicolon, ';'),
+            new_token_from_string(Int, "10"),
+            new_token_from_string(NotEq, "!="),
+            new_token_from_string(Int, "9"),
             new_token_from_ch(Semicolon, ';'),
             new_token_from_ch(Eof, NULL_CHAR),
         ];

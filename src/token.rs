@@ -19,6 +19,14 @@ pub enum TokenType {
     // Operators
     Assign,
     Plus,
+    Minus,
+    Bang,
+    Asterisk,
+    Slash,
+    Lt,
+    Gt,
+    Eq,
+    NotEq,
 
     // Delimiters
     Comma,
@@ -32,6 +40,11 @@ pub enum TokenType {
     // Keywords
     Function,
     Let,
+    If,
+    Else,
+    Return,
+    True,
+    False,
 }
 
 /// Returns a new token based on the provided token type and the character
@@ -43,10 +56,10 @@ pub fn new_token_from_ch(token_type: TokenType, ch: char) -> Token {
 }
 
 /// Returns a new token based on the provided token type and the literal
-pub fn new_token_from_string(token_type: TokenType, literal: String) -> Token {
+pub fn new_token_from_string(token_type: TokenType, literal: &str) -> Token {
     Token {
         token_type,
-        literal,
+        literal: literal.to_string(),
     }
 }
 
@@ -55,6 +68,11 @@ pub fn look_up_identifier(ident: &str) -> TokenType {
     match ident {
         "fn" => TokenType::Function,
         "let" => TokenType::Let,
+        "if" => TokenType::If,
+        "else" => TokenType::Else,
+        "return" => TokenType::Return,
+        "true" => TokenType::True,
+        "false" => TokenType::False,
         _ => TokenType::Ident,
     }
 }
