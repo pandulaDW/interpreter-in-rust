@@ -55,7 +55,7 @@ impl Lexer {
                     let identifier = self.read_identifier();
                     let token_type = look_up_identifier(&identifier);
                     new_token_from_string(token_type, identifier)
-                } else if self.ch.is_digit(10) {
+                } else if self.ch.is_ascii_digit() {
                     let num_literal = self.read_number();
                     new_token_from_string(TokenType::Int, num_literal)
                 } else {
@@ -95,7 +95,7 @@ impl Lexer {
     /// Reads a number by iteratively calling the read_char method and returns the number literal
     fn read_number(&mut self) -> String {
         let current_position = self.position;
-        while self.peek_char().is_digit(10) {
+        while self.peek_char().is_ascii_digit() {
             self.read_char();
         }
         self.input[current_position..self.read_position]

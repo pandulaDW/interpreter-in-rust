@@ -4,8 +4,10 @@ mod token;
 use lexer::Lexer;
 
 fn main() {
-    let mut l = Lexer::new("let v = 5;");
-    let token = l.next_token();
+    let mut l = Lexer::new("let v = 52;");
 
-    println!("{:?}", token);
+    for _ in 0..6 {
+        let t = l.next_token();
+        println!("{:?}", t);
+    }
 }
