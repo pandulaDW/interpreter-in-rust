@@ -47,6 +47,13 @@ pub enum TokenType {
     False,
 }
 
+impl TokenType {
+    /// Returns if the token is Eof
+    pub fn is_eof(&self) -> bool {
+        self == &TokenType::Eof
+    }
+}
+
 /// Returns a new token based on the provided token type and the character
 pub fn new_token_from_ch(token_type: TokenType, ch: char) -> Token {
     Token {

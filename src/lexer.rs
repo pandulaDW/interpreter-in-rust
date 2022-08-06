@@ -125,10 +125,10 @@ impl Lexer {
 
     /// Returns the character corresponding to the read_position
     fn peek_char(&self) -> char {
-        if self.read_position >= self.input.len() {
-            return NULL_CHAR;
-        }
-        self.input[self.read_position]
+        self.input
+            .get(self.read_position)
+            .unwrap_or(&NULL_CHAR)
+            .to_owned()
     }
 }
 
