@@ -16,36 +16,35 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    /// Returns a new Lexer after reading the first character
+    /// Returns a new Lexer for the given input
     pub fn new(input: &str) -> Self {
-        let mut l = Lexer {
+        Lexer {
             input: input.chars().collect(),
             position: 0,
             read_position: 0,
             ch: NULL_CHAR,
-        };
-
-        l.read_char();
-
-        return l;
+        }
     }
 
-    /// Returns the current token and reads the next token which can be returned on the
+    /// Returns the current token and reads the next token which will be returned on the
     /// next call
     pub fn next_token(&mut self) -> Token {
-        let tok;
-
-        match self.ch {
-            '=' => tok = new_token(TokenType::ASSIGN, self.ch),
-            ';' => tok = new_token(TokenType::SEMICOLON, self.ch),
-            '(' => tok = new_token(TokenType::LPAREN, self.ch),
-            ')' => tok = new_token(TokenType::RPAREN, self.ch),
-            ',' => tok = new_token(TokenType::COMMA, self.ch),
-            '+' => tok = new_token(TokenType::PLUS, self.ch),
-            '{' => tok = new_token(TokenType::LBRACE, self.ch),
-            '}' => tok = new_token(TokenType::RBRACE, self.ch),
-            _ => tok = new_token(TokenType::EOF, NULL_CHAR),
+        // read the first character of the input
+        if self.read_position == 0 {
+            self.read_char();
         }
+
+        let tok = match self.ch {
+            '=' => new_token(TokenType::Assign, self.ch),
+            ';' => new_token(TokenType::Semicolon, self.ch),
+            '(' => new_token(TokenType::Lparen, self.ch),
+            ')' => new_token(TokenType::Rparen, self.ch),
+            ',' => new_token(TokenType::Comma, self.ch),
+            '+' => new_token(TokenType::Plus, self.ch),
+            '{' => new_token(TokenType::Lbrace, self.ch),
+            '}' => new_token(TokenType::Rbrace, self.ch),
+            _ => new_token(TokenType::Eof, NULL_CHAR),
+        };
 
         // read the next character
         self.read_char();

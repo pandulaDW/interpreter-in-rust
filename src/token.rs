@@ -11,29 +11,29 @@ pub const NULL_CHAR: char = '\0';
 
 #[derive(PartialEq, Debug)]
 pub enum TokenType {
-    ILLEGAL,
-    EOF,
+    Illegal,
+    Eof,
 
     // Identifiers + literals
-    IDENT,
-    INT,
+    Ident,
+    Int,
 
     // Operators
-    ASSIGN,
-    PLUS,
+    Assign,
+    Plus,
 
     // Delimiters
-    COMMA,
-    SEMICOLON,
+    Comma,
+    Semicolon,
 
-    LPAREN,
-    RPAREN,
-    LBRACE,
-    RBRACE,
+    Lparen,
+    Rparen,
+    Lbrace,
+    Rbrace,
 
     // Keywords
-    FUNCTION,
-    LET,
+    Function,
+    Let,
 }
 
 /// Generates a new token based on the provided token type and the character
@@ -55,39 +55,39 @@ mod tests {
 
         let test_cases: Vec<Token> = vec![
             Token {
-                token_type: ASSIGN,
+                token_type: Assign,
                 literal: "=".to_string(),
             },
             Token {
-                token_type: PLUS,
+                token_type: Plus,
                 literal: "+".to_string(),
             },
             Token {
-                token_type: LPAREN,
+                token_type: Lparen,
                 literal: "(".to_string(),
             },
             Token {
-                token_type: RPAREN,
+                token_type: Rparen,
                 literal: ")".to_string(),
             },
             Token {
-                token_type: LBRACE,
+                token_type: Lbrace,
                 literal: "{".to_string(),
             },
             Token {
-                token_type: RBRACE,
+                token_type: Rbrace,
                 literal: "}".to_string(),
             },
             Token {
-                token_type: COMMA,
+                token_type: Comma,
                 literal: ",".to_string(),
             },
             Token {
-                token_type: SEMICOLON,
+                token_type: Semicolon,
                 literal: ";".to_string(),
             },
             Token {
-                token_type: EOF,
+                token_type: Eof,
                 literal: NULL_CHAR.to_string(),
             },
         ];
