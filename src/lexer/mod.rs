@@ -1,4 +1,4 @@
-mod token;
+pub mod token;
 mod tokenizer;
 
 /// Lexer is the structure that will tokenize a given input string
