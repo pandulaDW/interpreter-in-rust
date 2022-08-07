@@ -7,6 +7,12 @@ pub struct Program {
     pub statements: Vec<Box<dyn Statement>>,
 }
 
+impl Program {
+    pub fn new() -> Self {
+        Program { statements: vec![] }
+    }
+}
+
 impl Node for Program {
     /// Returns the token literal of the first statement
     fn token_literal(&self) -> String {

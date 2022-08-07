@@ -1,3 +1,5 @@
+use std::any::Any;
+
 pub mod program;
 pub mod statements;
 
@@ -11,6 +13,7 @@ pub trait Node {
 /// Should be implemented by statements as a way of differentiating between expressions
 pub trait Statement: Node {
     fn statement_node(&self);
+    fn into_any(self: Box<Self>) -> Box<dyn Any>;
 }
 
 /// Should be implemented by expressions as a way of differentiating between statements

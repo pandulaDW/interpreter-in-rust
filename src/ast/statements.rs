@@ -11,6 +11,10 @@ pub struct LetStatement {
 
 impl Statement for LetStatement {
     fn statement_node(&self) {}
+
+    fn into_any(self: Box<Self>) -> Box<dyn std::any::Any> {
+        self
+    }
 }
 
 impl Node for LetStatement {

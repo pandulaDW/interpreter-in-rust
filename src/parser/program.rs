@@ -35,8 +35,9 @@ impl Parser {
         self
     }
 
-    pub fn parse_program(&self) -> Option<Program> {
-        None
+    pub fn parse_program(&self) -> Program {
+        let program = Program::new();
+        program
     }
 }
 
@@ -56,9 +57,6 @@ mod tests {
         let p = Parser::new(l);
 
         let program = p.parse_program();
-        assert!(program.is_some(), "parse_program returned None");
-
-        let program = program.unwrap();
         assert!(
             program.statements.len() == 3,
             "program.Statements does not contain 3 statements. got={}",
@@ -67,17 +65,20 @@ mod tests {
 
         let test_cases = vec!["x", "y", "foobar"];
 
-        for (i, tt) in test_cases.iter().enumerate() {
-            let stmt = program.statements[i].as_ref();
-            // let let_stmt: LetStatement<Expression> = stmt.into();
+        for (i, stmt) in program.statements.into_iter().enumerate() {
+            let stmt_any = stmt.into_any();
+            let expected_name = test_cases[i];
 
-            // if !test_let_statement(let_stmt, tt) {
-            //     return;
-            // }
+            let let_stmt = match stmt_any.downcast_ref::<LetStatement>() {
+                Some(val) => val,
+                None => panic!("expected a let statement, found something else"),
+            };
+
+            test_let_statement(let_stmt, expected_name);
         }
     }
 
-    fn test_let_statement(s: LetStatement, name: &str) -> bool {
+    fn test_let_statement(s: &LetStatement, name: &str) {
         assert_eq!(
             s.token_literal(),
             "let",
@@ -98,7 +99,5 @@ mod tests {
             s.name.value,
             name
         );
-
-        true
     }
 }
