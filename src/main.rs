@@ -1,9 +1,9 @@
 mod ast;
 mod lexer;
+mod parser;
 mod repl;
 
 use std::io::{self, BufReader};
-use whoami;
 
 fn user_name() -> String {
     whoami::username()

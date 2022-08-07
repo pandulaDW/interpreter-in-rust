@@ -54,6 +54,11 @@ impl TokenType {
     }
 }
 
+/// A helper function to return an EOF token for initializing the parser
+pub fn eof_token() -> Token {
+    new_token(TokenType::Eof, NULL_CHAR)
+}
+
 /// Returns a new token based on the provided token type and the literal
 pub fn new_token<T: ToString>(token_type: TokenType, literal: T) -> Token {
     Token {

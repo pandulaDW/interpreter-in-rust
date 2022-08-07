@@ -1,4 +1,5 @@
-mod tree;
+pub mod program;
+pub mod statements;
 
 /// Every node in the AST has to implement the Node interface, meaning it has
 /// to provide a TokenLiteral() method that returns the literal value of
@@ -8,11 +9,11 @@ pub trait Node {
 }
 
 /// Should be implemented by statements as a way of differentiating between expressions
-trait Statement: Node {
-    fn statement_node();
+pub trait Statement: Node {
+    fn statement_node(&self);
 }
 
 /// Should be implemented by expressions as a way of differentiating between statements
-trait Expression: Node {
-    fn expression_node();
+pub trait Expression: Node {
+    fn expression_node(&self);
 }
