@@ -54,16 +54,8 @@ impl TokenType {
     }
 }
 
-/// Returns a new token based on the provided token type and the character
-pub fn new_token_from_ch(token_type: TokenType, ch: char) -> Token {
-    Token {
-        token_type,
-        literal: ch.to_string(),
-    }
-}
-
 /// Returns a new token based on the provided token type and the literal
-pub fn new_token_from_string(token_type: TokenType, literal: &str) -> Token {
+pub fn new_token<T: ToString>(token_type: TokenType, literal: T) -> Token {
     Token {
         token_type,
         literal: literal.to_string(),

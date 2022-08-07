@@ -1,33 +1,25 @@
 mod lexer;
-mod token;
+mod repl;
 
-use lexer::Lexer;
-use std::io::{self, Write};
+use std::io::{self, BufReader};
+use whoami;
+
+fn user_name() -> String {
+    whoami::username()
+}
 
 fn main() {
-    const PROMPT: &'static str = ">> ";
+    println!(
+        "Hello {}! This is the Monkey programming language!",
+        user_name()
+    );
+    println!("Feel free to type in commands");
 
-    loop {
-        let mut text = String::new();
+    let mut reader = BufReader::new(io::stdin());
+    let mut writer = io::stdout();
 
-        print!("{}", PROMPT);
-        io::stdout().flush().unwrap();
-
-        io::stdin().read_line(&mut text).unwrap();
-
-        if text.trim() == r"\q" {
-            println!("bye");
-            break;
-        }
-
-        let mut l = Lexer::new(&text);
-        loop {
-            let t = l.next_token();
-            if !t.token_type.is_eof() {
-                println!("{:?}", t);
-            } else {
-                break;
-            }
-        }
+    if let Err(e) = repl::start_repl(&mut reader, &mut writer) {
+        eprintln!("{}", e);
+        std::process::exit(1);
     }
 }
