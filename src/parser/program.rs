@@ -1,15 +1,13 @@
 #![allow(dead_code)]
 
-use std::mem;
-
 use crate::ast::program::Program;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 
 pub struct Parser {
-    l: Lexer,
+    pub l: Lexer,
     pub current_token: Token,
-    peek_token: Token,
+    pub peek_token: Token,
 }
 
 impl Parser {
@@ -28,31 +26,6 @@ impl Parser {
         p.next_token();
 
         p
-    }
-
-    /// Sets the peek token to the current token and advances to a new token.
-    pub fn next_token(&mut self) {
-        mem::swap(&mut self.current_token, &mut self.peek_token);
-        self.peek_token = self.l.next_token();
-    }
-
-    /// Checks if the current token is the supplied token type
-    pub fn current_token_is(&self, token_type: TokenType) -> bool {
-        self.peek_token.token_type == token_type
-    }
-
-    /// Checks if the peek token is the supplied token type
-    fn peek_token_is(&self, token_type: TokenType) -> bool {
-        self.peek_token.token_type == token_type
-    }
-
-    /// If the peek token is the supplied token type, advances the lexer
-    pub fn expect_peek(&mut self, token_type: TokenType) -> bool {
-        if self.peek_token_is(token_type) {
-            self.next_token();
-            return true;
-        }
-        false
     }
 
     /// The main parser method, which iterates through the tokens and generates a list of AST statements
