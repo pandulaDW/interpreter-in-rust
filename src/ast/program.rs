@@ -28,7 +28,7 @@ impl Display for Program {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut buf = String::new();
         for stmt in self.statements.iter() {
-            buf.push_str(format!("{}", stmt).as_str())
+            buf.push_str(format!("{}\n", stmt).as_str())
         }
         write!(f, "{}", buf)
     }

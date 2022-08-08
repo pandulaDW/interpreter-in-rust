@@ -31,6 +31,7 @@ impl Display for LetStatement {
         if let Some(v) = &self.value {
             out.push_str(v.to_string().as_str());
         }
+        out.push(';');
 
         write!(f, "{}", out)
     }
@@ -61,6 +62,7 @@ impl Display for ReturnStatement {
         if let Some(v) = &self.return_value {
             out.push_str(v.to_string().as_str());
         }
+        out.push(';');
 
         write!(f, "{}", out)
     }

@@ -29,3 +29,36 @@ pub trait Expression: Node {
     /// A marker method to mark an expression
     fn expression_node(&self) {}
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{expressions::Identifier, program::Program, statements::LetStatement};
+    use crate::lexer::{
+        keywords,
+        token::{new_token, TokenType},
+    };
+
+    #[test]
+    fn test_string() {
+        let mut program = Program::new();
+
+        let name = Identifier {
+            token: new_token(TokenType::Ident, "myVar"),
+            value: "myVar".to_string(),
+        };
+
+        let value = Identifier {
+            token: new_token(TokenType::Ident, "anotherVar"),
+            value: "anotherVar".to_string(),
+        };
+
+        let stmt = LetStatement {
+            token: new_token(TokenType::Let, keywords::LET),
+            name,
+            value: Some(Box::new(value)),
+        };
+
+        program.statements.push(Box::new(stmt));
+        assert_eq!(program.to_string(), "let myVar = anotherVar;\n");
+    }
+}
