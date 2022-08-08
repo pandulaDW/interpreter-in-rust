@@ -30,7 +30,7 @@ impl Parser {
         false
     }
 
-    /// Add an error to errors when the type of peekToken doesn’t match the expectation
+    /// Add an error to errors when the type of peekToken doesn't match the expectation
     pub fn peek_error(&mut self, token_type: TokenType) {
         let msg = format!(
             "expected next token to be {:?}, got {:?} instead",

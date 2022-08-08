@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use super::{Node, Statement};
+use std::fmt::Display;
 
 /// Program node is going to be the root node of every AST that the parser produces
 pub struct Program {
@@ -20,5 +21,15 @@ impl Node for Program {
             Some(s) => s.token_literal(),
             None => String::new(),
         }
+    }
+}
+
+impl Display for Program {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = String::new();
+        for stmt in self.statements.iter() {
+            buf.push_str(format!("{}", stmt).as_str())
+        }
+        write!(f, "{}", buf)
     }
 }

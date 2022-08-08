@@ -1,7 +1,7 @@
 use crate::ast::expressions::Identifier;
-use crate::ast::statements::LetStatement;
+use crate::ast::statements::{LetStatement, ReturnStatement};
 use crate::ast::Statement;
-use crate::lexer::keywords::LET;
+use crate::lexer::keywords;
 use crate::lexer::token::{new_token, TokenType};
 
 use super::program::Parser;
@@ -13,6 +13,7 @@ impl Parser {
 
         match self.current_token.token_type {
             Let => self.parse_let_statement(),
+            Return => self.parse_return_statement(),
             _ => None,
         }
     }
@@ -38,9 +39,24 @@ impl Parser {
         }
 
         let stmt = LetStatement {
-            token: new_token(TokenType::Let, LET),
+            token: new_token(TokenType::Let, keywords::LET),
             name: identifier,
             value: None,
+        };
+
+        Some(Box::new(stmt))
+    }
+
+    /// Parses `Return` statement
+    fn parse_return_statement(&mut self) -> Option<Box<dyn Statement>> {
+        // TODO: skipping the expressions until encountering a semicolon
+        while !self.current_token_is(&TokenType::Semicolon) {
+            self.next_token();
+        }
+
+        let stmt = ReturnStatement {
+            token: new_token(TokenType::Return, keywords::RETURN),
+            return_value: None,
         };
 
         Some(Box::new(stmt))

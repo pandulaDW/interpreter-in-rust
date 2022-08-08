@@ -66,7 +66,7 @@ mod tests {
         let mut p = Parser::new(l);
 
         let program = p.parse_program();
-        assert!(program.statements.len() == 3);
+        assert_eq!(program.statements.len(), 3);
 
         check_parser_errors(&p.errors);
 
@@ -101,7 +101,7 @@ mod tests {
         let mut p = Parser::new(l);
 
         let program = p.parse_program();
-        assert!(program.statements.len() == 3);
+        assert_eq!(program.statements.len(), 3);
         check_parser_errors(&p.errors);
 
         for stmt in program.statements.into_iter() {

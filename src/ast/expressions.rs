@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use super::{Expression, Node};
 use crate::lexer::token;
 
@@ -11,5 +13,11 @@ impl Expression for Identifier {}
 impl Node for Identifier {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
+    }
+}
+
+impl Display for Identifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.value)
     }
 }

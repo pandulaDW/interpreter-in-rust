@@ -1,4 +1,4 @@
-use std::any::Any;
+use std::{any::Any, fmt::Display};
 
 pub mod expressions;
 pub mod program;
@@ -7,7 +7,7 @@ pub mod statements;
 /// Every node in the AST has to implement the Node interface, meaning it has
 /// to provide a TokenLiteral() method that returns the literal value of
 /// the token it’s associated with.
-pub trait Node {
+pub trait Node: Display {
     fn token_literal(&self) -> String;
 }
 
