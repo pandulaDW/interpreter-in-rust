@@ -1,25 +1,25 @@
 #![allow(dead_code)]
 
+use std::any::Any;
+
 use super::{Expression, Node, Statement};
-use crate::lexer::token;
+use crate::lexer::{keywords, token};
 
 pub struct LetStatement {
     pub token: token::Token, // Let token
     pub name: Identifier,
-    pub value: Box<dyn Expression>,
+    pub value: Option<Box<dyn Expression>>,
 }
 
 impl Statement for LetStatement {
-    fn statement_node(&self) {}
-
-    fn into_any(self: Box<Self>) -> Box<dyn std::any::Any> {
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 }
 
 impl Node for LetStatement {
     fn token_literal(&self) -> String {
-        "let".to_string()
+        keywords::LET.to_string()
     }
 }
 
@@ -28,9 +28,7 @@ pub struct Identifier {
     pub value: String,
 }
 
-impl Expression for Identifier {
-    fn expression_node(&self) {}
-}
+impl Expression for Identifier {}
 
 impl Node for Identifier {
     fn token_literal(&self) -> String {

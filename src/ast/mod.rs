@@ -12,11 +12,18 @@ pub trait Node {
 
 /// Should be implemented by statements as a way of differentiating between expressions
 pub trait Statement: Node {
-    fn statement_node(&self);
+    /// A marker method to mark a statement
+    fn statement_node(&self) {}
+
+    /// Converts a boxed `Statement` trait object into a boxed Any trait object.
+    ///
+    /// This is required for runtime type down-casting.
+    /// Since the program keeps a list of `Statement`s and we would want to infer the underlying
+    /// type that implements the `Statement` trait.
     fn into_any(self: Box<Self>) -> Box<dyn Any>;
 }
 
 /// Should be implemented by expressions as a way of differentiating between statements
 pub trait Expression: Node {
-    fn expression_node(&self);
+    fn expression_node(&self) {}
 }

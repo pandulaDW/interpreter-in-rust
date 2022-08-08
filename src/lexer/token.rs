@@ -1,4 +1,4 @@
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub literal: String,
@@ -7,7 +7,7 @@ pub struct Token {
 /// Represents the UNICODE null character
 pub const NULL_CHAR: char = '\0';
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum TokenType {
     Illegal,
     Eof,

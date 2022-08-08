@@ -1,12 +1,14 @@
 #![allow(dead_code)]
 
+use std::mem;
+
 use crate::ast::program::Program;
-use crate::lexer::token::{eof_token, Token};
+use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 
-struct Parser {
+pub struct Parser {
     l: Lexer,
-    current_token: Token,
+    pub current_token: Token,
     peek_token: Token,
 }
 
@@ -22,21 +24,50 @@ impl Parser {
         };
 
         // Read two tokens, so curToken and peekToken are both set
-        p = p.next_token();
-        p = p.next_token();
+        p.next_token();
+        p.next_token();
 
         p
     }
 
-    // Sets the peek token to the current token and advances to a new token.
-    fn next_token(mut self) -> Self {
-        self.current_token = self.peek_token;
+    /// Sets the peek token to the current token and advances to a new token.
+    pub fn next_token(&mut self) {
+        mem::swap(&mut self.current_token, &mut self.peek_token);
         self.peek_token = self.l.next_token();
-        self
     }
 
-    pub fn parse_program(&self) -> Program {
-        let program = Program::new();
+    /// Checks if the current token is the supplied token type
+    pub fn current_token_is(&self, token_type: TokenType) -> bool {
+        self.peek_token.token_type == token_type
+    }
+
+    /// Checks if the peek token is the supplied token type
+    fn peek_token_is(&self, token_type: TokenType) -> bool {
+        self.peek_token.token_type == token_type
+    }
+
+    /// If the peek token is the supplied token type, advances the lexer
+    pub fn expect_peek(&mut self, token_type: TokenType) -> bool {
+        if self.peek_token_is(token_type) {
+            self.next_token();
+            return true;
+        }
+        false
+    }
+
+    /// The main parser method, which iterates through the tokens and generates a list of AST statements
+    /// within the `Program`
+    pub fn parse_program(&mut self) -> Program {
+        let mut program = Program::new();
+
+        while self.current_token.token_type != TokenType::Eof {
+            let stmt = self.parse_statement();
+            if let Some(s) = stmt {
+                program.statements.push(s);
+            }
+            self.next_token();
+        }
+
         program
     }
 }
@@ -46,22 +77,19 @@ mod tests {
     use super::{Lexer, Parser};
     use crate::ast::statements::LetStatement;
     use crate::ast::Node;
+    use crate::lexer::keywords;
 
     #[test]
     fn test_let_statements() {
-        let input = " let x = 5;
+        let input = "let x = 5;
         let y = 10;
         let foobar = 838383;";
 
         let l = Lexer::new(input);
-        let p = Parser::new(l);
+        let mut p = Parser::new(l);
 
         let program = p.parse_program();
-        assert!(
-            program.statements.len() == 3,
-            "program.Statements does not contain 3 statements. got={}",
-            program.statements.len()
-        );
+        assert!(program.statements.len() == 3);
 
         let test_cases = vec!["x", "y", "foobar"];
 
@@ -79,25 +107,8 @@ mod tests {
     }
 
     fn test_let_statement(s: &LetStatement, name: &str) {
-        assert_eq!(
-            s.token_literal(),
-            "let",
-            "token literal is not let, got {}",
-            s.token_literal()
-        );
-
-        assert_eq!(
-            s.name.value, name,
-            "name is not {}. got {}",
-            s.name.value, name
-        );
-
-        assert_eq!(
-            s.name.token_literal(),
-            name,
-            "name is not {}. got {}",
-            s.name.value,
-            name
-        );
+        assert_eq!(s.token_literal(), keywords::LET);
+        assert_eq!(s.name.value, name);
+        assert_eq!(s.name.token_literal(), name);
     }
 }
