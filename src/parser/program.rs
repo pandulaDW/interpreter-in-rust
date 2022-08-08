@@ -4,10 +4,13 @@ use crate::ast::program::Program;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 
+/// Parser represents the main structure which advances the lexer and parses the tokens as needed
+/// into AST statements.
 pub struct Parser {
     pub l: Lexer,
     pub current_token: Token,
     pub peek_token: Token,
+    pub errors: Vec<String>,
 }
 
 impl Parser {
@@ -19,6 +22,7 @@ impl Parser {
             l,
             current_token: eof_token(),
             peek_token: eof_token(),
+            errors: vec![],
         };
 
         // Read two tokens, so curToken and peekToken are both set
@@ -29,7 +33,7 @@ impl Parser {
     }
 
     /// The main parser method, which iterates through the tokens and generates a list of AST statements
-    /// within the `Program`
+    /// which ships with the `Program`
     pub fn parse_program(&mut self) -> Program {
         let mut program = Program::new();
 
@@ -64,6 +68,8 @@ mod tests {
         let program = p.parse_program();
         assert!(program.statements.len() == 3);
 
+        check_parser_errors(&p.errors);
+
         let test_cases = vec!["x", "y", "foobar"];
 
         for (i, stmt) in program.statements.into_iter().enumerate() {
@@ -83,5 +89,18 @@ mod tests {
         assert_eq!(s.token_literal(), keywords::LET);
         assert_eq!(s.name.value, name);
         assert_eq!(s.name.token_literal(), name);
+    }
+
+    fn check_parser_errors(errors: &Vec<String>) {
+        if errors.len() == 0 {
+            return;
+        }
+
+        let mut err_msg = String::new();
+        for msg in errors {
+            err_msg.push_str(format!("\tparser error: {}\n", msg).as_str());
+        }
+
+        panic!("parser has {} errors\n", errors.len());
     }
 }

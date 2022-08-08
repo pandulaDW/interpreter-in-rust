@@ -69,7 +69,7 @@ pub fn new_token<T: ToString>(token_type: TokenType, literal: T) -> Token {
     }
 }
 
-/// Checks the given identifier and returns the correct TokeType.
+/// Checks the given identifier and returns the correct `TokenType`.
 pub fn look_up_identifier(ident: &str) -> TokenType {
     use keywords::*;
 
@@ -90,7 +90,7 @@ mod tests {
     use super::{look_up_identifier, TokenType};
 
     #[test]
-    fn test_look_up_look_up_identifier() {
+    fn test_look_up_identifier() {
         assert_eq!(TokenType::Function, look_up_identifier("fn"));
         assert_eq!(TokenType::Let, look_up_identifier("let"));
         assert_eq!(TokenType::Ident, look_up_identifier("my name is khan"));

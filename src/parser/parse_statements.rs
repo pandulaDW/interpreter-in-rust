@@ -6,6 +6,7 @@ use crate::lexer::token::{new_token, TokenType};
 use super::program::Parser;
 
 impl Parser {
+    /// The high level statement parser. Delegates the work to the relevant parsers
     pub fn parse_statement(&mut self) -> Option<Box<dyn Statement>> {
         use TokenType::*;
 
@@ -15,6 +16,7 @@ impl Parser {
         }
     }
 
+    /// Parses `Let` statements
     fn parse_let_statement(&mut self) -> Option<Box<dyn Statement>> {
         if !self.expect_peek(TokenType::Ident) {
             return None;
@@ -30,7 +32,7 @@ impl Parser {
         }
 
         // TODO: skipping the expressions until encountering a semicolon
-        while !self.current_token_is(TokenType::Semicolon) {
+        while !self.current_token_is(&TokenType::Semicolon) {
             self.next_token();
         }
 

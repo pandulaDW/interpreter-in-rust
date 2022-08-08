@@ -25,5 +25,6 @@ pub trait Statement: Node {
 
 /// Should be implemented by expressions as a way of differentiating between statements
 pub trait Expression: Node {
+    /// A marker method to mark an expression
     fn expression_node(&self) {}
 }
