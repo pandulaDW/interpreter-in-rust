@@ -1,3 +1,4 @@
+use super::keywords;
 #[derive(PartialEq, Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
@@ -69,14 +70,16 @@ pub fn new_token<T: ToString>(token_type: TokenType, literal: T) -> Token {
 
 /// Checks the given identifier and returns the correct TokeType.
 pub fn look_up_identifier(ident: &str) -> TokenType {
+    use keywords::*;
+
     match ident {
-        "fn" => TokenType::Function,
-        "let" => TokenType::Let,
-        "if" => TokenType::If,
-        "else" => TokenType::Else,
-        "return" => TokenType::Return,
-        "true" => TokenType::True,
-        "false" => TokenType::False,
+        FN => TokenType::Function,
+        LET => TokenType::Let,
+        IF => TokenType::If,
+        ELSE => TokenType::Else,
+        RETURN => TokenType::Return,
+        TRUE => TokenType::True,
+        FALSE => TokenType::False,
         _ => TokenType::Ident,
     }
 }
