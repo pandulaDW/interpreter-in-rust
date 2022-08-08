@@ -1,4 +1,5 @@
-use crate::ast::statements::{Identifier, LetStatement};
+use crate::ast::expressions::Identifier;
+use crate::ast::statements::LetStatement;
 use crate::ast::Statement;
 use crate::lexer::keywords::LET;
 use crate::lexer::token::{new_token, TokenType};

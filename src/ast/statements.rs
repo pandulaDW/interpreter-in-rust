@@ -2,12 +2,12 @@
 
 use std::any::Any;
 
-use super::{Expression, Node, Statement};
+use super::{expressions, Expression, Node, Statement};
 use crate::lexer::{keywords, token};
 
 pub struct LetStatement {
     pub token: token::Token, // Let token
-    pub name: Identifier,
+    pub name: expressions::Identifier,
     pub value: Option<Box<dyn Expression>>,
 }
 
@@ -23,15 +23,19 @@ impl Node for LetStatement {
     }
 }
 
-pub struct Identifier {
-    pub token: token::Token, // Ident token
-    pub value: String,
+pub struct ReturnStatement {
+    pub token: token::Token, // Return token
+    pub return_value: Option<Box<dyn Expression>>,
 }
 
-impl Expression for Identifier {}
+impl Statement for ReturnStatement {
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
+    }
+}
 
-impl Node for Identifier {
+impl Node for ReturnStatement {
     fn token_literal(&self) -> String {
-        self.token.literal.clone()
+        keywords::RETURN.to_string()
     }
 }

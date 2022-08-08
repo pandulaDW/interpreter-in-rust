@@ -52,7 +52,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::{Lexer, Parser};
-    use crate::ast::statements::LetStatement;
+    use crate::ast::statements::{LetStatement, ReturnStatement};
     use crate::ast::Node;
     use crate::lexer::keywords;
 
@@ -91,6 +91,29 @@ mod tests {
         assert_eq!(s.name.token_literal(), name);
     }
 
+    #[test]
+    fn test_return_statements() {
+        let input = "return 5;
+        return 10;
+        return 993322;";
+
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+
+        let program = p.parse_program();
+        assert!(program.statements.len() == 3);
+        check_parser_errors(&p.errors);
+
+        for stmt in program.statements.into_iter() {
+            let stmt_any = stmt.into_any();
+            let return_stmt = match stmt_any.downcast_ref::<ReturnStatement>() {
+                Some(v) => v,
+                None => panic!("expected a return statement, found something else"),
+            };
+            assert_eq!(return_stmt.token_literal(), keywords::RETURN);
+        }
+    }
+
     fn check_parser_errors(errors: &Vec<String>) {
         if errors.len() == 0 {
             return;
@@ -101,6 +124,6 @@ mod tests {
             err_msg.push_str(format!("\tparser error: {}\n", msg).as_str());
         }
 
-        panic!("parser has {} errors\n", errors.len());
+        panic!("parser has {} errors\n{}", errors.len(), err_msg);
     }
 }
