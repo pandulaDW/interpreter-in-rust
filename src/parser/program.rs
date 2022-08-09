@@ -8,7 +8,7 @@ use crate::ast::Expression;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 
-pub type PrefixParseFn = dyn Fn(&Parser) -> Box<dyn Expression>;
+pub type PrefixParseFn = dyn Fn(&mut Parser) -> Box<dyn Expression>;
 pub type InfixParseFn = dyn Fn(Box<dyn Expression>) -> Box<dyn Expression>;
 
 /// Parser represents the main structure which advances the lexer and parses the tokens as needed

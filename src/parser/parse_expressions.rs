@@ -21,18 +21,23 @@ impl Parser {
     }
 
     fn parse_expression(&mut self, _precedence: u8) -> Option<Box<dyn Expression>> {
-        let prefix = match self.prefix_parse_fns.get(&self.current_token.token_type) {
+        // The key needed to be removed from the map to take ownership of the returned parser function.
+        // This is to get around the borrow checker for passing a mutable reference of `self` to the parser function
+        let prefix = match self.prefix_parse_fns.remove(&self.current_token.token_type) {
             Some(v) => v,
             None => return None,
         };
 
         let left_expr = prefix(self);
 
+        // The removed parser function will be added back here
+        self.register_prefix(self.current_token.token_type.clone(), prefix);
+
         Some(left_expr)
     }
 }
 
-pub fn parse_identifier(p: &Parser) -> Box<dyn Expression> {
+pub fn parse_identifier(p: &mut Parser) -> Box<dyn Expression> {
     let ident = Identifier {
         token: p.current_token.clone(),
         value: p.current_token.literal.clone(),
