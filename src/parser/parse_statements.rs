@@ -14,7 +14,7 @@ impl Parser {
         match self.current_token.token_type {
             Let => self.parse_let_statement(),
             Return => self.parse_return_statement(),
-            _ => None,
+            _ => self.parse_expression_statement()
         }
     }
 
@@ -49,15 +49,15 @@ impl Parser {
 
     /// Parses `Return` statement
     fn parse_return_statement(&mut self) -> Option<Box<dyn Statement>> {
-        // TODO: skipping the expressions until encountering a semicolon
-        while !self.current_token_is(&TokenType::Semicolon) {
-            self.next_token();
-        }
-
         let stmt = ReturnStatement {
             token: new_token(TokenType::Return, keywords::RETURN),
             return_value: None,
         };
+
+        // TODO: skipping the expressions until encountering a semicolon
+        while !self.current_token_is(&TokenType::Semicolon) {
+            self.next_token();
+        }
 
         Some(Box::new(stmt))
     }

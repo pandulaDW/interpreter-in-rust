@@ -12,11 +12,11 @@ impl Parser {
 
     /// Checks if the current token is the supplied token type
     pub fn current_token_is(&self, token_type: &TokenType) -> bool {
-        self.peek_token.token_type == *token_type
+        self.current_token.token_type == *token_type
     }
 
     /// Checks if the peek token is the supplied token type
-    fn peek_token_is(&self, token_type: &TokenType) -> bool {
+    pub fn peek_token_is(&self, token_type: &TokenType) -> bool {
         self.peek_token.token_type == *token_type
     }
 

@@ -2,13 +2,14 @@
 
 use std::collections::HashMap;
 
+use super::parse_expressions::parse_identifier;
 use crate::ast::program::Program;
 use crate::ast::Expression;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 
-pub type PrefixParseFn = dyn Fn() -> dyn Expression;
-pub type InfixParseFn = dyn Fn(dyn Expression) -> dyn Expression;
+pub type PrefixParseFn = dyn Fn(&Parser) -> Box<dyn Expression>;
+pub type InfixParseFn = dyn Fn(Box<dyn Expression>) -> Box<dyn Expression>;
 
 /// Parser represents the main structure which advances the lexer and parses the tokens as needed
 /// into AST statements.
@@ -42,6 +43,9 @@ impl Parser {
         // Read two tokens, so curToken and peekToken are both set
         p.next_token();
         p.next_token();
+
+        // register the expression parsers
+        p.register_prefix(TokenType::Ident, Box::new(parse_identifier));
 
         p
     }
