@@ -8,13 +8,8 @@ pub mod statements;
 /// to provide a TokenLiteral() method that returns the literal value of
 /// the token it’s associated with.
 pub trait Node: Display {
+    /// Return the token literal as a String
     fn token_literal(&self) -> String;
-}
-
-/// Should be implemented by statements as a way of differentiating between expressions
-pub trait Statement: Node {
-    /// A marker method to mark a statement
-    fn statement_node(&self) {}
 
     /// Converts a boxed `Statement` trait object into a boxed Any trait object.
     ///
@@ -22,6 +17,12 @@ pub trait Statement: Node {
     /// Since the program keeps a list of `Statement`s and we would want to infer the underlying
     /// type that implements the `Statement` trait.
     fn into_any(self: Box<Self>) -> Box<dyn Any>;
+}
+
+/// Should be implemented by statements as a way of differentiating between expressions
+pub trait Statement: Node {
+    /// A marker method to mark a statement
+    fn statement_node(&self) {}
 }
 
 /// Should be implemented by expressions as a way of differentiating between statements

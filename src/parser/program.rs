@@ -1,16 +1,28 @@
 #![allow(dead_code)]
 
+use std::collections::HashMap;
+
 use crate::ast::program::Program;
+use crate::ast::Expression;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 
+pub type PrefixParseFn = dyn Fn() -> dyn Expression;
+pub type InfixParseFn = dyn Fn(dyn Expression) -> dyn Expression;
+
 /// Parser represents the main structure which advances the lexer and parses the tokens as needed
 /// into AST statements.
+///
+/// It includes the information needed for parsing as well as parser results
 pub struct Parser {
     pub l: Lexer,
+    pub errors: Vec<String>,
+
     pub current_token: Token,
     pub peek_token: Token,
-    pub errors: Vec<String>,
+
+    pub prefix_parse_fns: HashMap<TokenType, Box<PrefixParseFn>>,
+    pub infix_parse_fns: HashMap<TokenType, Box<InfixParseFn>>,
 }
 
 impl Parser {
@@ -23,6 +35,8 @@ impl Parser {
             current_token: eof_token(),
             peek_token: eof_token(),
             errors: vec![],
+            prefix_parse_fns: HashMap::new(),
+            infix_parse_fns: HashMap::new(),
         };
 
         // Read two tokens, so curToken and peekToken are both set
@@ -52,7 +66,8 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::{Lexer, Parser};
-    use crate::ast::statements::{LetStatement, ReturnStatement};
+    use crate::ast::expressions::Identifier;
+    use crate::ast::statements::{ExpressionStatement, LetStatement, ReturnStatement};
     use crate::ast::Node;
     use crate::lexer::keywords;
 
@@ -76,16 +91,16 @@ mod tests {
             let stmt_any = stmt.into_any();
             let expected_name = test_cases[i];
 
-            let let_stmt = match stmt_any.downcast_ref::<LetStatement>() {
-                Some(val) => val,
-                None => panic!("expected a let statement, found something else"),
+            let let_stmt = match stmt_any.downcast::<LetStatement>() {
+                Ok(val) => val,
+                Err(e) => panic!("expected a let statement, found {:?}", e),
             };
 
-            test_let_statement(let_stmt, expected_name);
+            test_let_statement(*let_stmt, expected_name);
         }
     }
 
-    fn test_let_statement(s: &LetStatement, name: &str) {
+    fn test_let_statement(s: LetStatement, name: &str) {
         assert_eq!(s.token_literal(), keywords::LET);
         assert_eq!(s.name.value, name);
         assert_eq!(s.name.token_literal(), name);
@@ -106,11 +121,43 @@ mod tests {
 
         for stmt in program.statements.into_iter() {
             let stmt_any = stmt.into_any();
-            let return_stmt = match stmt_any.downcast_ref::<ReturnStatement>() {
-                Some(v) => v,
-                None => panic!("expected a return statement, found something else"),
+            let return_stmt = match stmt_any.downcast::<ReturnStatement>() {
+                Ok(v) => v,
+                Err(e) => panic!("expected a return statement, found {:?}", e),
             };
             assert_eq!(return_stmt.token_literal(), keywords::RETURN);
+        }
+    }
+
+    #[test]
+    fn test_identifier_expression() {
+        let input = "foobar";
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program();
+
+        check_parser_errors(&p.errors);
+        assert_eq!(program.statements.len(), 1);
+
+        for stmt in program.statements.into_iter() {
+            let stmt_any = stmt.into_any();
+            let expr_stmt = match stmt_any.downcast::<ExpressionStatement>() {
+                Ok(v) => v,
+                Err(e) => panic!("expected an expression statement, found {:?}", e),
+            };
+
+            let expression = expr_stmt
+                .expression
+                .expect("expected the expression of the expr_statement to exist");
+
+            let expr_any = expression.into_any();
+            let identifier = match expr_any.downcast::<Identifier>() {
+                Ok(v) => v,
+                Err(e) => panic!("expected an identifier statement, found {:?}", e),
+            };
+
+            assert_eq!(identifier.value, "foobar");
+            assert_eq!(identifier.token_literal(), "foobar");
         }
     }
 

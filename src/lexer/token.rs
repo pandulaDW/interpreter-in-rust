@@ -9,7 +9,7 @@ pub struct Token {
 /// Represents the UNICODE null character
 pub const NULL_CHAR: char = '\0';
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Eq, Hash)]
 pub enum TokenType {
     Illegal,
     Eof,

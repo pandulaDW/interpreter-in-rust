@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use super::{Node, Statement};
-use std::fmt::Display;
+use std::{any::Any, fmt::Display};
 
 /// Program node is going to be the root node of every AST that the parser produces
 pub struct Program {
@@ -21,6 +21,9 @@ impl Node for Program {
             Some(s) => s.token_literal(),
             None => String::new(),
         }
+    }
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 }
 

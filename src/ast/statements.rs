@@ -11,15 +11,14 @@ pub struct LetStatement {
     pub value: Option<Box<dyn Expression>>,
 }
 
-impl Statement for LetStatement {
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
-    }
-}
+impl Statement for LetStatement {}
 
 impl Node for LetStatement {
     fn token_literal(&self) -> String {
         keywords::LET.to_string()
+    }
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 }
 
@@ -42,15 +41,14 @@ pub struct ReturnStatement {
     pub return_value: Option<Box<dyn Expression>>,
 }
 
-impl Statement for ReturnStatement {
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
-    }
-}
+impl Statement for ReturnStatement {}
 
 impl Node for ReturnStatement {
     fn token_literal(&self) -> String {
         keywords::RETURN.to_string()
+    }
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 }
 
@@ -75,15 +73,15 @@ pub struct ExpressionStatement {
     pub expression: Option<Box<dyn Expression>>,
 }
 
-impl Statement for ExpressionStatement {
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
-    }
-}
+impl Statement for ExpressionStatement {}
 
 impl Node for ExpressionStatement {
     fn token_literal(&self) -> String {
         self.token.literal.to_string()
+    }
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
     }
 }
 
