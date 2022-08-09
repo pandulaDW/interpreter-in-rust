@@ -2,13 +2,13 @@
 
 use std::collections::HashMap;
 
-use super::parse_expressions::parse_identifier;
+use super::parse_expressions::{parse_identifier, parse_integer_literal};
 use crate::ast::program::Program;
 use crate::ast::Expression;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 
-pub type PrefixParseFn = dyn Fn(&mut Parser) -> Box<dyn Expression>;
+pub type PrefixParseFn = dyn Fn(&mut Parser) -> Option<Box<dyn Expression>>;
 pub type InfixParseFn = dyn Fn(Box<dyn Expression>) -> Box<dyn Expression>;
 
 /// Parser represents the main structure which advances the lexer and parses the tokens as needed
@@ -46,6 +46,7 @@ impl Parser {
 
         // register the expression parsers
         p.register_prefix(TokenType::Ident, Box::new(parse_identifier));
+        p.register_prefix(TokenType::Int, Box::new(parse_integer_literal));
 
         p
     }
@@ -70,7 +71,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::{Lexer, Parser};
-    use crate::ast::expressions::Identifier;
+    use crate::ast::expressions::{Identifier, IntegerLiteral};
     use crate::ast::statements::{ExpressionStatement, LetStatement, ReturnStatement};
     use crate::ast::Node;
     use crate::lexer::keywords;
@@ -135,7 +136,7 @@ mod tests {
 
     #[test]
     fn test_identifier_expression() {
-        let input = "foobar";
+        let input = "foobar;";
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
         let program = p.parse_program();
@@ -162,6 +163,37 @@ mod tests {
 
             assert_eq!(identifier.value, "foobar");
             assert_eq!(identifier.token_literal(), "foobar");
+        }
+    }
+
+    #[test]
+    fn test_integer_literal_expression() {
+        let input = "5;";
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program();
+
+        check_parser_errors(&p.errors);
+        assert_eq!(program.statements.len(), 1);
+
+        for stmt in program.statements.into_iter() {
+            let stmt_any = stmt.into_any();
+            let expr_stmt = match stmt_any.downcast::<ExpressionStatement>() {
+                Ok(v) => v,
+                Err(e) => panic!("expected an expression statement, found {:?}", e),
+            };
+            let expression = expr_stmt
+                .expression
+                .expect("expected the expression of the expr_statement to exist");
+            let expr_any = expression.into_any();
+
+            let integer_literal = match expr_any.downcast::<IntegerLiteral>() {
+                Ok(v) => v,
+                Err(e) => panic!("expected an integer literal statement, found {:?}", e),
+            };
+
+            assert_eq!(integer_literal.value, 5);
+            assert_eq!(integer_literal.token_literal(), "5");
         }
     }
 

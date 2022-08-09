@@ -1,6 +1,6 @@
 use super::program::Parser;
 use super::LOWEST;
-use crate::ast::expressions::Identifier;
+use crate::ast::expressions::{Identifier, IntegerLiteral};
 use crate::ast::{statements::ExpressionStatement, Expression, Statement};
 use crate::lexer::token::TokenType;
 
@@ -33,15 +33,33 @@ impl Parser {
         // The removed parser function will be added back here
         self.register_prefix(self.current_token.token_type.clone(), prefix);
 
-        Some(left_expr)
+        left_expr
     }
 }
 
-pub fn parse_identifier(p: &mut Parser) -> Box<dyn Expression> {
+pub fn parse_identifier(p: &mut Parser) -> Option<Box<dyn Expression>> {
     let ident = Identifier {
         token: p.current_token.clone(),
         value: p.current_token.literal.clone(),
     };
 
-    Box::new(ident)
+    Some(Box::new(ident))
+}
+
+pub fn parse_integer_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
+    let value = match p.current_token.literal.parse::<i64>() {
+        Ok(v) => v,
+        Err(e) => {
+            let msg = format!("could not parse as integer: {:?}", e);
+            p.errors.push(msg);
+            return None;
+        }
+    };
+
+    let expr = IntegerLiteral {
+        token: p.current_token.clone(),
+        value,
+    };
+
+    Some(Box::new(expr))
 }
