@@ -85,16 +85,14 @@ mod tests {
         let foobar = 838383;";
 
         let program = prepare_parser(input);
-
         assert_eq!(program.statements.len(), 3);
 
         let test_cases = vec!["x", "y", "foobar"];
 
         for (i, stmt) in program.statements.into_iter().enumerate() {
-            let stmt_any = stmt.into_any();
             let expected_name = test_cases[i];
 
-            let let_stmt = match stmt_any.downcast::<LetStatement>() {
+            let let_stmt = match stmt.into_any().downcast::<LetStatement>() {
                 Ok(val) => val,
                 Err(e) => panic!("expected a let statement, found {:?}", e),
             };
@@ -116,7 +114,6 @@ mod tests {
         return 993322;";
 
         let program = prepare_parser(input);
-
         assert_eq!(program.statements.len(), 3);
 
         for stmt in program.statements.into_iter() {
@@ -165,27 +162,11 @@ mod tests {
 
     #[test]
     fn test_parsing_prefix_expressions() {
-        struct TestInput<'a> {
-            input: &'a str,
-            operator: &'a str,
-            integer_value: i64,
-        }
-
-        let prefix_tests = vec![
-            TestInput {
-                input: "!5",
-                operator: "!",
-                integer_value: 5,
-            },
-            TestInput {
-                input: "-15",
-                operator: "-",
-                integer_value: 15,
-            },
-        ];
+        // (input, operator, integer_value)
+        let prefix_tests = vec![("!5", "!", 5), ("-15", "-", 15)];
 
         for tc in prefix_tests {
-            let mut program = prepare_parser(tc.input);
+            let mut program = prepare_parser(tc.0);
 
             assert_eq!(program.statements.len(), 1);
             let stmt = program.statements.remove(0);
@@ -195,10 +176,10 @@ mod tests {
                 Err(e) => panic!("expected an integer literal statement, found {:?}", e),
             };
 
-            assert_eq!(prefix_exp.operator, tc.operator);
+            assert_eq!(prefix_exp.operator, tc.1);
             let right_expr = prefix_exp.right.expect("right expression should exist");
 
-            test_integer_literal(right_expr, tc.integer_value);
+            test_integer_literal(right_expr, tc.2);
         }
     }
 
