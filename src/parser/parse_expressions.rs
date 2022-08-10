@@ -1,5 +1,5 @@
-use super::{precedence, program::Parser};
-use crate::ast::expressions::{Identifier, IntegerLiteral};
+use super::{program::Parser, Precedence};
+use crate::ast::expressions::{Identifier, IntegerLiteral, PrefixExpression};
 use crate::ast::{statements::ExpressionStatement, Expression, Statement};
 use crate::lexer::token::TokenType;
 
@@ -10,7 +10,7 @@ impl Parser {
             expression: None,
         };
 
-        stmt.expression = self.parse_expression(precedence::LOWEST);
+        stmt.expression = self.parse_expression(Precedence::Lowest);
 
         if self.peek_token_is(&TokenType::Semicolon) {
             self.next_token();
@@ -19,12 +19,15 @@ impl Parser {
         Some(Box::new(stmt))
     }
 
-    fn parse_expression(&mut self, _precedence: u8) -> Option<Box<dyn Expression>> {
+    fn parse_expression(&mut self, _precedence: Precedence) -> Option<Box<dyn Expression>> {
         // The key needed to be removed from the map to take ownership of the returned parser function.
         // This is to get around the borrow checker for passing a mutable reference of `self` to the parser function
         let prefix = match self.prefix_parse_fns.remove(&self.current_token.token_type) {
             Some(v) => v,
-            None => return None,
+            None => {
+                self.no_prefix_parse_fn_error(self.current_token.token_type.clone());
+                return None;
+            }
         };
 
         let left_expr = prefix(self);
@@ -59,6 +62,21 @@ pub fn parse_integer_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
         token: p.current_token.clone(),
         value,
     };
+
+    Some(Box::new(expr))
+}
+
+pub fn parse_prefix_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {
+    let mut expr = PrefixExpression {
+        token: p.current_token.clone(),
+        operator: p.current_token.literal.clone(),
+        right: None,
+    };
+
+    // advance the token to get the subject of the prefix
+    p.next_token();
+
+    expr.right = p.parse_expression(Precedence::Prefix);
 
     Some(Box::new(expr))
 }

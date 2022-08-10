@@ -48,4 +48,9 @@ impl Parser {
     pub fn _register_infix(&mut self, token_type: TokenType, func: Box<InfixParseFn>) {
         self.infix_parse_fns.insert(token_type, func);
     }
+
+    pub fn no_prefix_parse_fn_error(&mut self, token_type: TokenType) {
+        let msg = format!("no prefix parse function for {:?} found", token_type);
+        self.errors.push(msg);
+    }
 }

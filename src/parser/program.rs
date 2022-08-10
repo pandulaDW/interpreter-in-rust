@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::parse_expressions::{parse_identifier, parse_integer_literal};
+use super::parse_expressions::{parse_identifier, parse_integer_literal, parse_prefix_expression};
 use crate::ast::program::Program;
 use crate::ast::Expression;
 use crate::lexer::token::{eof_token, Token, TokenType};
@@ -45,6 +45,8 @@ impl Parser {
         // register the expression parsers
         p.register_prefix(TokenType::Ident, Box::new(parse_identifier));
         p.register_prefix(TokenType::Int, Box::new(parse_integer_literal));
+        p.register_prefix(TokenType::Bang, Box::new(parse_prefix_expression));
+        p.register_prefix(TokenType::Minus, Box::new(parse_prefix_expression));
 
         p
     }
@@ -69,9 +71,9 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::{Lexer, Parser};
-    use crate::ast::expressions::{Identifier, IntegerLiteral};
+    use crate::ast::expressions::{Identifier, IntegerLiteral, PrefixExpression};
     use crate::ast::statements::{ExpressionStatement, LetStatement, ReturnStatement};
-    use crate::ast::Node;
+    use crate::ast::{Expression, Node};
     use crate::lexer::keywords;
 
     #[test]
@@ -187,11 +189,63 @@ mod tests {
 
             let integer_literal = match expr_any.downcast::<IntegerLiteral>() {
                 Ok(v) => v,
-                Err(e) => panic!("expected an integer literal statement, found {:?}", e),
+                Err(e) => panic!("expected an integer literal expression, found {:?}", e),
             };
 
             assert_eq!(integer_literal.value, 5);
             assert_eq!(integer_literal.token_literal(), "5");
+        }
+    }
+
+    #[test]
+    fn test_parsing_prefix_expressions() {
+        struct TestInput<'a> {
+            input: &'a str,
+            operator: &'a str,
+            integer_value: i64,
+        }
+
+        let prefix_tests = vec![
+            TestInput {
+                input: "!5",
+                operator: "!",
+                integer_value: 5,
+            },
+            TestInput {
+                input: "-15",
+                operator: "-",
+                integer_value: 15,
+            },
+        ];
+
+        for tc in prefix_tests {
+            let l = Lexer::new(tc.input);
+            let mut p = Parser::new(l);
+            let mut program = p.parse_program();
+            check_parser_errors(&p.errors);
+
+            assert_eq!(program.statements.len(), 1);
+            let stmt = program.statements.remove(0);
+            let stmt_any = stmt.into_any();
+            let expr_stmt = match stmt_any.downcast::<ExpressionStatement>() {
+                Ok(v) => v,
+                Err(e) => panic!("expected an expression statement, found {:?}", e),
+            };
+            let expression = expr_stmt
+                .expression
+                .expect("expected the expression of the expr_statement to exist");
+
+            let expr_any = expression.into_any();
+
+            let prefix_exp = match expr_any.downcast::<PrefixExpression>() {
+                Ok(v) => v,
+                Err(e) => panic!("expected an integer literal statement, found {:?}", e),
+            };
+
+            assert_eq!(prefix_exp.operator, tc.operator);
+            let right_expr = prefix_exp.right.expect("right expression should exist");
+
+            test_integer_literal(right_expr, tc.integer_value);
         }
     }
 
@@ -206,5 +260,15 @@ mod tests {
         }
 
         panic!("parser has {} errors\n{}", errors.len(), err_msg);
+    }
+
+    fn test_integer_literal(expr: Box<dyn Expression>, value: i64) {
+        let expr_any = expr.into_any();
+        let integer_literal = match expr_any.downcast::<IntegerLiteral>() {
+            Ok(v) => v,
+            Err(e) => panic!("expected an integer literal expression, found {:?}", e),
+        };
+        assert_eq!(integer_literal.value, value);
+        assert_eq!(integer_literal.token_literal(), format!("{}", value));
     }
 }
