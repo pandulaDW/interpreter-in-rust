@@ -45,7 +45,7 @@ impl Parser {
     }
 
     /// Insert the infix parser function against the token type
-    pub fn register_infix(&mut self, token_type: TokenType, func: Box<InfixParseFn>) {
+    pub fn _register_infix(&mut self, token_type: TokenType, func: Box<InfixParseFn>) {
         self.infix_parse_fns.insert(token_type, func);
     }
 }

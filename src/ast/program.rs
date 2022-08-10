@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use super::{Node, Statement};
 use std::{any::Any, fmt::Display};
 

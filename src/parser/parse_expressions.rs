@@ -1,5 +1,4 @@
-use super::program::Parser;
-use super::LOWEST;
+use super::{precedence, program::Parser};
 use crate::ast::expressions::{Identifier, IntegerLiteral};
 use crate::ast::{statements::ExpressionStatement, Expression, Statement};
 use crate::lexer::token::TokenType;
@@ -11,7 +10,7 @@ impl Parser {
             expression: None,
         };
 
-        stmt.expression = self.parse_expression(LOWEST);
+        stmt.expression = self.parse_expression(precedence::LOWEST);
 
         if self.peek_token_is(&TokenType::Semicolon) {
             self.next_token();

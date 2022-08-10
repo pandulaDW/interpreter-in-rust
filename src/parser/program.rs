@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::collections::HashMap;
 
 use super::parse_expressions::{parse_identifier, parse_integer_literal};

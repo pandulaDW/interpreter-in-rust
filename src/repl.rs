@@ -1,4 +1,4 @@
-use crate::lexer::Lexer;
+use crate::{lexer::Lexer, parser::program::Parser};
 use std::io::{BufRead, Result, Write};
 
 const PROMPT: &str = ">> ";
@@ -17,16 +17,20 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
             break;
         }
 
-        let mut l = Lexer::new(&text);
-        loop {
-            let t = l.next_token();
-            if !t.token_type.is_eof() {
-                writeln!(output, "{:?}", t)?;
-            } else {
-                text.clear();
-                break;
+        let l = Lexer::new(&text);
+        let mut p = Parser::new(l);
+
+        let program = p.parse_program();
+
+        if !p.errors.is_empty() {
+            println!("encountered parser errors: {:?}", &p.errors);
+        } else {
+            for stmt in program.statements {
+                println!("{}", stmt);
             }
         }
+
+        text.clear();
     }
 
     Ok(())

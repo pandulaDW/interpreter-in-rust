@@ -49,13 +49,6 @@ pub enum TokenType {
     False,
 }
 
-impl TokenType {
-    /// Returns if the token is Eof
-    pub fn is_eof(&self) -> bool {
-        self == &TokenType::Eof
-    }
-}
-
 /// A helper function to return an EOF token for initializing the parser
 pub fn eof_token() -> Token {
     new_token(TokenType::Eof, NULL_CHAR)

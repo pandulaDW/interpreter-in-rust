@@ -14,7 +14,7 @@ impl Parser {
         match self.current_token.token_type {
             Let => self.parse_let_statement(),
             Return => self.parse_return_statement(),
-            _ => self.parse_expression_statement()
+            _ => self.parse_expression_statement(),
         }
     }
 
@@ -36,6 +36,9 @@ impl Parser {
         // TODO: skipping the expressions until encountering a semicolon
         while !self.current_token_is(&TokenType::Semicolon) {
             self.next_token();
+            if self.current_token_is(&TokenType::Eof) {
+                break;
+            }
         }
 
         let stmt = LetStatement {
@@ -57,6 +60,9 @@ impl Parser {
         // TODO: skipping the expressions until encountering a semicolon
         while !self.current_token_is(&TokenType::Semicolon) {
             self.next_token();
+            if self.current_token_is(&TokenType::Eof) {
+                break;
+            }
         }
 
         Some(Box::new(stmt))

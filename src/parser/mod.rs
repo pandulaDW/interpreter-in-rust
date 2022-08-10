@@ -1,15 +1,16 @@
-#![allow(dead_code)]
-
 mod helpers;
 mod parse_expressions;
 mod parse_statements;
 pub mod program;
 
-// Operator precedence
-const LOWEST: u8 = 1;
-const EQUALS: u8 = 2;
-const LESSGREATER: u8 = 3;
-const SUM: u8 = 4;
-const PRODUCT: u8 = 5;
-const PREFIX: u8 = 6;
-const CALL: u8 = 7;
+#[allow(dead_code)]
+// Operator precedences
+mod precedence {
+    pub const LOWEST: u8 = 1;
+    pub const EQUALS: u8 = 2;
+    pub const LESSGREATER: u8 = 3;
+    pub const SUM: u8 = 4;
+    pub const PRODUCT: u8 = 5;
+    pub const PREFIX: u8 = 6;
+    pub const CALL: u8 = 7;
+}
