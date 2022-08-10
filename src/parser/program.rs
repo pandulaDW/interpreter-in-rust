@@ -72,9 +72,11 @@ impl Parser {
 mod tests {
     use super::{Lexer, Parser};
     use crate::ast::expressions::{Identifier, IntegerLiteral, PrefixExpression};
+    use crate::ast::program::Program;
     use crate::ast::statements::{ExpressionStatement, LetStatement, ReturnStatement};
-    use crate::ast::{Expression, Node};
+    use crate::ast::{Expression, Node, Statement};
     use crate::lexer::keywords;
+    use std::any::Any;
 
     #[test]
     fn test_let_statements() {
@@ -82,13 +84,9 @@ mod tests {
         let y = 10;
         let foobar = 838383;";
 
-        let l = Lexer::new(input);
-        let mut p = Parser::new(l);
+        let program = prepare_parser(input);
 
-        let program = p.parse_program();
         assert_eq!(program.statements.len(), 3);
-
-        check_parser_errors(&p.errors);
 
         let test_cases = vec!["x", "y", "foobar"];
 
@@ -117,16 +115,12 @@ mod tests {
         return 10;
         return 993322;";
 
-        let l = Lexer::new(input);
-        let mut p = Parser::new(l);
+        let program = prepare_parser(input);
 
-        let program = p.parse_program();
         assert_eq!(program.statements.len(), 3);
-        check_parser_errors(&p.errors);
 
         for stmt in program.statements.into_iter() {
-            let stmt_any = stmt.into_any();
-            let return_stmt = match stmt_any.downcast::<ReturnStatement>() {
+            let return_stmt = match stmt.into_any().downcast::<ReturnStatement>() {
                 Ok(v) => v,
                 Err(e) => panic!("expected a return statement, found {:?}", e),
             };
@@ -136,26 +130,12 @@ mod tests {
 
     #[test]
     fn test_identifier_expression() {
-        let input = "foobar;";
-        let l = Lexer::new(input);
-        let mut p = Parser::new(l);
-        let program = p.parse_program();
+        let program = prepare_parser("foobar;");
 
-        check_parser_errors(&p.errors);
         assert_eq!(program.statements.len(), 1);
 
         for stmt in program.statements.into_iter() {
-            let stmt_any = stmt.into_any();
-            let expr_stmt = match stmt_any.downcast::<ExpressionStatement>() {
-                Ok(v) => v,
-                Err(e) => panic!("expected an expression statement, found {:?}", e),
-            };
-
-            let expression = expr_stmt
-                .expression
-                .expect("expected the expression of the expr_statement to exist");
-
-            let expr_any = expression.into_any();
+            let expr_any = get_expression_any_statement(stmt);
             let identifier = match expr_any.downcast::<Identifier>() {
                 Ok(v) => v,
                 Err(e) => panic!("expected an identifier statement, found {:?}", e),
@@ -168,29 +148,15 @@ mod tests {
 
     #[test]
     fn test_integer_literal_expression() {
-        let input = "5;";
-        let l = Lexer::new(input);
-        let mut p = Parser::new(l);
-        let program = p.parse_program();
-
-        check_parser_errors(&p.errors);
+        let program = prepare_parser("5;");
         assert_eq!(program.statements.len(), 1);
 
         for stmt in program.statements.into_iter() {
-            let stmt_any = stmt.into_any();
-            let expr_stmt = match stmt_any.downcast::<ExpressionStatement>() {
-                Ok(v) => v,
-                Err(e) => panic!("expected an expression statement, found {:?}", e),
-            };
-            let expression = expr_stmt
-                .expression
-                .expect("expected the expression of the expr_statement to exist");
-            let expr_any = expression.into_any();
-
-            let integer_literal = match expr_any.downcast::<IntegerLiteral>() {
-                Ok(v) => v,
-                Err(e) => panic!("expected an integer literal expression, found {:?}", e),
-            };
+            let integer_literal =
+                match get_expression_any_statement(stmt).downcast::<IntegerLiteral>() {
+                    Ok(v) => v,
+                    Err(e) => panic!("expected an integer literal expression, found {:?}", e),
+                };
 
             assert_eq!(integer_literal.value, 5);
             assert_eq!(integer_literal.token_literal(), "5");
@@ -219,25 +185,12 @@ mod tests {
         ];
 
         for tc in prefix_tests {
-            let l = Lexer::new(tc.input);
-            let mut p = Parser::new(l);
-            let mut program = p.parse_program();
-            check_parser_errors(&p.errors);
+            let mut program = prepare_parser(tc.input);
 
             assert_eq!(program.statements.len(), 1);
             let stmt = program.statements.remove(0);
-            let stmt_any = stmt.into_any();
-            let expr_stmt = match stmt_any.downcast::<ExpressionStatement>() {
-                Ok(v) => v,
-                Err(e) => panic!("expected an expression statement, found {:?}", e),
-            };
-            let expression = expr_stmt
-                .expression
-                .expect("expected the expression of the expr_statement to exist");
-
-            let expr_any = expression.into_any();
-
-            let prefix_exp = match expr_any.downcast::<PrefixExpression>() {
+            let prefix_exp = match get_expression_any_statement(stmt).downcast::<PrefixExpression>()
+            {
                 Ok(v) => v,
                 Err(e) => panic!("expected an integer literal statement, found {:?}", e),
             };
@@ -263,12 +216,30 @@ mod tests {
     }
 
     fn test_integer_literal(expr: Box<dyn Expression>, value: i64) {
-        let expr_any = expr.into_any();
-        let integer_literal = match expr_any.downcast::<IntegerLiteral>() {
+        let integer_literal = match expr.into_any().downcast::<IntegerLiteral>() {
             Ok(v) => v,
             Err(e) => panic!("expected an integer literal expression, found {:?}", e),
         };
         assert_eq!(integer_literal.value, value);
         assert_eq!(integer_literal.token_literal(), format!("{}", value));
+    }
+
+    fn prepare_parser(input: &str) -> Program {
+        let l = Lexer::new(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program();
+        check_parser_errors(&p.errors);
+        program
+    }
+
+    fn get_expression_any_statement(stmt: Box<dyn Statement>) -> Box<dyn Any> {
+        let expr_stmt = match stmt.into_any().downcast::<ExpressionStatement>() {
+            Ok(v) => v,
+            Err(e) => panic!("expected an expression statement, found {:?}", e),
+        };
+        expr_stmt
+            .expression
+            .expect("expected the expression of the expr_statement to exist")
+            .into_any()
     }
 }
