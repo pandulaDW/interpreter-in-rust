@@ -1,13 +1,16 @@
 use std::collections::HashMap;
 
-use super::parse_expressions::{parse_identifier, parse_integer_literal, parse_prefix_expression};
+use super::parse_expressions::{
+    parse_identifier, parse_infix_expression, parse_integer_literal, parse_prefix_expression,
+};
 use crate::ast::program::Program;
 use crate::ast::Expression;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 
 pub type PrefixParseFn = dyn Fn(&mut Parser) -> Option<Box<dyn Expression>>;
-pub type InfixParseFn = dyn Fn(Box<dyn Expression>) -> Box<dyn Expression>;
+pub type InfixParseFn =
+    dyn Fn(&mut Parser, Option<Box<dyn Expression>>) -> Option<Box<dyn Expression>>;
 
 /// Parser represents the main structure which advances the lexer and parses the tokens as needed
 /// into AST statements.
@@ -47,6 +50,14 @@ impl Parser {
         p.register_prefix(TokenType::Int, Box::new(parse_integer_literal));
         p.register_prefix(TokenType::Bang, Box::new(parse_prefix_expression));
         p.register_prefix(TokenType::Minus, Box::new(parse_prefix_expression));
+        p.register_infix(TokenType::Plus, Box::new(parse_infix_expression));
+        p.register_infix(TokenType::Minus, Box::new(parse_infix_expression));
+        p.register_infix(TokenType::Asterisk, Box::new(parse_infix_expression));
+        p.register_infix(TokenType::Slash, Box::new(parse_infix_expression));
+        p.register_infix(TokenType::Eq, Box::new(parse_infix_expression));
+        p.register_infix(TokenType::NotEq, Box::new(parse_infix_expression));
+        p.register_infix(TokenType::Lt, Box::new(parse_infix_expression));
+        p.register_infix(TokenType::Gt, Box::new(parse_infix_expression));
 
         p
     }
@@ -71,7 +82,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::{Lexer, Parser};
-    use crate::ast::expressions::{Identifier, IntegerLiteral, PrefixExpression};
+    use crate::ast::expressions::{Identifier, InfixExpression, IntegerLiteral, PrefixExpression};
     use crate::ast::program::Program;
     use crate::ast::statements::{ExpressionStatement, LetStatement, ReturnStatement};
     use crate::ast::{Expression, Node, Statement};
@@ -128,7 +139,6 @@ mod tests {
     #[test]
     fn test_identifier_expression() {
         let program = prepare_parser("foobar;");
-
         assert_eq!(program.statements.len(), 1);
 
         for stmt in program.statements.into_iter() {
@@ -167,7 +177,6 @@ mod tests {
 
         for tc in prefix_tests {
             let mut program = prepare_parser(tc.0);
-
             assert_eq!(program.statements.len(), 1);
             let stmt = program.statements.remove(0);
             let prefix_exp = match get_expression_any_statement(stmt).downcast::<PrefixExpression>()
@@ -180,6 +189,54 @@ mod tests {
             let right_expr = prefix_exp.right.expect("right expression should exist");
 
             test_integer_literal(right_expr, tc.2);
+        }
+    }
+
+    #[test]
+    fn test_parsing_infix_expressions() {
+        // (input, left_value, operator, right_value)
+        let infix_tests = vec![
+            ("5 + 5;", 5, "+", 5),
+            ("5 - 5;", 5, "-", 5),
+            ("5 * 5;", 5, "*", 5),
+            ("5 / 5;", 5, "/", 5),
+            ("5 > 5;", 5, ">", 5),
+            ("5 < 5;", 5, "<", 5),
+            ("5 == 5;", 5, "==", 5),
+            ("5 != 5;", 5, "!=", 5),
+        ];
+
+        for tc in infix_tests {
+            let mut program = prepare_parser(tc.0);
+            assert_eq!(program.statements.len(), 1);
+            let stmt = program.statements.remove(0);
+            let infix_expr = match get_expression_any_statement(stmt).downcast::<InfixExpression>()
+            {
+                Ok(v) => v,
+                Err(e) => panic!("expected an infix expression statement, found {:?}", e),
+            };
+
+            test_integer_literal(infix_expr.left.expect("left expression should exist"), tc.1);
+            assert_eq!(infix_expr.operator, tc.2);
+            test_integer_literal(
+                infix_expr.right.expect("right expression should exist"),
+                tc.3,
+            );
+        }
+    }
+
+    #[test]
+    fn test_operator_precedence_parsing() {
+        // input, expected
+        let tests = vec![
+            ("-a * b", "((-a) * b)"),
+            ("!-a", "(!(-a))"),
+            ("a + b + c", "((a + b) + c)"),
+        ];
+
+        for tc in tests {
+            let program = prepare_parser(tc.0);
+            assert_eq!(tc.1, program.to_string());
         }
     }
 

@@ -1,4 +1,7 @@
-use super::program::{InfixParseFn, Parser, PrefixParseFn};
+use super::{
+    program::{InfixParseFn, Parser, PrefixParseFn},
+    Precedence,
+};
 use crate::lexer::token::TokenType;
 
 use std::mem;
@@ -45,12 +48,20 @@ impl Parser {
     }
 
     /// Insert the infix parser function against the token type
-    pub fn _register_infix(&mut self, token_type: TokenType, func: Box<InfixParseFn>) {
+    pub fn register_infix(&mut self, token_type: TokenType, func: Box<InfixParseFn>) {
         self.infix_parse_fns.insert(token_type, func);
     }
 
     pub fn no_prefix_parse_fn_error(&mut self, token_type: TokenType) {
         let msg = format!("no prefix parse function for {:?} found", token_type);
         self.errors.push(msg);
+    }
+
+    pub fn peek_precedence(&self) -> Precedence {
+        Precedence::corresponding_token_type(&self.peek_token.token_type)
+    }
+
+    pub fn current_precedence(&self) -> Precedence {
+        Precedence::corresponding_token_type(&self.current_token.token_type)
     }
 }

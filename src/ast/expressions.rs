@@ -74,3 +74,40 @@ impl Display for PrefixExpression {
         write!(f, "")
     }
 }
+
+pub struct InfixExpression {
+    pub token: token::Token, // The infix token, e.g. !
+    pub left: Option<Box<dyn Expression>>,
+    pub operator: String,
+    pub right: Option<Box<dyn Expression>>,
+}
+
+impl Expression for InfixExpression {}
+
+impl Node for InfixExpression {
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
+    }
+}
+
+impl Display for InfixExpression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut out = "(".to_string();
+
+        if let Some(l) = &self.left {
+            out.push_str(&l.to_string());
+        }
+
+        out.push_str(format!(" {} ", &self.operator).as_str());
+
+        if let Some(r) = &self.right {
+            out.push_str(format!("{})", &r).as_str());
+        }
+
+        write!(f, "")
+    }
+}

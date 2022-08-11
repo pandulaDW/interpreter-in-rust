@@ -1,5 +1,5 @@
 use super::{program::Parser, Precedence};
-use crate::ast::expressions::{Identifier, IntegerLiteral, PrefixExpression};
+use crate::ast::expressions;
 use crate::ast::{statements::ExpressionStatement, Expression, Statement};
 use crate::lexer::token::TokenType;
 
@@ -19,9 +19,13 @@ impl Parser {
         Some(Box::new(stmt))
     }
 
-    fn parse_expression(&mut self, _precedence: Precedence) -> Option<Box<dyn Expression>> {
-        // The key needed to be removed from the map to take ownership of the returned parser function.
-        // This is to get around the borrow checker for passing a mutable reference of `self` to the parser function
+    /// Uses pratt parse technique to parse a given expression.
+    ///
+    /// Entries for prefix and infix function-maps keys needed to be removed from the map to take ownership of the returned parser function.
+    /// This is to get around the borrow checker for passing a mutable reference of `self` to the parser function.
+    ///
+    /// These removed functions are later added back in to the maps.
+    fn parse_expression(&mut self, precedence: Precedence) -> Option<Box<dyn Expression>> {
         let prefix = match self.prefix_parse_fns.remove(&self.current_token.token_type) {
             Some(v) => v,
             None => {
@@ -30,17 +34,28 @@ impl Parser {
             }
         };
 
-        let left_expr = prefix(self);
+        let mut left_expr = prefix(self);
 
-        // The removed parser function will be added back here
+        // The removed prefix parser function will be added back here
         self.register_prefix(self.current_token.token_type.clone(), prefix);
+
+        while !self.peek_token_is(&TokenType::Semicolon) && precedence < self.peek_precedence() {
+            let infix = match self.infix_parse_fns.remove(&self.peek_token.token_type) {
+                Some(v) => v,
+                None => return left_expr,
+            };
+
+            self.next_token();
+
+            left_expr = infix(self, left_expr);
+        }
 
         left_expr
     }
 }
 
 pub fn parse_identifier(p: &mut Parser) -> Option<Box<dyn Expression>> {
-    let ident = Identifier {
+    let ident = expressions::Identifier {
         token: p.current_token.clone(),
         value: p.current_token.literal.clone(),
     };
@@ -58,7 +73,7 @@ pub fn parse_integer_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
         }
     };
 
-    let expr = IntegerLiteral {
+    let expr = expressions::IntegerLiteral {
         token: p.current_token.clone(),
         value,
     };
@@ -67,7 +82,7 @@ pub fn parse_integer_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
 }
 
 pub fn parse_prefix_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {
-    let mut expr = PrefixExpression {
+    let mut expr = expressions::PrefixExpression {
         token: p.current_token.clone(),
         operator: p.current_token.literal.clone(),
         right: None,
@@ -79,4 +94,22 @@ pub fn parse_prefix_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {
     expr.right = p.parse_expression(Precedence::Prefix);
 
     Some(Box::new(expr))
+}
+
+pub fn parse_infix_expression(
+    p: &mut Parser,
+    left: Option<Box<dyn Expression>>,
+) -> Option<Box<dyn Expression>> {
+    let mut expression = expressions::InfixExpression {
+        token: p.current_token.clone(),
+        left,
+        operator: p.current_token.literal.clone(),
+        right: None,
+    };
+
+    let precedence = p.current_precedence();
+    p.next_token();
+    expression.right = p.parse_expression(precedence);
+
+    Some(Box::new(expression))
 }
