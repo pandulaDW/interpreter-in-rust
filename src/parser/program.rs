@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::parse_expressions::{
     parse_identifier, parse_infix_expression, parse_integer_literal, parse_prefix_expression,
 };
@@ -22,9 +20,6 @@ pub struct Parser {
 
     pub current_token: Token,
     pub peek_token: Token,
-
-    pub prefix_parse_fns: HashMap<TokenType, Box<PrefixParseFn>>,
-    pub infix_parse_fns: HashMap<TokenType, Box<InfixParseFn>>,
 }
 
 impl Parser {
@@ -37,27 +32,11 @@ impl Parser {
             current_token: eof_token(),
             peek_token: eof_token(),
             errors: vec![],
-            prefix_parse_fns: HashMap::new(),
-            infix_parse_fns: HashMap::new(),
         };
 
         // Read two tokens, so curToken and peekToken are both set
         p.next_token();
         p.next_token();
-
-        // register the expression parsers
-        p.register_prefix(TokenType::Ident, Box::new(parse_identifier));
-        p.register_prefix(TokenType::Int, Box::new(parse_integer_literal));
-        p.register_prefix(TokenType::Bang, Box::new(parse_prefix_expression));
-        p.register_prefix(TokenType::Minus, Box::new(parse_prefix_expression));
-        p.register_infix(TokenType::Plus, Box::new(parse_infix_expression));
-        p.register_infix(TokenType::Minus, Box::new(parse_infix_expression));
-        p.register_infix(TokenType::Asterisk, Box::new(parse_infix_expression));
-        p.register_infix(TokenType::Slash, Box::new(parse_infix_expression));
-        p.register_infix(TokenType::Eq, Box::new(parse_infix_expression));
-        p.register_infix(TokenType::NotEq, Box::new(parse_infix_expression));
-        p.register_infix(TokenType::Lt, Box::new(parse_infix_expression));
-        p.register_infix(TokenType::Gt, Box::new(parse_infix_expression));
 
         p
     }
@@ -76,6 +55,33 @@ impl Parser {
         }
 
         program
+    }
+
+    /// Returns the corresponding prefix parse function
+    pub fn prefix_parse_function(token_type: TokenType) -> Option<Box<PrefixParseFn>> {
+        match token_type {
+            TokenType::Ident => Some(Box::new(parse_identifier)),
+            TokenType::Int => Some(Box::new(parse_integer_literal)),
+            TokenType::Bang => Some(Box::new(parse_prefix_expression)),
+            TokenType::Minus => Some(Box::new(parse_prefix_expression)),
+            TokenType::Plus => Some(Box::new(parse_prefix_expression)),
+            _ => None,
+        }
+    }
+
+    /// Returns the corresponding infix parse function
+    pub fn infix_parse_function(token_type: TokenType) -> Option<Box<InfixParseFn>> {
+        match token_type {
+            TokenType::Plus
+            | TokenType::Minus
+            | TokenType::Asterisk
+            | TokenType::Slash
+            | TokenType::Eq
+            | TokenType::NotEq
+            | TokenType::Lt
+            | TokenType::Gt => Some(Box::new(parse_infix_expression)),
+            _ => None,
+        }
     }
 }
 

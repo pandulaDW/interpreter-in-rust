@@ -20,13 +20,8 @@ impl Parser {
     }
 
     /// Uses pratt parse technique to parse a given expression.
-    ///
-    /// Entries for prefix and infix function-maps keys needed to be removed from the map to take ownership of the returned parser function.
-    /// This is to get around the borrow checker for passing a mutable reference of `self` to the parser function.
-    ///
-    /// These removed functions are later added back in to the maps.
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Box<dyn Expression>> {
-        let prefix = match self.prefix_parse_fns.remove(&self.current_token.token_type) {
+        let prefix = match Parser::prefix_parse_function(self.current_token.token_type.clone()) {
             Some(v) => v,
             None => {
                 self.no_prefix_parse_fn_error(self.current_token.token_type.clone());
@@ -36,11 +31,8 @@ impl Parser {
 
         let mut left_expr = prefix(self);
 
-        // The removed prefix parser function will be added back here
-        self.register_prefix(self.current_token.token_type.clone(), prefix);
-
         while !self.peek_token_is(&TokenType::Semicolon) && precedence < self.peek_precedence() {
-            let infix = match self.infix_parse_fns.remove(&self.peek_token.token_type) {
+            let infix = match Parser::infix_parse_function(self.peek_token.token_type.clone()) {
                 Some(v) => v,
                 None => return left_expr,
             };
