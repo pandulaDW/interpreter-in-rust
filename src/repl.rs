@@ -1,9 +1,28 @@
-use crate::{lexer::Lexer, parser::program::Parser};
+use clap::Parser;
+
+use crate::parser::TRACING_ENABLED;
+use crate::{lexer::Lexer, parser::program};
 use std::io::{BufRead, Result, Write};
 
 const PROMPT: &str = ">> ";
 
+/// The monkey programming language REPL (Read -> Evaluate -> Print -> Loop)
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    /// Enables tracing for parsing expressions
+    #[clap(short, long, value_parser, default_value_t = false)]
+    tracing: bool,
+}
+
 pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result<()> {
+    let args = Args::parse();
+    unsafe {
+        TRACING_ENABLED = args.tracing;
+    }
+
+    greet();
+
     let mut text = String::new();
 
     loop {
@@ -18,7 +37,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
         }
 
         let l = Lexer::new(&text);
-        let mut p = Parser::new(l);
+        let mut p = program::Parser::new(l);
 
         let program = p.parse_program();
 
@@ -34,4 +53,12 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
     }
 
     Ok(())
+}
+
+fn greet() {
+    println!(
+        "Hello {}! This is the Monkey programming language!",
+        whoami::username()
+    );
+    println!("Feel free to type in commands");
 }

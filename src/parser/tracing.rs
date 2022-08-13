@@ -1,4 +1,4 @@
-const TRACE_IDENT_PLACEHOLDER: &'static str = "\t";
+const TRACE_IDENT_PLACEHOLDER: &str = "\t";
 
 /// Used to keep the state about trace levels
 pub struct Tracer {
@@ -26,14 +26,17 @@ impl Tracer {
     }
 
     fn trace_print(&self, fs: String) {
+        if !unsafe { super::TRACING_ENABLED } {
+            return;
+        }
         println!("{}{}", self.ident_level(), fs)
     }
 
     fn increment_ident(&mut self) {
-        self.trace_level = self.trace_level + 1;
+        self.trace_level += 1;
     }
 
     fn decrement_ident(&mut self) {
-        self.trace_level = self.trace_level - 1;
+        self.trace_level -= 1;
     }
 }

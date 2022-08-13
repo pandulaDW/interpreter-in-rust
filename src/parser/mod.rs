@@ -6,6 +6,8 @@ mod parse_statements;
 pub mod program;
 mod tracing;
 
+pub static mut TRACING_ENABLED: bool = false;
+
 /// Operator precedences
 #[derive(PartialEq, PartialOrd)]
 pub enum Precedence {
