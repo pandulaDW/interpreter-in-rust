@@ -4,6 +4,7 @@ mod helpers;
 mod parse_expressions;
 mod parse_statements;
 pub mod program;
+mod tracing;
 
 /// Operator precedences
 #[derive(PartialEq, PartialOrd)]

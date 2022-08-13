@@ -5,6 +5,7 @@ use crate::lexer::token::TokenType;
 
 impl Parser {
     pub fn parse_expression_statement(&mut self) -> Option<Box<dyn Statement>> {
+        let trace_msg = self.tracer.trace("parseExpressionStatement");
         let mut stmt = ExpressionStatement {
             token: self.current_token.clone(),
             expression: None,
@@ -16,11 +17,13 @@ impl Parser {
             self.next_token();
         }
 
+        self.tracer.un_trace(trace_msg);
         Some(Box::new(stmt))
     }
 
     /// Uses pratt parse technique to parse a given expression.
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Box<dyn Expression>> {
+        let trace_msg = self.tracer.trace("parseExpression");
         let prefix = match Parser::prefix_parse_function(self.current_token.token_type.clone()) {
             Some(v) => v,
             None => {
@@ -42,6 +45,7 @@ impl Parser {
             left_expr = infix(self, left_expr);
         }
 
+        self.tracer.un_trace(trace_msg);
         left_expr
     }
 }
@@ -56,6 +60,7 @@ pub fn parse_identifier(p: &mut Parser) -> Option<Box<dyn Expression>> {
 }
 
 pub fn parse_integer_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
+    let trace_msg = p.tracer.trace("parseIntegerLiteral");
     let value = match p.current_token.literal.parse::<i64>() {
         Ok(v) => v,
         Err(e) => {
@@ -70,10 +75,13 @@ pub fn parse_integer_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
         value,
     };
 
+    p.tracer.un_trace(trace_msg);
     Some(Box::new(expr))
 }
 
 pub fn parse_prefix_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {
+    let trace_msg = p.tracer.trace("parsePrefixExpression");
+
     let mut expr = expressions::PrefixExpression {
         token: p.current_token.clone(),
         operator: p.current_token.literal.clone(),
@@ -85,6 +93,7 @@ pub fn parse_prefix_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {
 
     expr.right = p.parse_expression(Precedence::Prefix);
 
+    p.tracer.un_trace(trace_msg);
     Some(Box::new(expr))
 }
 
@@ -92,6 +101,8 @@ pub fn parse_infix_expression(
     p: &mut Parser,
     left: Option<Box<dyn Expression>>,
 ) -> Option<Box<dyn Expression>> {
+    let trace_msg = p.tracer.trace("parseInfixExpression");
+
     let mut expression = expressions::InfixExpression {
         token: p.current_token.clone(),
         left,
@@ -103,5 +114,6 @@ pub fn parse_infix_expression(
     p.next_token();
     expression.right = p.parse_expression(precedence);
 
+    p.tracer.un_trace(trace_msg);
     Some(Box::new(expression))
 }

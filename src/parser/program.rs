@@ -1,6 +1,8 @@
 use super::parse_expressions::{
     parse_identifier, parse_infix_expression, parse_integer_literal, parse_prefix_expression,
 };
+
+use super::tracing::Tracer;
 use crate::ast::program::Program;
 use crate::ast::Expression;
 use crate::lexer::token::{eof_token, Token, TokenType};
@@ -17,6 +19,7 @@ pub type InfixParseFn =
 pub struct Parser {
     pub l: Lexer,
     pub errors: Vec<String>,
+    pub tracer: Tracer,
 
     pub current_token: Token,
     pub peek_token: Token,
@@ -31,6 +34,7 @@ impl Parser {
             l,
             current_token: eof_token(),
             peek_token: eof_token(),
+            tracer: Tracer::new(),
             errors: vec![],
         };
 
@@ -247,8 +251,14 @@ mod tests {
             ("3 + 4; -5 * 5", "(3 + 4)\n((-5) * 5)\n"),
             ("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))\n"),
             ("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))\n"),
-            ("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))\n"),
-            ("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))\n"),
+            (
+                "3 + 4 * 5 == 3 * 1 + 4 * 5",
+                "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))\n",
+            ),
+            (
+                "3 + 4 * 5 == 3 * 1 + 4 * 5",
+                "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))\n",
+            ),
         ];
 
         for tc in tests {
