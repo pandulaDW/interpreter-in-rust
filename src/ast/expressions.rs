@@ -108,6 +108,6 @@ impl Display for InfixExpression {
             out.push_str(format!("{})", &r).as_str());
         }
 
-        write!(f, "")
+        write!(f, "{}", out)
     }
 }
