@@ -7,7 +7,7 @@ use std::io::{BufRead, Result, Write};
 const PROMPT: &str = ">> ";
 
 /// The monkey programming language REPL (Read -> Evaluate -> Print -> Loop)
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
     /// Enables tracing for parsing expressions
@@ -44,9 +44,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
         if !p.errors.is_empty() {
             println!("encountered parser errors: {:?}", &p.errors);
         } else {
-            for stmt in program.statements {
-                println!("{}", stmt);
-            }
+            program.statements.iter().for_each(|v| println!("{}", v));
         }
 
         text.clear();

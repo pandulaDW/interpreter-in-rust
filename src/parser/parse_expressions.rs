@@ -1,5 +1,5 @@
 use super::{program::Parser, Precedence};
-use crate::ast::expressions;
+use crate::ast::expressions::{self, Boolean};
 use crate::ast::{statements::ExpressionStatement, Expression, Statement};
 use crate::lexer::token::TokenType;
 
@@ -77,6 +77,14 @@ pub fn parse_integer_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
 
     p.tracer.un_trace(trace_msg);
     Some(Box::new(expr))
+}
+
+pub fn parse_boolean_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {
+    let bool_expr = Boolean {
+        token: p.current_token.clone(),
+        value: p.current_token_is(&TokenType::True),
+    };
+    Some(Box::new(bool_expr))
 }
 
 pub fn parse_prefix_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {
