@@ -20,7 +20,6 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
     unsafe {
         TRACING_ENABLED = args.tracing;
     }
-
     greet();
 
     let mut text = String::new();
@@ -38,7 +37,6 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
 
         let l = Lexer::new(&text);
         let mut p = program::Parser::new(l);
-
         let program = p.parse_program();
 
         if !p.errors.is_empty() {
@@ -55,7 +53,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
 
 fn greet() {
     println!(
-        "Hello {}! This is the Monkey programming language!",
+        "Hello {}!, This is the Monkey programming language!",
         whoami::username()
     );
     println!("Feel free to type in commands");

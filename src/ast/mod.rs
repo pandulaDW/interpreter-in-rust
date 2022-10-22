@@ -20,16 +20,10 @@ pub trait Node: Display {
 }
 
 /// Should be implemented by statements as a way of differentiating between expressions
-pub trait Statement: Node {
-    /// A marker method to mark a statement
-    fn statement_node(&self) {}
-}
+pub trait Statement: Node {}
 
 /// Should be implemented by expressions as a way of differentiating between statements
-pub trait Expression: Node {
-    /// A marker method to mark an expression
-    fn expression_node(&self) {}
-}
+pub trait Expression: Node {}
 
 #[cfg(test)]
 mod tests {
