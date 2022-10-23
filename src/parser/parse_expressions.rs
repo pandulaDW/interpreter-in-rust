@@ -80,11 +80,26 @@ pub fn parse_integer_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
 }
 
 pub fn parse_boolean_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {
+    let trace_msg = p.tracer.trace("parseBooleanLiteral");
     let bool_expr = Boolean {
         token: p.current_token.clone(),
         value: p.current_token_is(&TokenType::True),
     };
+    p.tracer.un_trace(trace_msg);
     Some(Box::new(bool_expr))
+}
+
+pub fn parse_grouped_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {
+    let trace_msg = p.tracer.trace("parseGroupedExpression");
+    p.next_token();
+
+    let expr = p.parse_expression(Precedence::Lowest);
+    if !p.expect_peek(TokenType::Rparen) {
+        return None;
+    }
+
+    p.tracer.un_trace(trace_msg);
+    expr
 }
 
 pub fn parse_prefix_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {

@@ -1,6 +1,6 @@
 use super::parse_expressions::{
-    parse_boolean_expression, parse_identifier, parse_infix_expression, parse_integer_literal,
-    parse_prefix_expression,
+    parse_boolean_expression, parse_grouped_expression, parse_identifier, parse_infix_expression,
+    parse_integer_literal, parse_prefix_expression,
 };
 
 use super::tracing::Tracer;
@@ -71,6 +71,7 @@ impl Parser {
             Int => Some(Box::new(parse_integer_literal)),
             Bang | Minus | Plus => Some(Box::new(parse_prefix_expression)),
             True | False => Some(Box::new(parse_boolean_expression)),
+            Lparen => Some(Box::new(parse_grouped_expression)),
             _ => None,
         }
     }
@@ -92,7 +93,7 @@ impl Parser {
 mod tests {
     use super::{Lexer, Parser};
     use crate::ast::expressions::{
-        Boolean, Identifier, InfixExpression, IntegerLiteral, PrefixExpression,
+        Boolean, Identifier, IfExpression, InfixExpression, IntegerLiteral, PrefixExpression,
     };
     use crate::ast::program::Program;
     use crate::ast::statements::{ExpressionStatement, LetStatement, ReturnStatement};
@@ -152,7 +153,7 @@ mod tests {
         let mut program = prepare_parser("foobar;");
         assert_eq!(program.statements.len(), 1);
 
-        let expr_any = get_expression_any_statement(program.statements.pop().unwrap());
+        let expr_any = get_expression_any_statement(program.statements.remove(0));
         let identifier = match expr_any.downcast::<Identifier>() {
             Ok(v) => v,
             Err(e) => panic!("expected an identifier statement, found {:?}", e),
@@ -167,7 +168,7 @@ mod tests {
         let mut program = prepare_parser("5;");
         assert_eq!(program.statements.len(), 1);
 
-        let stmt = program.statements.pop().unwrap();
+        let stmt = program.statements.remove(0);
         let integer_literal = match get_expression_any_statement(stmt).downcast::<IntegerLiteral>()
         {
             Ok(v) => v,
@@ -183,7 +184,7 @@ mod tests {
         let mut program = prepare_parser("true;");
         assert_eq!(program.statements.len(), 1);
 
-        let stmt = program.statements.pop().unwrap();
+        let stmt = program.statements.remove(0);
         let boolean = match get_expression_any_statement(stmt).downcast::<Boolean>() {
             Ok(v) => v,
             Err(e) => panic!("expected a boolean expression, found {:?}", e),
@@ -249,7 +250,6 @@ mod tests {
         };
 
         let left_expr = &*tc.1;
-        // println!("{:?}{:?}", v.type_id(), TypeId::of::<bool>());
         if TypeId::of::<i64>() == left_expr.type_id() {
             let l = tc.1.downcast::<i64>().unwrap();
             test_integer_literal(infix_expr.left.expect("left expression should exist"), *l);
@@ -304,6 +304,11 @@ mod tests {
             ("false", "false\n"),
             ("3 > 5 == false", "((3 > 5) == false)\n"),
             ("3 < 5 == true", "((3 < 5) == true)\n"),
+            ("1 + (2 + 3) + 4", "((1 + (2 + 3)) + 4)\n"),
+            ("(5 + 5) * 2", "((5 + 5) * 2)\n"),
+            ("2 / (5 + 5)", "(2 / (5 + 5))\n"),
+            ("-(5 + 5)", "(-(5 + 5))\n"),
+            ("!(true == true)", "(!(true == true))\n"),
         ];
 
         for tc in tests {
@@ -312,8 +317,33 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_if_expression() {
+        let mut program = prepare_parser("if (x < y) { x };");
+        assert_eq!(program.statements.len(), 1);
+
+        let stmt = program.statements.remove(0);
+        let mut if_expr = match get_expression_any_statement(stmt).downcast::<IfExpression>() {
+            Ok(v) => v,
+            Err(e) => panic!("expected an if expression, found {:?}", e),
+        };
+        assert_eq!(if_expr.consequence.statements.len(), 1);
+
+        // TODO: add check for condition to be an infix
+
+        let consequence = if_expr.consequence.statements.remove(0);
+        let consequence_expr =
+            match get_expression_any_statement(consequence).downcast::<Identifier>() {
+                Ok(v) => v,
+                Err(e) => panic!("expected an identifier, found {:?}", e),
+            };
+        test_identifier(consequence_expr, "x");
+
+        assert!(if_expr.alternative.is_none());
+    }
+
     fn check_parser_errors(errors: &Vec<String>) {
-        if errors.len() == 0 {
+        if errors.is_empty() {
             return;
         }
 
@@ -322,7 +352,7 @@ mod tests {
             err_msg.push_str(format!("\tparser error: {}\n", msg).as_str());
         }
 
-        panic!("parser has {} errors\n{}", errors.len(), err_msg);
+        panic!("parser has {} error(s)\n{}", errors.len(), err_msg);
     }
 
     fn test_integer_literal(expr: Box<dyn Expression>, value: i64) {

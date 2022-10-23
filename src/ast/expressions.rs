@@ -1,6 +1,6 @@
 use std::{any::Any, fmt::Display};
 
-use super::{Expression, Node};
+use super::{statements::BlockStatement, Expression, Node};
 use crate::lexer::token;
 
 pub struct Identifier {
@@ -132,5 +132,41 @@ impl Node for Boolean {
 impl Display for Boolean {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.token_literal())
+    }
+}
+
+pub struct IfExpression {
+    pub token: token::Token,
+    pub condition: Box<dyn Expression>,
+    pub consequence: BlockStatement,
+    pub alternative: Option<BlockStatement>,
+}
+
+// impl Expression for IfExpression {}
+
+impl Node for IfExpression {
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
+    }
+}
+
+impl Display for IfExpression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut out = format!(
+            "if {} {}",
+            self.condition.to_string(),
+            self.consequence.to_string()
+        );
+
+        match &self.alternative {
+            Some(v) => out.push_str(format!("else {}", v.to_string()).as_str()),
+            None => {}
+        };
+
+        write!(f, "{}", out)
     }
 }

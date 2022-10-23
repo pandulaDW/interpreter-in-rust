@@ -91,3 +91,30 @@ impl Display for ExpressionStatement {
         write!(f, "")
     }
 }
+
+pub struct BlockStatement {
+    pub token: token::Token,
+    pub statements: Vec<Box<dyn Statement>>,
+}
+
+impl Statement for BlockStatement {}
+
+impl Node for BlockStatement {
+    fn token_literal(&self) -> String {
+        self.token.literal.to_string()
+    }
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
+    }
+}
+
+impl Display for BlockStatement {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut out = Vec::with_capacity(self.statements.len());
+        for stmt in &self.statements {
+            out.push(stmt.to_string());
+        }
+        write!(f, "{}", out.join("\n"))
+    }
+}
