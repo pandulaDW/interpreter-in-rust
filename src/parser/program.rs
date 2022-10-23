@@ -149,52 +149,48 @@ mod tests {
 
     #[test]
     fn test_identifier_expression() {
-        let program = prepare_parser("foobar;");
+        let mut program = prepare_parser("foobar;");
         assert_eq!(program.statements.len(), 1);
 
-        for stmt in program.statements.into_iter() {
-            let expr_any = get_expression_any_statement(stmt);
-            let identifier = match expr_any.downcast::<Identifier>() {
-                Ok(v) => v,
-                Err(e) => panic!("expected an identifier statement, found {:?}", e),
-            };
+        let expr_any = get_expression_any_statement(program.statements.pop().unwrap());
+        let identifier = match expr_any.downcast::<Identifier>() {
+            Ok(v) => v,
+            Err(e) => panic!("expected an identifier statement, found {:?}", e),
+        };
 
-            assert_eq!(identifier.value, "foobar");
-            assert_eq!(identifier.token_literal(), "foobar");
-        }
+        assert_eq!(identifier.value, "foobar");
+        assert_eq!(identifier.token_literal(), "foobar");
     }
 
     #[test]
     fn test_integer_literal_expression() {
-        let program = prepare_parser("5;");
+        let mut program = prepare_parser("5;");
         assert_eq!(program.statements.len(), 1);
 
-        for stmt in program.statements.into_iter() {
-            let integer_literal =
-                match get_expression_any_statement(stmt).downcast::<IntegerLiteral>() {
-                    Ok(v) => v,
-                    Err(e) => panic!("expected an integer literal expression, found {:?}", e),
-                };
+        let stmt = program.statements.pop().unwrap();
+        let integer_literal = match get_expression_any_statement(stmt).downcast::<IntegerLiteral>()
+        {
+            Ok(v) => v,
+            Err(e) => panic!("expected an integer literal expression, found {:?}", e),
+        };
 
-            assert_eq!(integer_literal.value, 5);
-            assert_eq!(integer_literal.token_literal(), "5");
-        }
+        assert_eq!(integer_literal.value, 5);
+        assert_eq!(integer_literal.token_literal(), "5");
     }
 
     #[test]
     fn test_boolean_expression_statement() {
-        let program = prepare_parser("true;");
+        let mut program = prepare_parser("true;");
         assert_eq!(program.statements.len(), 1);
 
-        for stmt in program.statements.into_iter() {
-            let boolean = match get_expression_any_statement(stmt).downcast::<Boolean>() {
-                Ok(v) => v,
-                Err(e) => panic!("expected a boolean expression, found {:?}", e),
-            };
+        let stmt = program.statements.pop().unwrap();
+        let boolean = match get_expression_any_statement(stmt).downcast::<Boolean>() {
+            Ok(v) => v,
+            Err(e) => panic!("expected a boolean expression, found {:?}", e),
+        };
 
-            assert_eq!(boolean.value, true);
-            assert_eq!(boolean.token_literal(), "true");
-        }
+        assert_eq!(boolean.value, true);
+        assert_eq!(boolean.token_literal(), "true");
     }
 
     #[test]
