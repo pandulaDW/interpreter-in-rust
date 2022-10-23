@@ -24,7 +24,7 @@ impl Parser {
     /// Uses pratt parse technique to parse a given expression.
     fn parse_expression(&mut self, precedence: Precedence) -> Option<Box<dyn Expression>> {
         let trace_msg = self.tracer.trace("parseExpression");
-        let prefix = match Parser::prefix_parse_function(self.current_token.token_type.clone()) {
+        let prefix = match Parser::prefix_parse_function(&self.current_token.token_type) {
             Some(v) => v,
             None => {
                 self.no_prefix_parse_fn_error(self.current_token.token_type.clone());
@@ -35,7 +35,7 @@ impl Parser {
         let mut left_expr = prefix(self);
 
         while !self.peek_token_is(&TokenType::Semicolon) && precedence < self.peek_precedence() {
-            let infix = match Parser::infix_parse_function(self.peek_token.token_type.clone()) {
+            let infix = match Parser::infix_parse_function(&self.peek_token.token_type) {
                 Some(v) => v,
                 None => return left_expr,
             };
@@ -109,7 +109,8 @@ pub fn parse_infix_expression(
     p: &mut Parser,
     left: Option<Box<dyn Expression>>,
 ) -> Option<Box<dyn Expression>> {
-    let trace_msg = p.tracer.trace("parseInfixExpression");
+    let tracer_msg = format!("parseInfixExpression {:?}", &p.current_token.literal);
+    let trace_msg = p.tracer.trace(tracer_msg.as_str());
 
     let mut expression = expressions::InfixExpression {
         token: p.current_token.clone(),

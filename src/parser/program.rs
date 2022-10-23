@@ -63,7 +63,7 @@ impl Parser {
     }
 
     /// Returns the corresponding prefix parse function
-    pub fn prefix_parse_function(token_type: TokenType) -> Option<Box<PrefixParseFn>> {
+    pub fn prefix_parse_function(token_type: &TokenType) -> Option<Box<PrefixParseFn>> {
         use TokenType::*;
 
         match token_type {
@@ -76,7 +76,7 @@ impl Parser {
     }
 
     /// Returns the corresponding infix parse function
-    pub fn infix_parse_function(token_type: TokenType) -> Option<Box<InfixParseFn>> {
+    pub fn infix_parse_function(token_type: &TokenType) -> Option<Box<InfixParseFn>> {
         use TokenType::*;
 
         match token_type {

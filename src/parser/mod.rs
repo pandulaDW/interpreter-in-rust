@@ -21,7 +21,7 @@ pub enum Precedence {
 }
 
 impl Precedence {
-    fn corresponding_token_type(token_type: &TokenType) -> Precedence {
+    fn corresponding_precedence(token_type: &TokenType) -> Precedence {
         use Precedence::*;
         use TokenType::*;
 

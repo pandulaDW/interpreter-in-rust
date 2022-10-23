@@ -45,10 +45,10 @@ impl Parser {
     }
 
     pub fn peek_precedence(&self) -> Precedence {
-        Precedence::corresponding_token_type(&self.peek_token.token_type)
+        Precedence::corresponding_precedence(&self.peek_token.token_type)
     }
 
     pub fn current_precedence(&self) -> Precedence {
-        Precedence::corresponding_token_type(&self.current_token.token_type)
+        Precedence::corresponding_precedence(&self.current_token.token_type)
     }
 }
