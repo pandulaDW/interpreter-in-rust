@@ -221,17 +221,18 @@ mod tests {
     fn test_parsing_infix_expressions() {
         // (input, left_value, operator, right_value)
         let infix_tests: Vec<TupleInput> = vec![
-            ("5 + 5;", Box::new(5), "+", Box::new(5)),
-            ("5 - 5;", Box::new(5), "-", Box::new(5)),
-            ("5 * 5;", Box::new(5), "*", Box::new(5)),
-            ("5 / 5;", Box::new(5), "/", Box::new(5)),
-            ("5 > 5;", Box::new(5), ">", Box::new(5)),
-            ("5 < 5;", Box::new(5), "<", Box::new(5)),
-            ("5 == 5;", Box::new(5), "==", Box::new(5)),
-            ("5 != 5;", Box::new(5), "!=", Box::new(5)),
+            ("5 + 5;", Box::new(5_i64), "+", Box::new(5_i64)),
+            ("5 - 5;", Box::new(5_i64), "-", Box::new(5_i64)),
+            ("5 * 5;", Box::new(5_i64), "*", Box::new(5_i64)),
+            ("5 / 5;", Box::new(5_i64), "/", Box::new(5_i64)),
+            ("5 > 5;", Box::new(5_i64), ">", Box::new(5_i64)),
+            ("5 < 5;", Box::new(5_i64), "<", Box::new(5_i64)),
+            ("5 == 5;", Box::new(5_i64), "==", Box::new(5_i64)),
+            ("5 != 5;", Box::new(5_i64), "!=", Box::new(5_i64)),
             ("true == true", Box::new(true), "==", Box::new(true)),
             ("true != false", Box::new(true), "!=", Box::new(false)),
             ("false == false", Box::new(false), "==", Box::new(false)),
+            ("alice * bob", Box::new("alice"), "*", Box::new("bob")),
         ];
         for tc in infix_tests {
             parse_infix_expression(tc);
@@ -247,22 +248,31 @@ mod tests {
             Err(e) => panic!("expected an infix expression statement, found {:?}", e),
         };
 
-        if TypeId::of::<i64>() == tc.1.type_id() {
+        let left_expr = &*tc.1;
+        // println!("{:?}{:?}", v.type_id(), TypeId::of::<bool>());
+        if TypeId::of::<i64>() == left_expr.type_id() {
             let l = tc.1.downcast::<i64>().unwrap();
             test_integer_literal(infix_expr.left.expect("left expression should exist"), *l);
-        } else if TypeId::of::<bool>() == tc.1.type_id() {
+        } else if TypeId::of::<bool>() == left_expr.type_id() {
             let l = tc.1.downcast::<bool>().unwrap();
             test_boolean_literal(infix_expr.left.expect("left expression should exist"), *l);
+        } else if TypeId::of::<&str>() == left_expr.type_id() {
+            let l = tc.1.downcast::<&str>().unwrap();
+            test_identifier(infix_expr.left.expect("left expression should exist"), *l);
         }
 
         assert_eq!(infix_expr.operator, tc.2);
 
-        if TypeId::of::<i64>() == tc.3.type_id() {
+        let right_expr = &*tc.3;
+        if TypeId::of::<i64>() == right_expr.type_id() {
             let r = tc.3.downcast::<i64>().unwrap();
             test_integer_literal(infix_expr.right.expect("right expression should exist"), *r);
-        } else if TypeId::of::<bool>() == tc.3.type_id() {
+        } else if TypeId::of::<bool>() == right_expr.type_id() {
             let r = tc.3.downcast::<bool>().unwrap();
-            test_boolean_literal(infix_expr.right.expect("left expression should exist"), *r);
+            test_boolean_literal(infix_expr.right.expect("right expression should exist"), *r);
+        } else if TypeId::of::<&str>() == right_expr.type_id() {
+            let l = tc.3.downcast::<&str>().unwrap();
+            test_identifier(infix_expr.right.expect("right expression should exist"), *l);
         }
     }
 
@@ -324,13 +334,22 @@ mod tests {
         assert_eq!(integer_literal.token_literal(), format!("{}", value));
     }
 
+    fn test_identifier(expr: Box<dyn Expression>, value: &str) {
+        let identifier = match expr.into_any().downcast::<Identifier>() {
+            Ok(v) => v,
+            Err(e) => panic!("expected an identifier expression, found {:?}", e),
+        };
+        assert_eq!(identifier.value, value);
+        assert_eq!(identifier.token_literal(), format!("{}", value));
+    }
+
     fn test_boolean_literal(expr: Box<dyn Expression>, value: bool) {
         let boolean = match expr.into_any().downcast::<Boolean>() {
             Ok(v) => v,
             Err(e) => panic!("expected a boolean expression, found {:?}", e),
         };
 
-        assert_eq!(boolean.value, true);
+        assert_eq!(boolean.value, value);
         assert_eq!(boolean.token_literal(), value.to_string());
     }
 
