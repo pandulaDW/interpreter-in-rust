@@ -107,7 +107,7 @@ mod tests {
         let y = 10;
         let foobar = 838383;";
 
-        let program = prepare_parser(input);
+        let program = helper_prepare_parser(input);
         assert_eq!(program.statements.len(), 3);
 
         let test_cases = vec!["x", "y", "foobar"];
@@ -115,19 +115,15 @@ mod tests {
         for (i, stmt) in program.statements.into_iter().enumerate() {
             let expected_name = test_cases[i];
 
-            let let_stmt = match stmt.into_any().downcast::<LetStatement>() {
-                Ok(val) => val,
-                Err(e) => panic!("expected a let statement, found {:?}", e),
-            };
+            let let_stmt = stmt
+                .into_any()
+                .downcast::<LetStatement>()
+                .expect(EXPECTED_LET);
 
-            test_let_statement(*let_stmt, expected_name);
+            assert_eq!(let_stmt.token_literal(), keywords::LET);
+            assert_eq!(let_stmt.name.value, expected_name);
+            assert_eq!(let_stmt.name.token_literal(), expected_name);
         }
-    }
-
-    fn test_let_statement(s: LetStatement, name: &str) {
-        assert_eq!(s.token_literal(), keywords::LET);
-        assert_eq!(s.name.value, name);
-        assert_eq!(s.name.token_literal(), name);
     }
 
     #[test]
@@ -136,62 +132,44 @@ mod tests {
         return 10;
         return 993322;";
 
-        let program = prepare_parser(input);
+        let program = helper_prepare_parser(input);
         assert_eq!(program.statements.len(), 3);
 
         for stmt in program.statements.into_iter() {
-            let return_stmt = match stmt.into_any().downcast::<ReturnStatement>() {
-                Ok(v) => v,
-                Err(e) => panic!("expected a return statement, found {:?}", e),
-            };
+            let return_stmt = stmt
+                .into_any()
+                .downcast::<ReturnStatement>()
+                .expect(EXPECTED_RETURN);
+
             assert_eq!(return_stmt.token_literal(), keywords::RETURN);
         }
     }
 
     #[test]
     fn test_identifier_expression() {
-        let mut program = prepare_parser("foobar;");
+        let mut program = helper_prepare_parser("foobar;");
         assert_eq!(program.statements.len(), 1);
 
-        let expr_any = get_expression_any_statement(program.statements.remove(0));
-        let identifier = match expr_any.downcast::<Identifier>() {
-            Ok(v) => v,
-            Err(e) => panic!("expected an identifier statement, found {:?}", e),
-        };
-
-        assert_eq!(identifier.value, "foobar");
-        assert_eq!(identifier.token_literal(), "foobar");
+        let expr = helper_get_expression(program.statements.remove(0));
+        helper_test_identifier(expr, "foobar");
     }
 
     #[test]
     fn test_integer_literal_expression() {
-        let mut program = prepare_parser("5;");
+        let mut program = helper_prepare_parser("5;");
         assert_eq!(program.statements.len(), 1);
 
-        let stmt = program.statements.remove(0);
-        let integer_literal = match get_expression_any_statement(stmt).downcast::<IntegerLiteral>()
-        {
-            Ok(v) => v,
-            Err(e) => panic!("expected an integer literal expression, found {:?}", e),
-        };
-
-        assert_eq!(integer_literal.value, 5);
-        assert_eq!(integer_literal.token_literal(), "5");
+        let expr = helper_get_expression(program.statements.remove(0));
+        helper_test_integer_literal(expr, 5);
     }
 
     #[test]
     fn test_boolean_expression_statement() {
-        let mut program = prepare_parser("true;");
+        let mut program = helper_prepare_parser("true;");
         assert_eq!(program.statements.len(), 1);
 
-        let stmt = program.statements.remove(0);
-        let boolean = match get_expression_any_statement(stmt).downcast::<Boolean>() {
-            Ok(v) => v,
-            Err(e) => panic!("expected a boolean expression, found {:?}", e),
-        };
-
-        assert_eq!(boolean.value, true);
-        assert_eq!(boolean.token_literal(), "true");
+        let expr = helper_get_expression(program.statements.remove(0));
+        helper_test_boolean_literal(expr, true);
     }
 
     #[test]
@@ -200,19 +178,17 @@ mod tests {
         let prefix_tests = vec![("!5", "!", 5), ("-15", "-", 15)];
 
         for tc in prefix_tests {
-            let mut program = prepare_parser(tc.0);
+            let mut program = helper_prepare_parser(tc.0);
             assert_eq!(program.statements.len(), 1);
             let stmt = program.statements.remove(0);
-            let prefix_exp = match get_expression_any_statement(stmt).downcast::<PrefixExpression>()
-            {
-                Ok(v) => v,
-                Err(e) => panic!("expected an integer literal statement, found {:?}", e),
-            };
+            let prefix_exp = helper_get_expression_any(stmt)
+                .downcast::<PrefixExpression>()
+                .expect(EXPECTED_PREFIX);
 
             assert_eq!(prefix_exp.operator, tc.1);
-            let right_expr = prefix_exp.right.expect("right expression should exist");
+            let right_expr = prefix_exp.right.expect(EXPECTED_RIGHT);
 
-            test_integer_literal(right_expr, tc.2);
+            helper_test_integer_literal(right_expr, tc.2);
         }
     }
 
@@ -236,43 +212,11 @@ mod tests {
             ("alice * bob", Box::new("alice"), "*", Box::new("bob")),
         ];
         for tc in infix_tests {
-            parse_infix_expression(tc);
-        }
-    }
-
-    fn parse_infix_expression(tc: TupleInput) {
-        let mut program = prepare_parser(tc.0);
-        assert_eq!(program.statements.len(), 1);
-        let stmt = program.statements.remove(0);
-        let infix_expr = match get_expression_any_statement(stmt).downcast::<InfixExpression>() {
-            Ok(v) => v,
-            Err(e) => panic!("expected an infix expression statement, found {:?}", e),
-        };
-
-        let left_expr = &*tc.1;
-        if TypeId::of::<i64>() == left_expr.type_id() {
-            let l = tc.1.downcast::<i64>().unwrap();
-            test_integer_literal(infix_expr.left.expect("left expression should exist"), *l);
-        } else if TypeId::of::<bool>() == left_expr.type_id() {
-            let l = tc.1.downcast::<bool>().unwrap();
-            test_boolean_literal(infix_expr.left.expect("left expression should exist"), *l);
-        } else if TypeId::of::<&str>() == left_expr.type_id() {
-            let l = tc.1.downcast::<&str>().unwrap();
-            test_identifier(infix_expr.left.expect("left expression should exist"), *l);
-        }
-
-        assert_eq!(infix_expr.operator, tc.2);
-
-        let right_expr = &*tc.3;
-        if TypeId::of::<i64>() == right_expr.type_id() {
-            let r = tc.3.downcast::<i64>().unwrap();
-            test_integer_literal(infix_expr.right.expect("right expression should exist"), *r);
-        } else if TypeId::of::<bool>() == right_expr.type_id() {
-            let r = tc.3.downcast::<bool>().unwrap();
-            test_boolean_literal(infix_expr.right.expect("right expression should exist"), *r);
-        } else if TypeId::of::<&str>() == right_expr.type_id() {
-            let l = tc.3.downcast::<&str>().unwrap();
-            test_identifier(infix_expr.right.expect("right expression should exist"), *l);
+            let mut program = helper_prepare_parser(tc.0);
+            assert_eq!(program.statements.len(), 1);
+            let stmt = program.statements.remove(0);
+            let expr_any = helper_get_expression_any(stmt);
+            helper_test_infix_expression(expr_any, tc.1, tc.2, tc.3);
         }
     }
 
@@ -312,37 +256,35 @@ mod tests {
         ];
 
         for tc in tests {
-            let program = prepare_parser(tc.0);
+            let program = helper_prepare_parser(tc.0);
             assert_eq!(tc.1, program.to_string());
         }
     }
 
     #[test]
     fn test_if_expression() {
-        let mut program = prepare_parser("if (x < y) { x };");
+        let mut program = helper_prepare_parser("if (x < y) { x };");
         assert_eq!(program.statements.len(), 1);
 
         let stmt = program.statements.remove(0);
-        let mut if_expr = match get_expression_any_statement(stmt).downcast::<IfExpression>() {
-            Ok(v) => v,
-            Err(e) => panic!("expected an if expression, found {:?}", e),
-        };
+        let mut if_expr = helper_get_expression_any(stmt)
+            .downcast::<IfExpression>()
+            .expect(EXPECTED_IF);
         assert_eq!(if_expr.consequence.statements.len(), 1);
 
-        // TODO: add check for condition to be an infix
+        let condition = if_expr.condition.into_any();
+        helper_test_infix_expression(condition, Box::new("x"), "<", Box::new("y"));
 
         let consequence = if_expr.consequence.statements.remove(0);
-        let consequence_expr =
-            match get_expression_any_statement(consequence).downcast::<Identifier>() {
-                Ok(v) => v,
-                Err(e) => panic!("expected an identifier, found {:?}", e),
-            };
-        test_identifier(consequence_expr, "x");
+        let consequence_expr = helper_get_expression_any(consequence)
+            .downcast::<Identifier>()
+            .expect(EXPECTED_IDENT);
+        helper_test_identifier(consequence_expr, "x");
 
         assert!(if_expr.alternative.is_none());
     }
 
-    fn check_parser_errors(errors: &Vec<String>) {
+    fn helper_check_parser_errors(errors: &Vec<String>) {
         if errors.is_empty() {
             return;
         }
@@ -355,50 +297,105 @@ mod tests {
         panic!("parser has {} error(s)\n{}", errors.len(), err_msg);
     }
 
-    fn test_integer_literal(expr: Box<dyn Expression>, value: i64) {
-        let integer_literal = match expr.into_any().downcast::<IntegerLiteral>() {
-            Ok(v) => v,
-            Err(e) => panic!("expected an integer literal expression, found {:?}", e),
-        };
+    fn helper_test_integer_literal(expr: Box<dyn Expression>, value: i64) {
+        let integer_literal = expr
+            .into_any()
+            .downcast::<IntegerLiteral>()
+            .expect(EXPECTED_INTEGER);
         assert_eq!(integer_literal.value, value);
         assert_eq!(integer_literal.token_literal(), format!("{}", value));
     }
 
-    fn test_identifier(expr: Box<dyn Expression>, value: &str) {
-        let identifier = match expr.into_any().downcast::<Identifier>() {
-            Ok(v) => v,
-            Err(e) => panic!("expected an identifier expression, found {:?}", e),
-        };
+    fn helper_test_identifier(expr: Box<dyn Expression>, value: &str) {
+        let identifier = expr
+            .into_any()
+            .downcast::<Identifier>()
+            .expect(EXPECTED_IDENT);
         assert_eq!(identifier.value, value);
         assert_eq!(identifier.token_literal(), format!("{}", value));
     }
 
-    fn test_boolean_literal(expr: Box<dyn Expression>, value: bool) {
-        let boolean = match expr.into_any().downcast::<Boolean>() {
-            Ok(v) => v,
-            Err(e) => panic!("expected a boolean expression, found {:?}", e),
-        };
+    fn helper_test_boolean_literal(expr: Box<dyn Expression>, value: bool) {
+        let boolean = expr
+            .into_any()
+            .downcast::<Boolean>()
+            .expect(EXPECTED_BOOLEAN);
 
         assert_eq!(boolean.value, value);
         assert_eq!(boolean.token_literal(), value.to_string());
     }
 
-    fn prepare_parser(input: &str) -> Program {
+    fn helper_test_infix_expression(
+        expr_any: Box<dyn Any>,
+        left: Box<dyn Any>,
+        operator: &str,
+        right: Box<dyn Any>,
+    ) {
+        let infix_expr = expr_any
+            .downcast::<InfixExpression>()
+            .expect(EXPECTED_INFIX);
+
+        let left_expr = &*left;
+        if TypeId::of::<i64>() == left_expr.type_id() {
+            let l = left.downcast::<i64>().unwrap();
+            helper_test_integer_literal(infix_expr.left.expect(EXPECTED_LEFT), *l);
+        } else if TypeId::of::<bool>() == left_expr.type_id() {
+            let l = left.downcast::<bool>().unwrap();
+            helper_test_boolean_literal(infix_expr.left.expect(EXPECTED_LEFT), *l);
+        } else if TypeId::of::<&str>() == left_expr.type_id() {
+            let l = left.downcast::<&str>().unwrap();
+            helper_test_identifier(infix_expr.left.expect(EXPECTED_LEFT), *l);
+        }
+
+        assert_eq!(infix_expr.operator, operator);
+
+        let right_expr = &*right;
+        if TypeId::of::<i64>() == right_expr.type_id() {
+            let r = right.downcast::<i64>().unwrap();
+            helper_test_integer_literal(infix_expr.right.expect(EXPECTED_RIGHT), *r);
+        } else if TypeId::of::<bool>() == right_expr.type_id() {
+            let r = right.downcast::<bool>().unwrap();
+            helper_test_boolean_literal(infix_expr.right.expect(EXPECTED_RIGHT), *r);
+        } else if TypeId::of::<&str>() == right_expr.type_id() {
+            let l = right.downcast::<&str>().unwrap();
+            helper_test_identifier(infix_expr.right.expect(EXPECTED_RIGHT), *l);
+        }
+    }
+
+    fn helper_prepare_parser(input: &str) -> Program {
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
         let program = p.parse_program();
-        check_parser_errors(&p.errors);
+        helper_check_parser_errors(&p.errors);
         program
     }
 
-    fn get_expression_any_statement(stmt: Box<dyn Statement>) -> Box<dyn Any> {
-        let expr_stmt = match stmt.into_any().downcast::<ExpressionStatement>() {
-            Ok(v) => v,
-            Err(e) => panic!("expected an expression statement, found {:?}", e),
-        };
-        expr_stmt
-            .expression
-            .expect("expected the expression of the expr_statement to exist")
+    fn helper_get_expression_any(stmt: Box<dyn Statement>) -> Box<dyn Any> {
+        let expr_stmt = stmt
             .into_any()
+            .downcast::<ExpressionStatement>()
+            .expect(EXPECTED_EXPRESSION_STATEMENT);
+        expr_stmt.expression.expect(EXPECTED_EXPRESSION).into_any()
     }
+
+    fn helper_get_expression(stmt: Box<dyn Statement>) -> Box<dyn Expression> {
+        let expr_stmt = stmt
+            .into_any()
+            .downcast::<ExpressionStatement>()
+            .expect(EXPECTED_EXPRESSION_STATEMENT);
+        expr_stmt.expression.expect(EXPECTED_EXPRESSION)
+    }
+
+    const EXPECTED_IDENT: &str = "expected an identifier";
+    const EXPECTED_LET: &str = "expected a let statement";
+    const EXPECTED_RETURN: &str = "expected a return statement";
+    const EXPECTED_INTEGER: &str = "expected an integer literal";
+    const EXPECTED_BOOLEAN: &str = "expected a boolean expression";
+    const EXPECTED_PREFIX: &str = "expected a prefix expression";
+    const EXPECTED_INFIX: &str = "expected an infix expression";
+    const EXPECTED_IF: &str = "expected an if expression";
+    const EXPECTED_LEFT: &str = "expected the left expression to exist";
+    const EXPECTED_RIGHT: &str = "expected the right expression to exist";
+    const EXPECTED_EXPRESSION_STATEMENT: &str = "expected an expression statement";
+    const EXPECTED_EXPRESSION: &str = "expected an expression";
 }
