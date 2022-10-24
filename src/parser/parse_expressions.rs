@@ -1,5 +1,6 @@
 use super::{program::Parser, Precedence};
-use crate::ast::expressions::{self, Boolean};
+use crate::ast::expressions::{self, Boolean, IfExpression};
+use crate::ast::statements::BlockStatement;
 use crate::ast::{statements::ExpressionStatement, Expression, Statement};
 use crate::lexer::token::TokenType;
 
@@ -140,4 +141,65 @@ pub fn parse_infix_expression(
 
     p.tracer.un_trace(trace_msg);
     Some(Box::new(expression))
+}
+
+pub fn parse_if_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {
+    let token_literal = p.current_token.clone();
+
+    if !p.expect_peek(TokenType::Lparen) {
+        return None;
+    }
+
+    p.next_token();
+
+    let condition = match p.parse_expression(Precedence::Lowest) {
+        Some(v) => v,
+        None => return None,
+    };
+
+    if !p.expect_peek(TokenType::Rparen) {
+        return None;
+    }
+
+    if !p.expect_peek(TokenType::Lbrace) {
+        return None;
+    }
+
+    let consequence = parse_block_statement(p);
+
+    let mut alternative = None;
+    if p.peek_token_is(&TokenType::Else) {
+        p.next_token(); // consumes else
+        if !p.expect_peek(TokenType::Lbrace) {
+            return None;
+        }
+        alternative = Some(parse_block_statement(p));
+    }
+
+    Some(Box::new(IfExpression {
+        token: token_literal,
+        condition,
+        consequence,
+        alternative,
+    }))
+}
+
+pub fn parse_block_statement(p: &mut Parser) -> BlockStatement {
+    let mut block = BlockStatement {
+        token: p.current_token.clone(),
+        statements: Vec::new(),
+    };
+
+    p.next_token();
+
+    while !p.current_token_is(&TokenType::Rbrace) && !p.current_token_is(&TokenType::Eof) {
+        let stmt = p.parse_statement();
+        match stmt {
+            Some(v) => block.statements.push(v),
+            None => {}
+        };
+        p.next_token();
+    }
+
+    block
 }

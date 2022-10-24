@@ -8,6 +8,7 @@ use crate::ast::program::Program;
 use crate::ast::Expression;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
+use crate::parser::parse_expressions::parse_if_expression;
 
 pub type PrefixParseFn = dyn Fn(&mut Parser) -> Option<Box<dyn Expression>>;
 pub type InfixParseFn =
@@ -72,6 +73,7 @@ impl Parser {
             Bang | Minus | Plus => Some(Box::new(parse_prefix_expression)),
             True | False => Some(Box::new(parse_boolean_expression)),
             Lparen => Some(Box::new(parse_grouped_expression)),
+            If => Some(Box::new(parse_if_expression)),
             _ => None,
         }
     }
@@ -279,6 +281,32 @@ mod tests {
         helper_test_identifier(consequence_expr, "x");
 
         assert!(if_expr.alternative.is_none());
+    }
+
+    #[test]
+    fn test_if_else_expression() {
+        let mut program = helper_prepare_parser("if (x > y) { x } else { y + z; }");
+        assert_eq!(program.statements.len(), 1);
+
+        let stmt = program.statements.remove(0);
+        let mut if_expr = helper_get_expression_any(stmt)
+            .downcast::<IfExpression>()
+            .expect(EXPECTED_IF);
+        assert_eq!(if_expr.consequence.statements.len(), 1);
+
+        let condition = if_expr.condition.into_any();
+        helper_test_infix_expression(condition, Box::new("x"), ">", Box::new("y"));
+
+        let consequence = if_expr.consequence.statements.remove(0);
+        let consequence_expr = helper_get_expression_any(consequence)
+            .downcast::<Identifier>()
+            .expect(EXPECTED_IDENT);
+        helper_test_identifier(consequence_expr, "x");
+
+        assert!(if_expr.alternative.is_some());
+        let alternative = if_expr.alternative.unwrap().statements.remove(0);
+        let alternative_expr = helper_get_expression_any(alternative);
+        helper_test_infix_expression(alternative_expr, Box::new("y"), "+", Box::new("z"));
     }
 }
 

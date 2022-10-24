@@ -142,7 +142,7 @@ pub struct IfExpression {
     pub alternative: Option<BlockStatement>,
 }
 
-// impl Expression for IfExpression {}
+impl Expression for IfExpression {}
 
 impl Node for IfExpression {
     fn token_literal(&self) -> String {
