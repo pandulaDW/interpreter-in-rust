@@ -91,15 +91,12 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use super::{Lexer, Parser};
-    use crate::ast::expressions::{
-        Boolean, Identifier, IfExpression, InfixExpression, IntegerLiteral, PrefixExpression,
-    };
-    use crate::ast::program::Program;
-    use crate::ast::statements::{ExpressionStatement, LetStatement, ReturnStatement};
-    use crate::ast::{Expression, Node, Statement};
+    use super::test_helpers::*;
+    use crate::ast::expressions::{Identifier, IfExpression, PrefixExpression};
+    use crate::ast::statements::{LetStatement, ReturnStatement};
+    use crate::ast::Node;
     use crate::lexer::keywords;
-    use std::any::{Any, TypeId};
+    use std::any::Any;
 
     #[test]
     fn test_let_statements() {
@@ -283,8 +280,19 @@ mod tests {
 
         assert!(if_expr.alternative.is_none());
     }
+}
 
-    fn helper_check_parser_errors(errors: &Vec<String>) {
+/// Contains helper functions and constants useful for testing parsing
+#[allow(dead_code)]
+mod test_helpers {
+    use super::{Lexer, Parser};
+    use crate::ast::expressions::{Boolean, Identifier, InfixExpression, IntegerLiteral};
+    use crate::ast::program::Program;
+    use crate::ast::statements::ExpressionStatement;
+    use crate::ast::{Expression, Node, Statement};
+    use std::any::{Any, TypeId};
+
+    pub fn helper_check_parser_errors(errors: &Vec<String>) {
         if errors.is_empty() {
             return;
         }
@@ -297,7 +305,7 @@ mod tests {
         panic!("parser has {} error(s)\n{}", errors.len(), err_msg);
     }
 
-    fn helper_test_integer_literal(expr: Box<dyn Expression>, value: i64) {
+    pub fn helper_test_integer_literal(expr: Box<dyn Expression>, value: i64) {
         let integer_literal = expr
             .into_any()
             .downcast::<IntegerLiteral>()
@@ -306,7 +314,7 @@ mod tests {
         assert_eq!(integer_literal.token_literal(), format!("{}", value));
     }
 
-    fn helper_test_identifier(expr: Box<dyn Expression>, value: &str) {
+    pub fn helper_test_identifier(expr: Box<dyn Expression>, value: &str) {
         let identifier = expr
             .into_any()
             .downcast::<Identifier>()
@@ -315,7 +323,7 @@ mod tests {
         assert_eq!(identifier.token_literal(), format!("{}", value));
     }
 
-    fn helper_test_boolean_literal(expr: Box<dyn Expression>, value: bool) {
+    pub fn helper_test_boolean_literal(expr: Box<dyn Expression>, value: bool) {
         let boolean = expr
             .into_any()
             .downcast::<Boolean>()
@@ -325,7 +333,7 @@ mod tests {
         assert_eq!(boolean.token_literal(), value.to_string());
     }
 
-    fn helper_test_infix_expression(
+    pub fn helper_test_infix_expression(
         expr_any: Box<dyn Any>,
         left: Box<dyn Any>,
         operator: &str,
@@ -362,7 +370,7 @@ mod tests {
         }
     }
 
-    fn helper_prepare_parser(input: &str) -> Program {
+    pub fn helper_prepare_parser(input: &str) -> Program {
         let l = Lexer::new(input);
         let mut p = Parser::new(l);
         let program = p.parse_program();
@@ -370,7 +378,7 @@ mod tests {
         program
     }
 
-    fn helper_get_expression_any(stmt: Box<dyn Statement>) -> Box<dyn Any> {
+    pub fn helper_get_expression_any(stmt: Box<dyn Statement>) -> Box<dyn Any> {
         let expr_stmt = stmt
             .into_any()
             .downcast::<ExpressionStatement>()
@@ -378,7 +386,7 @@ mod tests {
         expr_stmt.expression.expect(EXPECTED_EXPRESSION).into_any()
     }
 
-    fn helper_get_expression(stmt: Box<dyn Statement>) -> Box<dyn Expression> {
+    pub fn helper_get_expression(stmt: Box<dyn Statement>) -> Box<dyn Expression> {
         let expr_stmt = stmt
             .into_any()
             .downcast::<ExpressionStatement>()
@@ -386,16 +394,16 @@ mod tests {
         expr_stmt.expression.expect(EXPECTED_EXPRESSION)
     }
 
-    const EXPECTED_IDENT: &str = "expected an identifier";
-    const EXPECTED_LET: &str = "expected a let statement";
-    const EXPECTED_RETURN: &str = "expected a return statement";
-    const EXPECTED_INTEGER: &str = "expected an integer literal";
-    const EXPECTED_BOOLEAN: &str = "expected a boolean expression";
-    const EXPECTED_PREFIX: &str = "expected a prefix expression";
-    const EXPECTED_INFIX: &str = "expected an infix expression";
-    const EXPECTED_IF: &str = "expected an if expression";
-    const EXPECTED_LEFT: &str = "expected the left expression to exist";
-    const EXPECTED_RIGHT: &str = "expected the right expression to exist";
-    const EXPECTED_EXPRESSION_STATEMENT: &str = "expected an expression statement";
-    const EXPECTED_EXPRESSION: &str = "expected an expression";
+    pub const EXPECTED_IDENT: &str = "expected an identifier";
+    pub const EXPECTED_LET: &str = "expected a let statement";
+    pub const EXPECTED_RETURN: &str = "expected a return statement";
+    pub const EXPECTED_INTEGER: &str = "expected an integer literal";
+    pub const EXPECTED_BOOLEAN: &str = "expected a boolean expression";
+    pub const EXPECTED_PREFIX: &str = "expected a prefix expression";
+    pub const EXPECTED_INFIX: &str = "expected an infix expression";
+    pub const EXPECTED_IF: &str = "expected an if expression";
+    pub const EXPECTED_LEFT: &str = "expected the left expression to exist";
+    pub const EXPECTED_RIGHT: &str = "expected the right expression to exist";
+    pub const EXPECTED_EXPRESSION_STATEMENT: &str = "expected an expression statement";
+    pub const EXPECTED_EXPRESSION: &str = "expected an expression";
 }
