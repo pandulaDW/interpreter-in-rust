@@ -8,7 +8,7 @@ use crate::ast::program::Program;
 use crate::ast::Expression;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
-use crate::parser::parse_expressions::parse_if_expression;
+use crate::parser::parse_expressions::{parse_function_literal, parse_if_expression};
 
 pub type PrefixParseFn = dyn Fn(&mut Parser) -> Option<Box<dyn Expression>>;
 pub type InfixParseFn =
@@ -74,6 +74,7 @@ impl Parser {
             True | False => Some(Box::new(parse_boolean_expression)),
             Lparen => Some(Box::new(parse_grouped_expression)),
             If => Some(Box::new(parse_if_expression)),
+            Function => Some(Box::new(parse_function_literal)),
             _ => None,
         }
     }
@@ -94,7 +95,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::test_helpers::*;
-    use crate::ast::expressions::{Identifier, IfExpression, PrefixExpression};
+    use crate::ast::expressions::{FunctionLiteral, Identifier, IfExpression, PrefixExpression};
     use crate::ast::statements::{LetStatement, ReturnStatement};
     use crate::ast::Node;
     use crate::lexer::keywords;
@@ -308,10 +309,30 @@ mod tests {
         let alternative_expr = helper_get_expression_any(alternative);
         helper_test_infix_expression(alternative_expr, Box::new("y"), "+", Box::new("z"));
     }
+
+    #[test]
+    fn test_functional_literal() {
+        let mut program = helper_prepare_parser("fn(x, y) { x + y; }");
+        assert_eq!(program.statements.len(), 1);
+
+        let stmt = program.statements.remove(0);
+        let mut fn_expr = helper_get_expression_any(stmt)
+            .downcast::<FunctionLiteral>()
+            .expect(EXPECTED_FUNC);
+        assert_eq!(fn_expr.parameters.len(), 2);
+
+        assert_eq!(fn_expr.parameters[0].value, "x");
+        assert_eq!(fn_expr.parameters[1].value, "y");
+
+        assert_eq!(fn_expr.body.statements.len(), 1);
+        let stmt = fn_expr.body.statements.remove(0);
+        let body_expr = helper_get_expression_any(stmt);
+        helper_test_infix_expression(body_expr, Box::new("x"), "+", Box::new("y"));
+    }
 }
 
 /// Contains helper functions and constants useful for testing parsing
-#[allow(dead_code)]
+#[cfg(test)]
 mod test_helpers {
     use super::{Lexer, Parser};
     use crate::ast::expressions::{Boolean, Identifier, InfixExpression, IntegerLiteral};
@@ -430,6 +451,7 @@ mod test_helpers {
     pub const EXPECTED_PREFIX: &str = "expected a prefix expression";
     pub const EXPECTED_INFIX: &str = "expected an infix expression";
     pub const EXPECTED_IF: &str = "expected an if expression";
+    pub const EXPECTED_FUNC: &str = "expected an function literal expression";
     pub const EXPECTED_LEFT: &str = "expected the left expression to exist";
     pub const EXPECTED_RIGHT: &str = "expected the right expression to exist";
     pub const EXPECTED_EXPRESSION_STATEMENT: &str = "expected an expression statement";

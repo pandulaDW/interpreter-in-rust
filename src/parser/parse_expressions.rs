@@ -1,5 +1,5 @@
 use super::{program::Parser, Precedence};
-use crate::ast::expressions::{self, Boolean, IfExpression};
+use crate::ast::expressions::{self, Boolean, FunctionLiteral, IfExpression};
 use crate::ast::statements::BlockStatement;
 use crate::ast::{statements::ExpressionStatement, Expression, Statement};
 use crate::lexer::token::TokenType;
@@ -152,10 +152,7 @@ pub fn parse_if_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {
 
     p.next_token();
 
-    let condition = match p.parse_expression(Precedence::Lowest) {
-        Some(v) => v,
-        None => return None,
-    };
+    let condition = p.parse_expression(Precedence::Lowest)?;
 
     if !p.expect_peek(TokenType::Rparen) {
         return None;
@@ -181,6 +178,47 @@ pub fn parse_if_expression(p: &mut Parser) -> Option<Box<dyn Expression>> {
         condition,
         consequence,
         alternative,
+    }))
+}
+
+pub fn parse_function_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
+    let token = p.current_token.clone();
+
+    if !p.expect_peek(TokenType::Lparen) {
+        return None;
+    }
+
+    let mut parameters = Vec::new();
+    while !p.peek_token_is(&TokenType::Rparen) {
+        if !p.expect_peek(TokenType::Ident) {
+            return None;
+        }
+        let param = expressions::Identifier {
+            token: p.current_token.clone(),
+            value: p.current_token.literal.clone(),
+        };
+        parameters.push(param);
+
+        if p.peek_token_is(&TokenType::Rparen) {
+            break;
+        }
+
+        if !p.expect_peek(TokenType::Comma) {
+            return None;
+        }
+    }
+    p.next_token();
+
+    if !p.expect_peek(TokenType::Lbrace) {
+        return None;
+    }
+
+    let body = parse_block_statement(p);
+
+    Some(Box::new(FunctionLiteral {
+        token,
+        parameters,
+        body,
     }))
 }
 

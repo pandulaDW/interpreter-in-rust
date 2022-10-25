@@ -156,16 +156,53 @@ impl Node for IfExpression {
 
 impl Display for IfExpression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut out = format!(
-            "if {} {}",
-            self.condition.to_string(),
-            self.consequence.to_string()
-        );
+        let mut consequence = String::new();
+        for line in self.consequence.to_string().lines() {
+            consequence.push_str(format!("  {};\n", line).as_str());
+        }
+
+        let mut out = format!("if {} {{ \n{}}}", self.condition.to_string(), consequence);
 
         match &self.alternative {
             Some(v) => out.push_str(format!("else {}", v.to_string()).as_str()),
             None => {}
         };
+
+        write!(f, "{}", out)
+    }
+}
+
+pub struct FunctionLiteral {
+    pub token: token::Token,
+    pub parameters: Vec<Identifier>,
+    pub body: BlockStatement,
+}
+
+impl Expression for FunctionLiteral {}
+
+impl Node for FunctionLiteral {
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
+    }
+}
+
+impl Display for FunctionLiteral {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let params: Vec<String> = self.parameters.iter().map(|v| v.to_string()).collect();
+        let mut out = String::new();
+        out.push_str(
+            format!(
+                "{}({}){}",
+                self.token_literal(),
+                params.join(","),
+                self.body.to_string()
+            )
+            .as_str(),
+        );
 
         write!(f, "{}", out)
     }
