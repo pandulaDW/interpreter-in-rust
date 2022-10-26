@@ -237,9 +237,8 @@ fn parse_block_statement(p: &mut Parser) -> BlockStatement {
 
     while !p.current_token_is(&TokenType::Rbrace) && !p.current_token_is(&TokenType::Eof) {
         let stmt = p.parse_statement();
-        match stmt {
-            Some(v) => block.statements.push(v),
-            None => {}
+        if let Some(v) = stmt {
+            block.statements.push(v);
         };
         p.next_token();
     }

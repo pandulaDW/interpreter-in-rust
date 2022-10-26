@@ -10,7 +10,7 @@ The interpreter is built from scratch which includes a lexer (tokenizer), a pars
 - The language supports int, string and boolean data types.
 - Supports common operators like +, -, ==, !=, <, > etc.
 - Supports let and return statements.
-- Supports If/else expressions and functional expressions.
+- Supports If/else expressions and function expressions.
 
 ## Methodology
 

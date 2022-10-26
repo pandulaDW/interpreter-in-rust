@@ -9,7 +9,7 @@ mod tracing;
 pub static mut TRACING_ENABLED: bool = false;
 
 /// Operator precedences
-#[derive(PartialEq, PartialOrd)]
+#[derive(PartialEq, Eq, PartialOrd)]
 pub enum Precedence {
     Lowest = 1,
     Equals = 2,

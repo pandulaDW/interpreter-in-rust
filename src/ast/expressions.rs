@@ -161,10 +161,10 @@ impl Display for IfExpression {
             consequence.push_str(format!("  {};\n", line).as_str());
         }
 
-        let mut out = format!("if {} {{ \n{}}}", self.condition.to_string(), consequence);
+        let mut out = format!("if {} {{ \n{}}}", self.condition, consequence);
 
         match &self.alternative {
-            Some(v) => out.push_str(format!("else {}", v.to_string()).as_str()),
+            Some(v) => out.push_str(format!("else {}", v).as_str()),
             None => {}
         };
 
@@ -199,7 +199,7 @@ impl Display for FunctionLiteral {
                 "{}({}){}",
                 self.token_literal(),
                 params.join(","),
-                self.body.to_string()
+                self.body
             )
             .as_str(),
         );
