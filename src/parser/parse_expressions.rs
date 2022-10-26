@@ -1,5 +1,7 @@
 use super::{program::Parser, Precedence};
-use crate::ast::expressions::{self, Boolean, FunctionLiteral, Identifier, IfExpression};
+use crate::ast::expressions::{
+    self, Boolean, CallExpression, FunctionLiteral, Identifier, IfExpression,
+};
 use crate::ast::statements::BlockStatement;
 use crate::ast::{statements::ExpressionStatement, Expression, Statement};
 use crate::lexer::token::TokenType;
@@ -204,6 +206,24 @@ pub fn parse_function_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
     }))
 }
 
+pub fn parse_call_expression(
+    p: &mut Parser,
+    left: Option<Box<dyn Expression>>,
+) -> Option<Box<dyn Expression>> {
+    let token = p.current_token.clone(); // (
+    let function = left?;
+
+    let arguments = parse_fn_call_arguments(p)?;
+
+    let expr = CallExpression {
+        token,
+        function,
+        arguments,
+    };
+
+    Some(Box::new(expr))
+}
+
 fn parse_fn_literal_parameters(p: &mut Parser) -> Option<Vec<Identifier>> {
     let mut parameters = Vec::new();
     while !p.peek_token_is(&TokenType::Rparen) {
@@ -225,6 +245,26 @@ fn parse_fn_literal_parameters(p: &mut Parser) -> Option<Vec<Identifier>> {
         }
     }
     Some(parameters)
+}
+
+fn parse_fn_call_arguments(p: &mut Parser) -> Option<Vec<Box<dyn Expression>>> {
+    let mut args = Vec::new();
+
+    while !p.peek_token_is(&TokenType::Rparen) {
+        p.next_token(); // consumes ( OR ,
+        args.push(p.parse_expression(Precedence::Lowest)?);
+
+        if p.peek_token_is(&TokenType::Rparen) {
+            p.next_token();
+            break;
+        }
+
+        if !p.expect_peek(TokenType::Comma) {
+            return None;
+        }
+    }
+
+    Some(args)
 }
 
 fn parse_block_statement(p: &mut Parser) -> BlockStatement {

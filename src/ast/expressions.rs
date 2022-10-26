@@ -207,3 +207,36 @@ impl Display for FunctionLiteral {
         write!(f, "{}", out)
     }
 }
+
+pub struct CallExpression {
+    pub token: token::Token, // ( LPAREN
+    pub function: Box<dyn Expression>,
+    pub arguments: Vec<Box<dyn Expression>>,
+}
+
+impl Expression for CallExpression {}
+
+impl Node for CallExpression {
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        self
+    }
+}
+
+impl Display for CallExpression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let out = format!(
+            "{}({})",
+            self.function,
+            self.arguments
+                .iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<String>>()
+                .join(", ")
+        );
+        write!(f, "{}", out)
+    }
+}

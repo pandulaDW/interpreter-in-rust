@@ -9,7 +9,7 @@ mod tracing;
 pub static mut TRACING_ENABLED: bool = false;
 
 /// Operator precedences
-#[derive(PartialEq, Eq, PartialOrd)]
+#[derive(PartialEq, Eq, PartialOrd, Debug)]
 pub enum Precedence {
     Lowest = 1,
     Equals = 2,
@@ -17,7 +17,7 @@ pub enum Precedence {
     Sum = 4,
     Product = 5,
     Prefix = 6,
-    _Call = 7,
+    Call = 7,
 }
 
 impl Precedence {
@@ -30,6 +30,7 @@ impl Precedence {
             Lt | Gt => LessGreater,
             Plus | Minus => Sum,
             Slash | Asterisk => Product,
+            Lparen => Call,
             _ => Lowest,
         }
     }

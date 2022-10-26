@@ -8,7 +8,9 @@ use crate::ast::program::Program;
 use crate::ast::Expression;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
-use crate::parser::parse_expressions::{parse_function_literal, parse_if_expression};
+use crate::parser::parse_expressions::{
+    parse_call_expression, parse_function_literal, parse_if_expression,
+};
 
 pub type PrefixParseFn = dyn Fn(&mut Parser) -> Option<Box<dyn Expression>>;
 pub type InfixParseFn =
@@ -87,6 +89,7 @@ impl Parser {
             Plus | Minus | Asterisk | Slash | Eq | NotEq | Lt | Gt => {
                 Some(Box::new(parse_infix_expression))
             }
+            Lparen => Some(Box::new(parse_call_expression)),
             _ => None,
         }
     }
@@ -95,7 +98,9 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::test_helpers::*;
-    use crate::ast::expressions::{FunctionLiteral, Identifier, IfExpression, PrefixExpression};
+    use crate::ast::expressions::{
+        CallExpression, FunctionLiteral, Identifier, IfExpression, PrefixExpression,
+    };
     use crate::ast::statements::{LetStatement, ReturnStatement};
     use crate::ast::Node;
     use crate::lexer::keywords;
@@ -352,6 +357,25 @@ mod tests {
                 .for_each(|(i, param)| assert_eq!(fn_expr.parameters[i].value, param));
         }
     }
+
+    #[test]
+    fn test_parse_call_expression() {
+        let input = "add(1, 2 * 3, 4 + 5);";
+        let mut program = helper_prepare_parser(input);
+        assert_eq!(program.statements.len(), 1);
+
+        let stmt = program.statements.remove(0);
+        let call_expr = helper_get_expression_any(stmt)
+            .downcast::<CallExpression>()
+            .expect(EXPECTED_CALL);
+        helper_test_identifier(call_expr.function, "add");
+
+        let mut args = call_expr.arguments;
+        assert_eq!(args.len(), 3);
+        helper_test_integer_literal(args.remove(0), 1);
+        helper_test_infix_expression(args.remove(0).into_any(), Box::new(2), "*", Box::new(3));
+        helper_test_infix_expression(args.remove(0).into_any(), Box::new(4), "+", Box::new(5));
+    }
 }
 
 /// Contains helper functions and constants useful for testing parsing
@@ -475,6 +499,7 @@ mod test_helpers {
     pub const EXPECTED_INFIX: &str = "expected an infix expression";
     pub const EXPECTED_IF: &str = "expected an if expression";
     pub const EXPECTED_FUNC: &str = "expected an function literal expression";
+    pub const EXPECTED_CALL: &str = "expected a call expression";
     pub const EXPECTED_LEFT: &str = "expected the left expression to exist";
     pub const EXPECTED_RIGHT: &str = "expected the right expression to exist";
     pub const EXPECTED_EXPRESSION_STATEMENT: &str = "expected an expression statement";
