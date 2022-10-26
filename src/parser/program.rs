@@ -135,21 +135,38 @@ mod tests {
 
     #[test]
     fn test_return_statements() {
-        let input = "return 5;
-        return 10;
-        return 993322;";
+        // input, expectedIdent, expectedValue
+        let tests: Vec<(&str, Box<dyn Any>)> = vec![
+            ("return 5", Box::new(5)),
+            ("return false;", Box::new(false)),
+            ("return x", Box::new("x")),
+        ];
 
-        let program = helper_prepare_parser(input);
-        assert_eq!(program.statements.len(), 3);
+        for tc in tests {
+            let mut program = helper_prepare_parser(tc.0);
+            assert_eq!(program.statements.len(), 1);
 
-        for stmt in program.statements.into_iter() {
-            let return_stmt = stmt
+            let return_stmt = program
+                .statements
+                .remove(0)
                 .into_any()
                 .downcast::<ReturnStatement>()
                 .expect(EXPECTED_RETURN);
 
             assert_eq!(return_stmt.token_literal(), keywords::RETURN);
+            helper_test_literal(tc.1, return_stmt.return_value.expect(EXPECTED_EXPRESSION));
         }
+
+        let mut program = helper_prepare_parser("return x+y;");
+        assert_eq!(program.statements.len(), 1);
+        let return_stmt = program
+            .statements
+            .remove(0)
+            .into_any()
+            .downcast::<ReturnStatement>()
+            .expect(EXPECTED_RETURN);
+        let return_expr = return_stmt.return_value.expect(EXPECTED_EXPRESSION);
+        helper_test_infix_expression(return_expr.into_any(), Box::new("x"), "+", Box::new("y"));
     }
 
     #[test]
@@ -260,6 +277,15 @@ mod tests {
             ("2 / (5 + 5)", "(2 / (5 + 5))\n"),
             ("-(5 + 5)", "(-(5 + 5))\n"),
             ("!(true == true)", "(!(true == true))\n"),
+            ("a + add(b * c) + d", "((a + add((b * c))) + d)\n"),
+            (
+                "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+                "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))\n",
+            ),
+            (
+                "add(a + b + c * d / f + g)",
+                "add((((a + b) + ((c * d) / f)) + g))\n",
+            ),
         ];
 
         for tc in tests {

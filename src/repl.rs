@@ -40,7 +40,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
         let program = p.parse_program();
 
         if !p.errors.is_empty() {
-            println!("encountered parser errors: {:?}", &p.errors);
+            print_parser_errors(&p.errors);
         } else {
             program.statements.iter().for_each(|v| println!("{}", v));
         }
@@ -58,3 +58,24 @@ fn greet() {
     );
     println!("Feel free to type in commands");
 }
+
+fn print_parser_errors(errors: &Vec<String>) {
+    println!("{}", MONKEY_FACE);
+    println!("Woops! We ran into some monkey business here!");
+    println!("parser Errors:");
+    errors.iter().for_each(|v| println!("\t- {}", v));
+}
+
+const MONKEY_FACE: &str = r#"
+            __,__
+   .--.  .-"     "-.  .--.
+  / .. \/  .-. .-.  \/ .. \
+ | |  '|  /   Y   \  |'  | |
+ | \   \  \ 0 | 0 /  /   / |
+  \ '- ,\.-"""""""-./, -' /
+   ''-' /_   ^ ^   _\ '-''
+       |  \._   _./  |
+       \   \ '~' /   /
+        '._ '-=-' _.'
+           '-----'
+"#;
