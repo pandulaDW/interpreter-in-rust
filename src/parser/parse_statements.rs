@@ -1,10 +1,9 @@
 use crate::ast::expressions::Identifier;
 use crate::ast::statements::{LetStatement, ReturnStatement};
 use crate::ast::Statement;
-use crate::lexer::keywords;
-use crate::lexer::token::{new_token, TokenType};
+use crate::lexer::token::TokenType;
 
-use super::program::Parser;
+use super::{program::Parser, Precedence};
 
 impl Parser {
     /// The high level statement parser. Delegates the work to the relevant parsers
@@ -20,6 +19,8 @@ impl Parser {
 
     /// Parses `Let` statements
     fn parse_let_statement(&mut self) -> Option<Box<dyn Statement>> {
+        let token = self.current_token.clone();
+
         if !self.expect_peek(TokenType::Ident) {
             return None;
         }
@@ -33,18 +34,17 @@ impl Parser {
             return None;
         }
 
-        // TODO: skipping the expressions until encountering a semicolon
-        while !self.current_token_is(&TokenType::Semicolon) {
+        self.next_token();
+        let value = self.parse_expression(Precedence::Lowest);
+
+        if self.peek_token_is(&TokenType::Semicolon) {
             self.next_token();
-            if self.current_token_is(&TokenType::Eof) {
-                break;
-            }
         }
 
         let stmt = LetStatement {
-            token: new_token(TokenType::Let, keywords::LET),
+            token,
             name: identifier,
-            value: None,
+            value,
         };
 
         Some(Box::new(stmt))
@@ -52,18 +52,20 @@ impl Parser {
 
     /// Parses `Return` statement
     fn parse_return_statement(&mut self) -> Option<Box<dyn Statement>> {
-        let stmt = ReturnStatement {
-            token: new_token(TokenType::Return, keywords::RETURN),
-            return_value: None,
-        };
+        let token = self.current_token.clone();
 
-        // TODO: skipping the expressions until encountering a semicolon
-        while !self.current_token_is(&TokenType::Semicolon) {
+        self.next_token();
+
+        let return_value = self.parse_expression(Precedence::Lowest);
+
+        if self.peek_token_is(&TokenType::Semicolon) {
             self.next_token();
-            if self.current_token_is(&TokenType::Eof) {
-                break;
-            }
         }
+
+        let stmt = ReturnStatement {
+            token,
+            return_value,
+        };
 
         Some(Box::new(stmt))
     }

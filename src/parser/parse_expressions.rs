@@ -25,7 +25,7 @@ impl Parser {
     }
 
     /// Uses pratt parse technique to parse a given expression.
-    fn parse_expression(&mut self, precedence: Precedence) -> Option<Box<dyn Expression>> {
+    pub fn parse_expression(&mut self, precedence: Precedence) -> Option<Box<dyn Expression>> {
         let trace_msg = self.tracer.trace("parseExpression");
         let prefix = match Parser::prefix_parse_function(&self.current_token.token_type) {
             Some(v) => v,
@@ -192,7 +192,7 @@ pub fn parse_function_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
 
     let parameters = parse_fn_literal_parameters(p)?;
 
-    p.next_token();
+    p.next_token(); // consumes )
     if !p.expect_peek(TokenType::Lbrace) {
         return None;
     }
@@ -214,14 +214,13 @@ pub fn parse_call_expression(
     let function = left?;
 
     let arguments = parse_fn_call_arguments(p)?;
+    p.next_token(); // consumes )
 
-    let expr = CallExpression {
+    Some(Box::new(CallExpression {
         token,
         function,
         arguments,
-    };
-
-    Some(Box::new(expr))
+    }))
 }
 
 fn parse_fn_literal_parameters(p: &mut Parser) -> Option<Vec<Identifier>> {
@@ -255,7 +254,6 @@ fn parse_fn_call_arguments(p: &mut Parser) -> Option<Vec<Box<dyn Expression>>> {
         args.push(p.parse_expression(Precedence::Lowest)?);
 
         if p.peek_token_is(&TokenType::Rparen) {
-            p.next_token();
             break;
         }
 

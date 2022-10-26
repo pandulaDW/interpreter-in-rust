@@ -108,26 +108,28 @@ mod tests {
 
     #[test]
     fn test_let_statements() {
-        let input = "let x = 5;
-        let y = 10;
-        let foobar = 838383;";
+        // input, expectedIdent, expectedValue
+        let tests: Vec<(&str, &str, Box<dyn Any>)> = vec![
+            ("let x = 5", "x", Box::new(5)),
+            ("let y = true;", "y", Box::new(true)),
+            ("let foobar = y", "foobar", Box::new("y")),
+        ];
 
-        let program = helper_prepare_parser(input);
-        assert_eq!(program.statements.len(), 3);
+        for tc in tests {
+            let mut program = helper_prepare_parser(tc.0);
+            assert_eq!(program.statements.len(), 1);
 
-        let test_cases = vec!["x", "y", "foobar"];
-
-        for (i, stmt) in program.statements.into_iter().enumerate() {
-            let expected_name = test_cases[i];
-
-            let let_stmt = stmt
+            let let_stmt = program
+                .statements
+                .remove(0)
                 .into_any()
                 .downcast::<LetStatement>()
                 .expect(EXPECTED_LET);
 
             assert_eq!(let_stmt.token_literal(), keywords::LET);
-            assert_eq!(let_stmt.name.value, expected_name);
-            assert_eq!(let_stmt.name.token_literal(), expected_name);
+            assert_eq!(let_stmt.name.value, tc.1);
+            assert_eq!(let_stmt.name.token_literal(), tc.1);
+            helper_test_literal(tc.2, let_stmt.value.expect(EXPECTED_EXPRESSION));
         }
     }
 
@@ -360,7 +362,7 @@ mod tests {
 
     #[test]
     fn test_parse_call_expression() {
-        let input = "add(1, 2 * 3, 4 + 5);";
+        let input = "add(1, 2 * 3, 4 + 5, x);";
         let mut program = helper_prepare_parser(input);
         assert_eq!(program.statements.len(), 1);
 
@@ -371,10 +373,20 @@ mod tests {
         helper_test_identifier(call_expr.function, "add");
 
         let mut args = call_expr.arguments;
-        assert_eq!(args.len(), 3);
+        assert_eq!(args.len(), 4);
         helper_test_integer_literal(args.remove(0), 1);
         helper_test_infix_expression(args.remove(0).into_any(), Box::new(2), "*", Box::new(3));
         helper_test_infix_expression(args.remove(0).into_any(), Box::new(4), "+", Box::new(5));
+        helper_test_identifier(args.remove(0), "x");
+
+        let input = "print();";
+        let mut program = helper_prepare_parser(input);
+        assert_eq!(program.statements.len(), 1);
+        let call_expr = helper_get_expression_any(program.statements.remove(0))
+            .downcast::<CallExpression>()
+            .unwrap();
+        helper_test_identifier(call_expr.function, "print");
+        assert_eq!(call_expr.arguments.len(), 0);
     }
 }
 
@@ -439,31 +451,9 @@ mod test_helpers {
             .downcast::<InfixExpression>()
             .expect(EXPECTED_INFIX);
 
-        let left_expr = &*left;
-        if TypeId::of::<i64>() == left_expr.type_id() {
-            let l = left.downcast::<i64>().unwrap();
-            helper_test_integer_literal(infix_expr.left.expect(EXPECTED_LEFT), *l);
-        } else if TypeId::of::<bool>() == left_expr.type_id() {
-            let l = left.downcast::<bool>().unwrap();
-            helper_test_boolean_literal(infix_expr.left.expect(EXPECTED_LEFT), *l);
-        } else if TypeId::of::<&str>() == left_expr.type_id() {
-            let l = left.downcast::<&str>().unwrap();
-            helper_test_identifier(infix_expr.left.expect(EXPECTED_LEFT), *l);
-        }
-
+        helper_test_literal(left, infix_expr.left.expect(EXPECTED_LEFT));
         assert_eq!(infix_expr.operator, operator);
-
-        let right_expr = &*right;
-        if TypeId::of::<i64>() == right_expr.type_id() {
-            let r = right.downcast::<i64>().unwrap();
-            helper_test_integer_literal(infix_expr.right.expect(EXPECTED_RIGHT), *r);
-        } else if TypeId::of::<bool>() == right_expr.type_id() {
-            let r = right.downcast::<bool>().unwrap();
-            helper_test_boolean_literal(infix_expr.right.expect(EXPECTED_RIGHT), *r);
-        } else if TypeId::of::<&str>() == right_expr.type_id() {
-            let l = right.downcast::<&str>().unwrap();
-            helper_test_identifier(infix_expr.right.expect(EXPECTED_RIGHT), *l);
-        }
+        helper_test_literal(right, infix_expr.right.expect(EXPECTED_RIGHT));
     }
 
     pub fn helper_prepare_parser(input: &str) -> Program {
@@ -488,6 +478,21 @@ mod test_helpers {
             .downcast::<ExpressionStatement>()
             .expect(EXPECTED_EXPRESSION_STATEMENT);
         expr_stmt.expression.expect(EXPECTED_EXPRESSION)
+    }
+
+    pub fn helper_test_literal(expected: Box<dyn Any>, actual: Box<dyn Expression>) {
+        let expected_type_id = (&*expected).type_id();
+
+        if TypeId::of::<i64>() == expected_type_id {
+            let val = expected.downcast::<i64>().unwrap();
+            helper_test_integer_literal(actual, *val);
+        } else if TypeId::of::<bool>() == expected_type_id {
+            let val = expected.downcast::<bool>().unwrap();
+            helper_test_boolean_literal(actual, *val);
+        } else if TypeId::of::<&str>() == expected_type_id {
+            let val = expected.downcast::<&str>().unwrap();
+            helper_test_identifier(actual, *val);
+        }
     }
 
     pub const EXPECTED_IDENT: &str = "expected an identifier";
