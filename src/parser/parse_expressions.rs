@@ -1,5 +1,5 @@
 use super::{program::Parser, Precedence};
-use crate::ast::expressions::{self, Boolean, FunctionLiteral, IfExpression};
+use crate::ast::expressions::{self, Boolean, FunctionLiteral, Identifier, IfExpression};
 use crate::ast::statements::BlockStatement;
 use crate::ast::{statements::ExpressionStatement, Expression, Statement};
 use crate::lexer::token::TokenType;
@@ -188,6 +188,23 @@ pub fn parse_function_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
         return None;
     }
 
+    let parameters = parse_fn_literal_parameters(p)?;
+
+    p.next_token();
+    if !p.expect_peek(TokenType::Lbrace) {
+        return None;
+    }
+
+    let body = parse_block_statement(p);
+
+    Some(Box::new(FunctionLiteral {
+        token,
+        parameters,
+        body,
+    }))
+}
+
+fn parse_fn_literal_parameters(p: &mut Parser) -> Option<Vec<Identifier>> {
     let mut parameters = Vec::new();
     while !p.peek_token_is(&TokenType::Rparen) {
         if !p.expect_peek(TokenType::Ident) {
@@ -207,22 +224,10 @@ pub fn parse_function_literal(p: &mut Parser) -> Option<Box<dyn Expression>> {
             return None;
         }
     }
-    p.next_token();
-
-    if !p.expect_peek(TokenType::Lbrace) {
-        return None;
-    }
-
-    let body = parse_block_statement(p);
-
-    Some(Box::new(FunctionLiteral {
-        token,
-        parameters,
-        body,
-    }))
+    Some(parameters)
 }
 
-pub fn parse_block_statement(p: &mut Parser) -> BlockStatement {
+fn parse_block_statement(p: &mut Parser) -> BlockStatement {
     let mut block = BlockStatement {
         token: p.current_token.clone(),
         statements: Vec::new(),

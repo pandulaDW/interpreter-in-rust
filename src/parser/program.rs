@@ -329,6 +329,29 @@ mod tests {
         let body_expr = helper_get_expression_any(stmt);
         helper_test_infix_expression(body_expr, Box::new("x"), "+", Box::new("y"));
     }
+
+    #[test]
+    fn test_parse_fn_literal_parameters() {
+        // (input, expected_params)
+        let input = [
+            ("fn() {};", vec![]),
+            ("fn(x,y,z) {}", vec!["x", "y", "z"]),
+            ("fn(x){}", vec!["x"]),
+        ];
+
+        for tc in input {
+            let mut program = helper_prepare_parser(tc.0);
+            assert_eq!(program.statements.len(), 1);
+            let fn_expr = helper_get_expression_any(program.statements.remove(0))
+                .downcast::<FunctionLiteral>()
+                .expect(EXPECTED_FUNC);
+            assert_eq!(fn_expr.parameters.len(), tc.1.len());
+
+            tc.1.into_iter()
+                .enumerate()
+                .for_each(|(i, param)| assert_eq!(fn_expr.parameters[i].value, param));
+        }
+    }
 }
 
 /// Contains helper functions and constants useful for testing parsing
