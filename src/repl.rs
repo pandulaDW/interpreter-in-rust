@@ -59,7 +59,7 @@ fn greet() {
     println!("Feel free to type in commands");
 }
 
-fn print_parser_errors(errors: &Vec<String>) {
+fn print_parser_errors(errors: &[String]) {
     println!("{}", MONKEY_FACE);
     println!("Woops! We ran into some monkey business here!");
     println!("parser Errors:");
