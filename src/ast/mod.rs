@@ -4,7 +4,7 @@ pub mod statements;
 
 use std::fmt::Display;
 
-use self::{program::Program, statements::AllStatements};
+use self::{expressions::AllExpressions, program::Program, statements::AllStatements};
 
 /// Every node in the AST has to implement the Node interface, meaning it has
 /// to provide a TokenLiteral() method that returns the literal value of
@@ -14,13 +14,13 @@ pub trait Node: Display {
     fn token_literal(&self) -> String;
 }
 
-/// A Wrapper around the program node and statement nodes. Expression nodes are not used here since,
-/// they will be contained within the statements.
+/// A Wrapper around the program node, statement nodes and expression nodes
 ///
 /// Primarily will be used by the evaluator.
 pub enum AllNodes {
     Program(Program),
     Statements(AllStatements),
+    Expressions(AllExpressions),
 }
 
 #[cfg(test)]

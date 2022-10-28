@@ -47,6 +47,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
             text.clear();
             continue;
         }
+        program.statements.iter().for_each(|v| println!("{}", v));
 
         let evaluated = evaluator::eval(program.make_node());
         if let Some(e) = evaluated {

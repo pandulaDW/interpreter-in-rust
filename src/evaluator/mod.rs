@@ -15,6 +15,33 @@ mod tests {
             helper_test_integer_obj(evaluated, tc.1);
         }
     }
+
+    #[test]
+    fn test_eval_boolean_expression() {
+        let test_cases = [("true", true), ("false", false)];
+
+        for tc in test_cases {
+            let evaluated = helper_test_eval(tc.0);
+            helper_test_boolean_obj(evaluated, tc.1);
+        }
+    }
+
+    #[test]
+    fn test_bang_operator() {
+        let test_cases = [
+            ("!true", false),
+            ("!false", true),
+            ("!5", false),
+            ("!!true", true),
+            ("!!false", false),
+            ("!!5", true),
+        ];
+
+        for tc in test_cases {
+            let evaluated = helper_test_eval(tc.0);
+            helper_test_boolean_obj(evaluated, tc.1);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -32,6 +59,14 @@ mod test_helpers {
 
     pub fn helper_test_integer_obj(obj: Option<AllObjects>, expected: i64) {
         if let AllObjects::Integer(obj) = obj.expect(EXPECTED_OBJECT) {
+            assert_eq!(obj.value, expected);
+        } else {
+            panic!("{}", EXPECTED_INT_OBJECT);
+        }
+    }
+
+    pub fn helper_test_boolean_obj(obj: Option<AllObjects>, expected: bool) {
+        if let AllObjects::Boolean(obj) = obj.expect(EXPECTED_OBJECT) {
             assert_eq!(obj.value, expected);
         } else {
             panic!("{}", EXPECTED_INT_OBJECT);

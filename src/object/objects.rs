@@ -1,5 +1,6 @@
 use super::Object;
 
+#[derive(PartialEq, Eq)]
 pub struct Integer {
     pub value: i64,
 }
@@ -10,6 +11,7 @@ impl Object for Integer {
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub struct Boolean {
     pub value: bool,
 }
@@ -20,6 +22,7 @@ impl Object for Boolean {
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub struct Null;
 
 impl Object for Null {
