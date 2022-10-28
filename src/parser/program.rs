@@ -4,7 +4,7 @@ use super::parse_expressions::{
 };
 
 use super::tracing::Tracer;
-use crate::ast::expressions::AllExpression;
+use crate::ast::expressions::AllExpressions;
 use crate::ast::program::Program;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
@@ -12,9 +12,9 @@ use crate::parser::parse_expressions::{
     parse_call_expression, parse_function_literal, parse_if_expression,
 };
 
-pub type PrefixParseFn = dyn Fn(&mut Parser) -> Option<Box<AllExpression>>;
+pub type PrefixParseFn = dyn Fn(&mut Parser) -> Option<Box<AllExpressions>>;
 pub type InfixParseFn =
-    dyn Fn(&mut Parser, Option<Box<AllExpression>>) -> Option<Box<AllExpression>>;
+    dyn Fn(&mut Parser, Option<Box<AllExpressions>>) -> Option<Box<AllExpressions>>;
 
 /// Parser represents the main structure which advances the lexer and parses the tokens as needed
 /// into AST statements.
@@ -98,7 +98,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::test_helpers::*;
-    use crate::ast::expressions::AllExpression;
+    use crate::ast::expressions::AllExpressions;
     use crate::ast::statements::AllStatements;
     use crate::ast::Node;
     use crate::lexer::keywords;
@@ -198,7 +198,7 @@ mod tests {
             assert_eq!(program.statements.len(), 1);
             let stmt = program.statements.remove(0);
             let prefix_exp = match helper_get_expression(stmt) {
-                AllExpression::PrefixExpression(v) => v,
+                AllExpressions::PrefixExpression(v) => v,
                 _ => panic!("{}", EXPECTED_PREFIX),
             };
 
@@ -297,7 +297,7 @@ mod tests {
         assert_eq!(program.statements.len(), 1);
 
         let mut if_expr = match helper_get_expression(program.statements.remove(0)) {
-            AllExpression::IfExpression(v) => v,
+            AllExpressions::IfExpression(v) => v,
             _ => panic!("{}", EXPECTED_IF),
         };
         assert_eq!(if_expr.consequence.statements.len(), 1);
@@ -320,7 +320,7 @@ mod tests {
         assert_eq!(program.statements.len(), 1);
 
         let mut if_expr = match helper_get_expression(program.statements.remove(0)) {
-            AllExpression::IfExpression(v) => v,
+            AllExpressions::IfExpression(v) => v,
             _ => panic!("{}", EXPECTED_IF),
         };
         assert_eq!(if_expr.consequence.statements.len(), 1);
@@ -343,7 +343,7 @@ mod tests {
         assert_eq!(program.statements.len(), 1);
 
         let mut fn_expr = match helper_get_expression(program.statements.remove(0)) {
-            AllExpression::FunctionLiteral(v) => v,
+            AllExpressions::FunctionLiteral(v) => v,
             _ => panic!("{}", EXPECTED_FUNC),
         };
         assert_eq!(fn_expr.parameters.len(), 2);
@@ -370,7 +370,7 @@ mod tests {
             let mut program = helper_prepare_parser(tc.0);
             assert_eq!(program.statements.len(), 1);
             let fn_expr = match helper_get_expression(program.statements.remove(0)) {
-                AllExpression::FunctionLiteral(v) => v,
+                AllExpressions::FunctionLiteral(v) => v,
                 _ => panic!("{}", EXPECTED_FUNC),
             };
             assert_eq!(fn_expr.parameters.len(), tc.1.len());
@@ -388,7 +388,7 @@ mod tests {
         assert_eq!(program.statements.len(), 1);
 
         let call_expr = match helper_get_expression(program.statements.remove(0)) {
-            AllExpression::CallExpression(v) => v,
+            AllExpressions::CallExpression(v) => v,
             _ => panic!("{}", EXPECTED_CALL),
         };
 
@@ -405,7 +405,7 @@ mod tests {
         let mut program = helper_prepare_parser(input);
         assert_eq!(program.statements.len(), 1);
         let call_expr = match helper_get_expression(program.statements.remove(0)) {
-            AllExpression::CallExpression(v) => v,
+            AllExpressions::CallExpression(v) => v,
             _ => panic!("{}", EXPECTED_CALL),
         };
         helper_test_identifier(*call_expr.function, "print");
@@ -417,7 +417,7 @@ mod tests {
 #[cfg(test)]
 mod test_helpers {
     use super::{Lexer, Parser};
-    use crate::ast::expressions::AllExpression;
+    use crate::ast::expressions::AllExpressions;
     use crate::ast::program::Program;
     use crate::ast::statements::AllStatements;
     use crate::ast::Node;
@@ -441,8 +441,8 @@ mod test_helpers {
         panic!("parser has {} error(s)\n{}", errors.len(), err_msg);
     }
 
-    pub fn helper_test_integer_literal(expr: AllExpression, value: i64) {
-        if let AllExpression::IntegerLiteral(integer_literal) = expr {
+    pub fn helper_test_integer_literal(expr: AllExpressions, value: i64) {
+        if let AllExpressions::IntegerLiteral(integer_literal) = expr {
             assert_eq!(integer_literal.value, value);
             assert_eq!(integer_literal.token_literal(), format!("{}", value));
         } else {
@@ -450,8 +450,8 @@ mod test_helpers {
         }
     }
 
-    pub fn helper_test_identifier(expr: AllExpression, value: &str) {
-        if let AllExpression::Identifier(identifier) = expr {
+    pub fn helper_test_identifier(expr: AllExpressions, value: &str) {
+        if let AllExpressions::Identifier(identifier) = expr {
             assert_eq!(identifier.value, value);
             assert_eq!(identifier.token_literal(), format!("{}", value));
         } else {
@@ -459,8 +459,8 @@ mod test_helpers {
         }
     }
 
-    pub fn helper_test_boolean_literal(expr: AllExpression, value: bool) {
-        if let AllExpression::Boolean(boolean) = expr {
+    pub fn helper_test_boolean_literal(expr: AllExpressions, value: bool) {
+        if let AllExpressions::Boolean(boolean) = expr {
             assert_eq!(boolean.value, value);
             assert_eq!(boolean.token_literal(), value.to_string());
         } else {
@@ -469,12 +469,12 @@ mod test_helpers {
     }
 
     pub fn helper_test_infix_expression(
-        expr: AllExpression,
+        expr: AllExpressions,
         left: Literal,
         operator: &str,
         right: Literal,
     ) {
-        if let AllExpression::InfixExpression(infix_expr) = expr {
+        if let AllExpressions::InfixExpression(infix_expr) = expr {
             helper_test_literal(left, *infix_expr.left.expect(EXPECTED_LEFT));
             assert_eq!(infix_expr.operator, operator);
             helper_test_literal(right, *infix_expr.right.expect(EXPECTED_RIGHT));
@@ -491,7 +491,7 @@ mod test_helpers {
         program
     }
 
-    pub fn helper_get_expression(stmt: AllStatements) -> AllExpression {
+    pub fn helper_get_expression(stmt: AllStatements) -> AllExpressions {
         if let AllStatements::Expression(expr_stmt) = stmt {
             return *expr_stmt.expression.expect(EXPECTED_EXPRESSION);
         } else {
@@ -499,7 +499,7 @@ mod test_helpers {
         }
     }
 
-    pub fn helper_test_literal(expected: Literal, expr: AllExpression) {
+    pub fn helper_test_literal(expected: Literal, expr: AllExpressions) {
         match expected {
             Literal::Int(val) => helper_test_integer_literal(expr, val),
             Literal::Bool(val) => helper_test_boolean_literal(expr, val),

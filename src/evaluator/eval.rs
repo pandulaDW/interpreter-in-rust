@@ -1,5 +1,5 @@
-// use crate::{ast::program::Program, object::Object};
+use crate::{ast::program::Program, object::ObjectType};
 
-// pub fn eval(_program: Program) -> Box<dyn Object> {
-//     todo!()
-// }
+pub fn _eval(_program: Program) -> ObjectType {
+    todo!()
+}

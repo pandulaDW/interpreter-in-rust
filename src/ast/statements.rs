@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use super::{
-    expressions::{self, AllExpression},
+    expressions::{self, AllExpressions},
     Node,
 };
 use crate::lexer::{keywords, token};
@@ -37,7 +37,7 @@ impl Display for AllStatements {
 pub struct LetStatement {
     pub token: token::Token, // Let token
     pub name: expressions::Identifier,
-    pub value: Box<AllExpression>,
+    pub value: Box<AllExpressions>,
 }
 
 impl Node for LetStatement {
@@ -60,7 +60,7 @@ impl Display for LetStatement {
 
 pub struct ReturnStatement {
     pub token: token::Token, // Return token
-    pub return_value: Box<AllExpression>,
+    pub return_value: Box<AllExpressions>,
 }
 
 impl Node for ReturnStatement {
@@ -83,7 +83,7 @@ impl Display for ReturnStatement {
 /// consists solely of one expression
 pub struct ExpressionStatement {
     pub token: token::Token,
-    pub expression: Option<Box<AllExpression>>,
+    pub expression: Option<Box<AllExpressions>>,
 }
 
 impl Node for ExpressionStatement {

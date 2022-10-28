@@ -61,7 +61,7 @@ fn greet() {
 
 fn print_parser_errors(errors: &[String]) {
     println!("{}", MONKEY_FACE);
-    println!("Woops! We ran into some monkey business here!");
+    println!("Woops! We ran into some monkey business here 🥴");
     println!("parser Errors:");
     errors.iter().for_each(|v| println!("\t- {}", v));
 }

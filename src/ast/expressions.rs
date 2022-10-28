@@ -3,7 +3,7 @@ use std::fmt::Display;
 use super::{statements::BlockStatement, Node};
 use crate::lexer::token;
 
-pub enum AllExpression {
+pub enum AllExpressions {
     Identifier(Identifier),
     IntegerLiteral(IntegerLiteral),
     PrefixExpression(PrefixExpression),
@@ -14,17 +14,17 @@ pub enum AllExpression {
     CallExpression(CallExpression),
 }
 
-impl Display for AllExpression {
+impl Display for AllExpressions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let out = match self {
-            AllExpression::Identifier(v) => v.to_string(),
-            AllExpression::IntegerLiteral(v) => v.to_string(),
-            AllExpression::PrefixExpression(v) => v.to_string(),
-            AllExpression::InfixExpression(v) => v.to_string(),
-            AllExpression::Boolean(v) => v.to_string(),
-            AllExpression::IfExpression(v) => v.to_string(),
-            AllExpression::FunctionLiteral(v) => v.to_string(),
-            AllExpression::CallExpression(v) => v.to_string(),
+            AllExpressions::Identifier(v) => v.to_string(),
+            AllExpressions::IntegerLiteral(v) => v.to_string(),
+            AllExpressions::PrefixExpression(v) => v.to_string(),
+            AllExpressions::InfixExpression(v) => v.to_string(),
+            AllExpressions::Boolean(v) => v.to_string(),
+            AllExpressions::IfExpression(v) => v.to_string(),
+            AllExpressions::FunctionLiteral(v) => v.to_string(),
+            AllExpressions::CallExpression(v) => v.to_string(),
         };
         write!(f, "{}", out)
     }
@@ -67,7 +67,7 @@ impl Display for IntegerLiteral {
 pub struct PrefixExpression {
     pub token: token::Token, // The prefix token, e.g. !
     pub operator: String,
-    pub right: Option<Box<AllExpression>>,
+    pub right: Option<Box<AllExpressions>>,
 }
 
 impl Node for PrefixExpression {
@@ -87,9 +87,9 @@ impl Display for PrefixExpression {
 
 pub struct InfixExpression {
     pub token: token::Token, // The infix token, e.g. !
-    pub left: Option<Box<AllExpression>>,
+    pub left: Option<Box<AllExpressions>>,
     pub operator: String,
-    pub right: Option<Box<AllExpression>>,
+    pub right: Option<Box<AllExpressions>>,
 }
 
 impl Node for InfixExpression {
@@ -135,7 +135,7 @@ impl Display for Boolean {
 
 pub struct IfExpression {
     pub token: token::Token,
-    pub condition: Box<AllExpression>,
+    pub condition: Box<AllExpressions>,
     pub consequence: BlockStatement,
     pub alternative: Option<BlockStatement>,
 }
@@ -196,8 +196,8 @@ impl Display for FunctionLiteral {
 
 pub struct CallExpression {
     pub token: token::Token, // ( LPAREN
-    pub function: Box<AllExpression>,
-    pub arguments: Vec<AllExpression>,
+    pub function: Box<AllExpressions>,
+    pub arguments: Vec<AllExpressions>,
 }
 
 impl Node for CallExpression {

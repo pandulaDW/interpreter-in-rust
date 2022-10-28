@@ -15,7 +15,7 @@ pub trait Node: Display {
 #[cfg(test)]
 mod tests {
     use super::{
-        expressions::{AllExpression, Identifier},
+        expressions::{AllExpressions, Identifier},
         program::Program,
         statements::{AllStatements, LetStatement},
     };
@@ -41,7 +41,7 @@ mod tests {
         let stmt = LetStatement {
             token: new_token(TokenType::Let, keywords::LET),
             name,
-            value: Box::new(AllExpression::Identifier(value)),
+            value: Box::new(AllExpressions::Identifier(value)),
         };
 
         program.statements.push(AllStatements::Let(stmt));
