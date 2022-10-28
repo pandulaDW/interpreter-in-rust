@@ -1,8 +1,8 @@
-use std::{any::Any, fmt::Display};
-
 pub mod expressions;
 pub mod program;
 pub mod statements;
+
+use std::{any::Any, fmt::Display};
 
 /// Every node in the AST has to implement the Node interface, meaning it has
 /// to provide a TokenLiteral() method that returns the literal value of
@@ -27,7 +27,11 @@ pub trait Expression: Node {}
 
 #[cfg(test)]
 mod tests {
-    use super::{expressions::Identifier, program::Program, statements::LetStatement};
+    use super::{
+        expressions::Identifier,
+        program::Program,
+        statements::{AllStatements, LetStatement},
+    };
     use crate::lexer::{
         keywords,
         token::{new_token, TokenType},
@@ -53,7 +57,7 @@ mod tests {
             value: Some(Box::new(value)),
         };
 
-        program.statements.push(Box::new(stmt));
+        program.statements.push(AllStatements::Let(stmt));
         assert_eq!(program.to_string(), "let myVar = anotherVar;\n");
     }
 }

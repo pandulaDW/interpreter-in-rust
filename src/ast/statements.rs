@@ -3,6 +3,41 @@ use std::{any::Any, fmt::Display};
 use super::{expressions, Expression, Node, Statement};
 use crate::lexer::{keywords, token};
 
+pub enum AllStatements {
+    Let(LetStatement),
+    Return(ReturnStatement),
+    Expression(ExpressionStatement),
+    _Block(BlockStatement),
+}
+
+impl Node for AllStatements {
+    fn token_literal(&self) -> String {
+        match self {
+            AllStatements::Let(v) => v.token_literal(),
+            AllStatements::Return(v) => v.token_literal(),
+            AllStatements::Expression(v) => v.token_literal(),
+            AllStatements::_Block(v) => v.token_literal(),
+        }
+    }
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any> {
+        todo!()
+    }
+}
+
+impl Display for AllStatements {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let out = match self {
+            AllStatements::Let(v) => v.to_string(),
+            AllStatements::Return(v) => v.to_string(),
+            AllStatements::Expression(v) => v.to_string(),
+            AllStatements::_Block(v) => v.to_string(),
+        };
+
+        write!(f, "{}", out)
+    }
+}
+
 pub struct LetStatement {
     pub token: token::Token, // Let token
     pub name: expressions::Identifier,
@@ -94,7 +129,7 @@ impl Display for ExpressionStatement {
 
 pub struct BlockStatement {
     pub token: token::Token,
-    pub statements: Vec<Box<dyn Statement>>,
+    pub statements: Vec<AllStatements>,
 }
 
 impl Statement for BlockStatement {}

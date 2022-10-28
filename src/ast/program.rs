@@ -1,9 +1,9 @@
-use super::{Node, Statement};
+use super::{statements::AllStatements, Node};
 use std::{any::Any, fmt::Display};
 
 /// Program node is going to be the root node of every AST that the parser produces
 pub struct Program {
-    pub statements: Vec<Box<dyn Statement>>,
+    pub statements: Vec<AllStatements>,
 }
 
 impl Program {

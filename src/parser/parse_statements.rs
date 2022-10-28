@@ -1,13 +1,12 @@
 use crate::ast::expressions::Identifier;
-use crate::ast::statements::{LetStatement, ReturnStatement};
-use crate::ast::Statement;
+use crate::ast::statements::{AllStatements, LetStatement, ReturnStatement};
 use crate::lexer::token::TokenType;
 
 use super::{program::Parser, Precedence};
 
 impl Parser {
     /// The high level statement parser. Delegates the work to the relevant parsers
-    pub fn parse_statement(&mut self) -> Option<Box<dyn Statement>> {
+    pub fn parse_statement(&mut self) -> Option<AllStatements> {
         use TokenType::*;
 
         match self.current_token.token_type {
@@ -18,7 +17,7 @@ impl Parser {
     }
 
     /// Parses `Let` statements
-    fn parse_let_statement(&mut self) -> Option<Box<dyn Statement>> {
+    fn parse_let_statement(&mut self) -> Option<AllStatements> {
         let token = self.current_token.clone();
 
         if !self.expect_peek(TokenType::Ident) {
@@ -47,11 +46,11 @@ impl Parser {
             value,
         };
 
-        Some(Box::new(stmt))
+        Some(AllStatements::Let(stmt))
     }
 
     /// Parses `Return` statement
-    fn parse_return_statement(&mut self) -> Option<Box<dyn Statement>> {
+    fn parse_return_statement(&mut self) -> Option<AllStatements> {
         let token = self.current_token.clone();
 
         self.next_token();
@@ -67,6 +66,6 @@ impl Parser {
             return_value,
         };
 
-        Some(Box::new(stmt))
+        Some(AllStatements::Return(stmt))
     }
 }

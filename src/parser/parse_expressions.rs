@@ -2,12 +2,12 @@ use super::{program::Parser, Precedence};
 use crate::ast::expressions::{
     self, Boolean, CallExpression, FunctionLiteral, Identifier, IfExpression,
 };
-use crate::ast::statements::BlockStatement;
-use crate::ast::{statements::ExpressionStatement, Expression, Statement};
+use crate::ast::statements::{AllStatements, BlockStatement};
+use crate::ast::{statements::ExpressionStatement, Expression};
 use crate::lexer::token::TokenType;
 
 impl Parser {
-    pub fn parse_expression_statement(&mut self) -> Option<Box<dyn Statement>> {
+    pub fn parse_expression_statement(&mut self) -> Option<AllStatements> {
         let trace_msg = self.tracer.trace("parseExpressionStatement");
         let mut stmt = ExpressionStatement {
             token: self.current_token.clone(),
@@ -21,7 +21,7 @@ impl Parser {
         }
 
         self.tracer.un_trace(trace_msg);
-        Some(Box::new(stmt))
+        Some(AllStatements::Expression(stmt))
     }
 
     /// Uses pratt parse technique to parse a given expression.

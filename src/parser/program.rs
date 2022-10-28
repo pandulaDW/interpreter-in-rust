@@ -101,7 +101,7 @@ mod tests {
     use crate::ast::expressions::{
         CallExpression, FunctionLiteral, Identifier, IfExpression, PrefixExpression,
     };
-    use crate::ast::statements::{LetStatement, ReturnStatement};
+    use crate::ast::statements::AllStatements;
     use crate::ast::Node;
     use crate::lexer::keywords;
     use std::any::Any;
@@ -119,17 +119,14 @@ mod tests {
             let mut program = helper_prepare_parser(tc.0);
             assert_eq!(program.statements.len(), 1);
 
-            let let_stmt = program
-                .statements
-                .remove(0)
-                .into_any()
-                .downcast::<LetStatement>()
-                .expect(EXPECTED_LET);
-
-            assert_eq!(let_stmt.token_literal(), keywords::LET);
-            assert_eq!(let_stmt.name.value, tc.1);
-            assert_eq!(let_stmt.name.token_literal(), tc.1);
-            helper_test_literal(tc.2, let_stmt.value.expect(EXPECTED_EXPRESSION));
+            if let AllStatements::Let(let_stmt) = program.statements.remove(0) {
+                assert_eq!(let_stmt.token_literal(), keywords::LET);
+                assert_eq!(let_stmt.name.value, tc.1);
+                assert_eq!(let_stmt.name.token_literal(), tc.1);
+                helper_test_literal(tc.2, let_stmt.value.expect(EXPECTED_EXPRESSION));
+            } else {
+                panic!("{}", EXPECTED_LET);
+            }
         }
     }
 
@@ -146,27 +143,22 @@ mod tests {
             let mut program = helper_prepare_parser(tc.0);
             assert_eq!(program.statements.len(), 1);
 
-            let return_stmt = program
-                .statements
-                .remove(0)
-                .into_any()
-                .downcast::<ReturnStatement>()
-                .expect(EXPECTED_RETURN);
-
-            assert_eq!(return_stmt.token_literal(), keywords::RETURN);
-            helper_test_literal(tc.1, return_stmt.return_value.expect(EXPECTED_EXPRESSION));
+            if let AllStatements::Return(return_stmt) = program.statements.remove(0) {
+                assert_eq!(return_stmt.token_literal(), keywords::RETURN);
+                helper_test_literal(tc.1, return_stmt.return_value.expect(EXPECTED_EXPRESSION));
+            } else {
+                panic!("{}", EXPECTED_RETURN);
+            }
         }
 
         let mut program = helper_prepare_parser("return x+y;");
         assert_eq!(program.statements.len(), 1);
-        let return_stmt = program
-            .statements
-            .remove(0)
-            .into_any()
-            .downcast::<ReturnStatement>()
-            .expect(EXPECTED_RETURN);
-        let return_expr = return_stmt.return_value.expect(EXPECTED_EXPRESSION);
-        helper_test_infix_expression(return_expr.into_any(), Box::new("x"), "+", Box::new("y"));
+        if let AllStatements::Return(return_stmt) = program.statements.remove(0) {
+            let return_expr = return_stmt.return_value.expect(EXPECTED_EXPRESSION);
+            helper_test_infix_expression(return_expr.into_any(), Box::new("x"), "+", Box::new("y"));
+        } else {
+            panic!("{}", EXPECTED_RETURN);
+        }
     }
 
     #[test]
@@ -422,8 +414,8 @@ mod test_helpers {
     use super::{Lexer, Parser};
     use crate::ast::expressions::{Boolean, Identifier, InfixExpression, IntegerLiteral};
     use crate::ast::program::Program;
-    use crate::ast::statements::ExpressionStatement;
-    use crate::ast::{Expression, Node, Statement};
+    use crate::ast::statements::AllStatements;
+    use crate::ast::{Expression, Node};
     use std::any::{Any, TypeId};
 
     pub fn helper_check_parser_errors(errors: &Vec<String>) {
@@ -490,20 +482,20 @@ mod test_helpers {
         program
     }
 
-    pub fn helper_get_expression_any(stmt: Box<dyn Statement>) -> Box<dyn Any> {
-        let expr_stmt = stmt
-            .into_any()
-            .downcast::<ExpressionStatement>()
-            .expect(EXPECTED_EXPRESSION_STATEMENT);
-        expr_stmt.expression.expect(EXPECTED_EXPRESSION).into_any()
+    pub fn helper_get_expression_any(stmt: AllStatements) -> Box<dyn Any> {
+        if let AllStatements::Expression(expr_stmt) = stmt {
+            return expr_stmt.expression.expect(EXPECTED_EXPRESSION).into_any();
+        } else {
+            panic!("{}", EXPECTED_EXPRESSION_STATEMENT);
+        }
     }
 
-    pub fn helper_get_expression(stmt: Box<dyn Statement>) -> Box<dyn Expression> {
-        let expr_stmt = stmt
-            .into_any()
-            .downcast::<ExpressionStatement>()
-            .expect(EXPECTED_EXPRESSION_STATEMENT);
-        expr_stmt.expression.expect(EXPECTED_EXPRESSION)
+    pub fn helper_get_expression(stmt: AllStatements) -> Box<dyn Expression> {
+        if let AllStatements::Expression(expr_stmt) = stmt {
+            return expr_stmt.expression.expect(EXPECTED_EXPRESSION);
+        } else {
+            panic!("{}", EXPECTED_EXPRESSION_STATEMENT);
+        }
     }
 
     pub fn helper_test_literal(expected: Box<dyn Any>, actual: Box<dyn Expression>) {
