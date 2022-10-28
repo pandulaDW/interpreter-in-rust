@@ -1,13 +1,16 @@
-use clap::Parser;
-
-use crate::parser::TRACING_ENABLED;
-use crate::{lexer::Lexer, parser::program};
+use crate::{
+    evaluator,
+    lexer::Lexer,
+    object::Object,
+    parser::{Parser, TRACING_ENABLED},
+};
+use clap::Parser as ClapParser;
 use std::io::{BufRead, Result, Write};
 
 const PROMPT: &str = ">> ";
 
 /// The monkey programming language REPL (Read -> Evaluate -> Print -> Loop)
-#[derive(Parser)]
+#[derive(ClapParser)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
     /// Enables tracing for parsing expressions
@@ -36,13 +39,18 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
         }
 
         let l = Lexer::new(&text);
-        let mut p = program::Parser::new(l);
+        let mut p = Parser::new(l);
         let program = p.parse_program();
 
         if !p.errors.is_empty() {
             print_parser_errors(&p.errors);
-        } else {
-            program.statements.iter().for_each(|v| println!("{}", v));
+            text.clear();
+            continue;
+        }
+
+        let evaluated = evaluator::eval(program.make_node());
+        if let Some(e) = evaluated {
+            println!("{}", e.inspect());
         }
 
         text.clear();

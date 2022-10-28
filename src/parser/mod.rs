@@ -3,9 +3,10 @@ use crate::lexer::token::TokenType;
 mod helpers;
 mod parse_expressions;
 mod parse_statements;
-pub mod program;
+mod program;
 mod tracing;
 
+pub use program::Parser;
 pub static mut TRACING_ENABLED: bool = false;
 
 /// Operator precedences

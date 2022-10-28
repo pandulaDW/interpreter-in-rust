@@ -1,4 +1,4 @@
-use super::{statements::AllStatements, Node};
+use super::{statements::AllStatements, AllNodes, Node};
 use std::fmt::Display;
 
 /// Program node is going to be the root node of every AST that the parser produces
@@ -7,8 +7,14 @@ pub struct Program {
 }
 
 impl Program {
+    /// Creates a new instance of the Program with parsed statements
     pub fn new() -> Self {
         Program { statements: vec![] }
+    }
+
+    /// Return the program as a variant of AllNodes to be evaluated by the evaluator
+    pub fn make_node(self) -> AllNodes {
+        AllNodes::Program(self)
     }
 }
 

@@ -1,40 +1,28 @@
-use super::{Object, ObjectType};
+use super::Object;
 
-struct Integer {
-    value: i64,
+pub struct Integer {
+    pub value: i64,
 }
 
 impl Object for Integer {
-    fn object_type() -> ObjectType {
-        ObjectType::Integer
-    }
-
     fn inspect(&self) -> String {
         format!("{}", self.value)
     }
 }
 
-struct Boolean {
-    value: bool,
+pub struct Boolean {
+    pub value: bool,
 }
 
 impl Object for Boolean {
-    fn object_type() -> ObjectType {
-        ObjectType::Boolean
-    }
-
     fn inspect(&self) -> String {
         format!("{}", self.value)
     }
 }
 
-struct Null {}
+pub struct Null;
 
 impl Object for Null {
-    fn object_type() -> ObjectType {
-        ObjectType::Null
-    }
-
     fn inspect(&self) -> String {
         "null".to_string()
     }
