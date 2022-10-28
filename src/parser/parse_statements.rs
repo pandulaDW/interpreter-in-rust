@@ -34,7 +34,7 @@ impl Parser {
         }
 
         self.next_token();
-        let value = self.parse_expression(Precedence::Lowest);
+        let value = self.parse_expression(Precedence::Lowest)?;
 
         if self.peek_token_is(&TokenType::Semicolon) {
             self.next_token();
@@ -55,7 +55,7 @@ impl Parser {
 
         self.next_token();
 
-        let return_value = self.parse_expression(Precedence::Lowest);
+        let return_value = self.parse_expression(Precedence::Lowest)?;
 
         if self.peek_token_is(&TokenType::Semicolon) {
             self.next_token();

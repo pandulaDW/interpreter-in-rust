@@ -1,21 +1,43 @@
-use std::{any::Any, fmt::Display};
+use std::fmt::Display;
 
-use super::{statements::BlockStatement, Expression, Node};
+use super::{statements::BlockStatement, Node};
 use crate::lexer::token;
+
+pub enum AllExpression {
+    Identifier(Identifier),
+    IntegerLiteral(IntegerLiteral),
+    PrefixExpression(PrefixExpression),
+    InfixExpression(InfixExpression),
+    Boolean(Boolean),
+    IfExpression(IfExpression),
+    FunctionLiteral(FunctionLiteral),
+    CallExpression(CallExpression),
+}
+
+impl Display for AllExpression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let out = match self {
+            AllExpression::Identifier(v) => v.to_string(),
+            AllExpression::IntegerLiteral(v) => v.to_string(),
+            AllExpression::PrefixExpression(v) => v.to_string(),
+            AllExpression::InfixExpression(v) => v.to_string(),
+            AllExpression::Boolean(v) => v.to_string(),
+            AllExpression::IfExpression(v) => v.to_string(),
+            AllExpression::FunctionLiteral(v) => v.to_string(),
+            AllExpression::CallExpression(v) => v.to_string(),
+        };
+        write!(f, "{}", out)
+    }
+}
 
 pub struct Identifier {
     pub token: token::Token, // Ident token
     pub value: String,
 }
 
-impl Expression for Identifier {}
-
 impl Node for Identifier {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
-    }
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
     }
 }
 
@@ -30,15 +52,9 @@ pub struct IntegerLiteral {
     pub value: i64,
 }
 
-impl Expression for IntegerLiteral {}
-
 impl Node for IntegerLiteral {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
-    }
-
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
     }
 }
 
@@ -51,18 +67,12 @@ impl Display for IntegerLiteral {
 pub struct PrefixExpression {
     pub token: token::Token, // The prefix token, e.g. !
     pub operator: String,
-    pub right: Option<Box<dyn Expression>>,
+    pub right: Option<Box<AllExpression>>,
 }
-
-impl Expression for PrefixExpression {}
 
 impl Node for PrefixExpression {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
-    }
-
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
     }
 }
 
@@ -77,20 +87,14 @@ impl Display for PrefixExpression {
 
 pub struct InfixExpression {
     pub token: token::Token, // The infix token, e.g. !
-    pub left: Option<Box<dyn Expression>>,
+    pub left: Option<Box<AllExpression>>,
     pub operator: String,
-    pub right: Option<Box<dyn Expression>>,
+    pub right: Option<Box<AllExpression>>,
 }
-
-impl Expression for InfixExpression {}
 
 impl Node for InfixExpression {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
-    }
-
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
     }
 }
 
@@ -117,15 +121,9 @@ pub struct Boolean {
     pub value: bool,
 }
 
-impl Expression for Boolean {}
-
 impl Node for Boolean {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
-    }
-
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
     }
 }
 
@@ -137,20 +135,14 @@ impl Display for Boolean {
 
 pub struct IfExpression {
     pub token: token::Token,
-    pub condition: Box<dyn Expression>,
+    pub condition: Box<AllExpression>,
     pub consequence: BlockStatement,
     pub alternative: Option<BlockStatement>,
 }
 
-impl Expression for IfExpression {}
-
 impl Node for IfExpression {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
-    }
-
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
     }
 }
 
@@ -178,15 +170,9 @@ pub struct FunctionLiteral {
     pub body: BlockStatement,
 }
 
-impl Expression for FunctionLiteral {}
-
 impl Node for FunctionLiteral {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
-    }
-
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
     }
 }
 
@@ -210,19 +196,13 @@ impl Display for FunctionLiteral {
 
 pub struct CallExpression {
     pub token: token::Token, // ( LPAREN
-    pub function: Box<dyn Expression>,
-    pub arguments: Vec<Box<dyn Expression>>,
+    pub function: Box<AllExpression>,
+    pub arguments: Vec<AllExpression>,
 }
-
-impl Expression for CallExpression {}
 
 impl Node for CallExpression {
     fn token_literal(&self) -> String {
         self.token.literal.clone()
-    }
-
-    fn into_any(self: Box<Self>) -> Box<dyn Any> {
-        self
     }
 }
 

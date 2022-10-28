@@ -2,7 +2,7 @@ pub mod expressions;
 pub mod program;
 pub mod statements;
 
-use std::{any::Any, fmt::Display};
+use std::fmt::Display;
 
 /// Every node in the AST has to implement the Node interface, meaning it has
 /// to provide a TokenLiteral() method that returns the literal value of
@@ -10,25 +10,12 @@ use std::{any::Any, fmt::Display};
 pub trait Node: Display {
     /// Return the token literal as a String
     fn token_literal(&self) -> String;
-
-    /// Converts a boxed `Statement` trait object into a boxed Any trait object.
-    ///
-    /// This is required for runtime type down-casting.
-    /// Since the program keeps a list of `Statement`s and we would want to infer the underlying
-    /// type that implements the `Statement` trait.
-    fn into_any(self: Box<Self>) -> Box<dyn Any>;
 }
-
-/// Should be implemented by statements as a way of differentiating between expressions
-pub trait Statement: Node {}
-
-/// Should be implemented by expressions as a way of differentiating between statements
-pub trait Expression: Node {}
 
 #[cfg(test)]
 mod tests {
     use super::{
-        expressions::Identifier,
+        expressions::{AllExpression, Identifier},
         program::Program,
         statements::{AllStatements, LetStatement},
     };
@@ -54,7 +41,7 @@ mod tests {
         let stmt = LetStatement {
             token: new_token(TokenType::Let, keywords::LET),
             name,
-            value: Some(Box::new(value)),
+            value: Box::new(AllExpression::Identifier(value)),
         };
 
         program.statements.push(AllStatements::Let(stmt));
