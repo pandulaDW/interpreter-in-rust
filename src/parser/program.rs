@@ -102,15 +102,15 @@ mod tests {
     use crate::ast::statements::AllStatements;
     use crate::ast::Node;
     use crate::lexer::keywords;
-    use std::any::Any;
 
     #[test]
     fn test_let_statements() {
-        // input, expectedIdent, expectedValue
-        let tests: Vec<(&str, &str, Box<dyn Any>)> = vec![
-            ("let x = 5", "x", Box::new(5)),
-            ("let y = true;", "y", Box::new(true)),
-            ("let foobar = y", "foobar", Box::new("y")),
+        use Literal::*;
+
+        let tests = vec![
+            ("let x = 5", "x", Int(5)),
+            ("let y = true;", "y", Bool(true)),
+            ("let foobar = y", "foobar", Str("y")),
         ];
 
         for tc in tests {
@@ -129,13 +129,14 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "reason"]
     fn test_return_statements() {
+        use Literal::*;
+
         // input, expectedIdent, expectedValue
-        let tests: Vec<(&str, Box<dyn Any>)> = vec![
-            ("return 5", Box::new(5)),
-            ("return false;", Box::new(false)),
-            ("return x", Box::new("x")),
+        let tests = vec![
+            ("return 5", Int(5)),
+            ("return false;", Bool(false)),
+            ("return x", Str("x")),
         ];
 
         for tc in tests {
@@ -154,7 +155,7 @@ mod tests {
         assert_eq!(program.statements.len(), 1);
         if let AllStatements::Return(return_stmt) = program.statements.remove(0) {
             let return_expr = return_stmt.return_value;
-            helper_test_infix_expression(return_expr, Box::new("x"), "+", Box::new("y"));
+            helper_test_infix_expression(*return_expr, Str("x"), "+", Str("y"));
         } else {
             panic!("{}", EXPECTED_RETURN);
         }
@@ -208,33 +209,35 @@ mod tests {
         }
     }
 
-    // type TupleInput<'a> = (&'a str, Box<dyn Any>, &'a str, Box<dyn Any>);
+    type TupleInput<'a> = (&'a str, Literal<'a>, &'a str, Literal<'a>);
 
-    // #[test]
-    // fn test_parsing_infix_expressions() {
-    //     // (input, left_value, operator, right_value)
-    //     let infix_tests: Vec<TupleInput> = vec![
-    //         ("5 + 5;", Box::new(5_i64), "+", Box::new(5_i64)),
-    //         ("5 - 5;", Box::new(5_i64), "-", Box::new(5_i64)),
-    //         ("5 * 5;", Box::new(5_i64), "*", Box::new(5_i64)),
-    //         ("5 / 5;", Box::new(5_i64), "/", Box::new(5_i64)),
-    //         ("5 > 5;", Box::new(5_i64), ">", Box::new(5_i64)),
-    //         ("5 < 5;", Box::new(5_i64), "<", Box::new(5_i64)),
-    //         ("5 == 5;", Box::new(5_i64), "==", Box::new(5_i64)),
-    //         ("5 != 5;", Box::new(5_i64), "!=", Box::new(5_i64)),
-    //         ("true == true", Box::new(true), "==", Box::new(true)),
-    //         ("true != false", Box::new(true), "!=", Box::new(false)),
-    //         ("false == false", Box::new(false), "==", Box::new(false)),
-    //         ("alice * bob", Box::new("alice"), "*", Box::new("bob")),
-    //     ];
-    //     for tc in infix_tests {
-    //         let mut program = helper_prepare_parser(tc.0);
-    //         assert_eq!(program.statements.len(), 1);
-    //         let stmt = program.statements.remove(0);
-    //         let expr_any = helper_get_expression_any(stmt);
-    //         helper_test_infix_expression(expr_any, tc.1, tc.2, tc.3);
-    //     }
-    // }
+    #[test]
+    fn test_parsing_infix_expressions() {
+        use Literal::*;
+
+        // (input, left_value, operator, right_value)
+        let infix_tests: Vec<TupleInput> = vec![
+            ("5 + 5;", Int(5_i64), "+", Int(5_i64)),
+            ("5 - 5;", Int(5_i64), "-", Int(5_i64)),
+            ("5 * 5;", Int(5_i64), "*", Int(5_i64)),
+            ("5 / 5;", Int(5_i64), "/", Int(5_i64)),
+            ("5 > 5;", Int(5_i64), ">", Int(5_i64)),
+            ("5 < 5;", Int(5_i64), "<", Int(5_i64)),
+            ("5 == 5;", Int(5_i64), "==", Int(5_i64)),
+            ("5 != 5;", Int(5_i64), "!=", Int(5_i64)),
+            ("true == true", Bool(true), "==", Bool(true)),
+            ("true != false", Bool(true), "!=", Bool(false)),
+            ("false == false", Bool(false), "==", Bool(false)),
+            ("alice * bob", Str("alice"), "*", Str("bob")),
+        ];
+        for tc in infix_tests {
+            let mut program = helper_prepare_parser(tc.0);
+            assert_eq!(program.statements.len(), 1);
+            let stmt = program.statements.remove(0);
+            let expr = helper_get_expression(stmt);
+            helper_test_infix_expression(expr, tc.1, tc.2, tc.3);
+        }
+    }
 
     #[test]
     fn test_operator_precedence_parsing() {
@@ -286,137 +289,144 @@ mod tests {
         }
     }
 
-    // #[test]
-    // fn test_if_expression() {
-    //     let mut program = helper_prepare_parser("if (x < y) { x };");
-    //     assert_eq!(program.statements.len(), 1);
+    #[test]
+    fn test_if_expression() {
+        use Literal::Str;
 
-    //     let stmt = program.statements.remove(0);
-    //     let mut if_expr = helper_get_expression_any(stmt)
-    //         .downcast::<IfExpression>()
-    //         .expect(EXPECTED_IF);
-    //     assert_eq!(if_expr.consequence.statements.len(), 1);
+        let mut program = helper_prepare_parser("if (x < y) { x };");
+        assert_eq!(program.statements.len(), 1);
 
-    //     let condition = if_expr.condition.into_any();
-    //     helper_test_infix_expression(condition, Box::new("x"), "<", Box::new("y"));
+        let mut if_expr = match helper_get_expression(program.statements.remove(0)) {
+            AllExpression::IfExpression(v) => v,
+            _ => panic!("{}", EXPECTED_IF),
+        };
+        assert_eq!(if_expr.consequence.statements.len(), 1);
 
-    //     let consequence = if_expr.consequence.statements.remove(0);
-    //     let consequence_expr = helper_get_expression_any(consequence)
-    //         .downcast::<Identifier>()
-    //         .expect(EXPECTED_IDENT);
-    //     helper_test_identifier(consequence_expr, "x");
+        helper_test_infix_expression(*if_expr.condition, Str("x"), "<", Str("y"));
 
-    //     assert!(if_expr.alternative.is_none());
-    // }
+        let consequence = if_expr.consequence.statements.remove(0);
+        let consequence_expr = helper_get_expression(consequence);
 
-    // #[test]
-    // fn test_if_else_expression() {
-    //     let mut program = helper_prepare_parser("if (x > y) { x } else { y + z; }");
-    //     assert_eq!(program.statements.len(), 1);
+        helper_test_identifier(consequence_expr, "x");
 
-    //     let stmt = program.statements.remove(0);
-    //     let mut if_expr = helper_get_expression_any(stmt)
-    //         .downcast::<IfExpression>()
-    //         .expect(EXPECTED_IF);
-    //     assert_eq!(if_expr.consequence.statements.len(), 1);
+        assert!(if_expr.alternative.is_none());
+    }
 
-    //     let condition = if_expr.condition.into_any();
-    //     helper_test_infix_expression(condition, Box::new("x"), ">", Box::new("y"));
+    #[test]
+    fn test_if_else_expression() {
+        use Literal::Str;
 
-    //     let consequence = if_expr.consequence.statements.remove(0);
-    //     let consequence_expr = helper_get_expression_any(consequence)
-    //         .downcast::<Identifier>()
-    //         .expect(EXPECTED_IDENT);
-    //     helper_test_identifier(consequence_expr, "x");
+        let mut program = helper_prepare_parser("if (x > y) { x } else { y + z; }");
+        assert_eq!(program.statements.len(), 1);
 
-    //     assert!(if_expr.alternative.is_some());
-    //     let alternative = if_expr.alternative.unwrap().statements.remove(0);
-    //     let alternative_expr = helper_get_expression_any(alternative);
-    //     helper_test_infix_expression(alternative_expr, Box::new("y"), "+", Box::new("z"));
-    // }
+        let mut if_expr = match helper_get_expression(program.statements.remove(0)) {
+            AllExpression::IfExpression(v) => v,
+            _ => panic!("{}", EXPECTED_IF),
+        };
+        assert_eq!(if_expr.consequence.statements.len(), 1);
 
-    // #[test]
-    // fn test_functional_literal() {
-    //     let mut program = helper_prepare_parser("fn(x, y) { x + y; }");
-    //     assert_eq!(program.statements.len(), 1);
+        helper_test_infix_expression(*if_expr.condition, Str("x"), ">", Str("y"));
 
-    //     let stmt = program.statements.remove(0);
-    //     let mut fn_expr = helper_get_expression_any(stmt)
-    //         .downcast::<FunctionLiteral>()
-    //         .expect(EXPECTED_FUNC);
-    //     assert_eq!(fn_expr.parameters.len(), 2);
+        let consequence = if_expr.consequence.statements.remove(0);
+        let consequence_expr = helper_get_expression(consequence);
+        helper_test_identifier(consequence_expr, "x");
 
-    //     assert_eq!(fn_expr.parameters[0].value, "x");
-    //     assert_eq!(fn_expr.parameters[1].value, "y");
+        assert!(if_expr.alternative.is_some());
+        let alternative = if_expr.alternative.unwrap().statements.remove(0);
+        let alternative_expr = helper_get_expression(alternative);
+        helper_test_infix_expression(alternative_expr, Literal::Str("y"), "+", Literal::Str("z"));
+    }
 
-    //     assert_eq!(fn_expr.body.statements.len(), 1);
-    //     let stmt = fn_expr.body.statements.remove(0);
-    //     let body_expr = helper_get_expression_any(stmt);
-    //     helper_test_infix_expression(body_expr, Box::new("x"), "+", Box::new("y"));
-    // }
+    #[test]
+    fn test_functional_literal() {
+        let mut program = helper_prepare_parser("fn(x, y) { x + y; }");
+        assert_eq!(program.statements.len(), 1);
 
-    // #[test]
-    // fn test_parse_fn_literal_parameters() {
-    //     // (input, expected_params)
-    //     let input = [
-    //         ("fn() {};", vec![]),
-    //         ("fn(x,y,z) {}", vec!["x", "y", "z"]),
-    //         ("fn(x){}", vec!["x"]),
-    //     ];
+        let mut fn_expr = match helper_get_expression(program.statements.remove(0)) {
+            AllExpression::FunctionLiteral(v) => v,
+            _ => panic!("{}", EXPECTED_FUNC),
+        };
+        assert_eq!(fn_expr.parameters.len(), 2);
 
-    //     for tc in input {
-    //         let mut program = helper_prepare_parser(tc.0);
-    //         assert_eq!(program.statements.len(), 1);
-    //         let fn_expr = helper_get_expression_any(program.statements.remove(0))
-    //             .downcast::<FunctionLiteral>()
-    //             .expect(EXPECTED_FUNC);
-    //         assert_eq!(fn_expr.parameters.len(), tc.1.len());
+        assert_eq!(fn_expr.parameters[0].value, "x");
+        assert_eq!(fn_expr.parameters[1].value, "y");
 
-    //         tc.1.into_iter()
-    //             .enumerate()
-    //             .for_each(|(i, param)| assert_eq!(fn_expr.parameters[i].value, param));
-    //     }
-    // }
+        assert_eq!(fn_expr.body.statements.len(), 1);
+        let stmt = fn_expr.body.statements.remove(0);
+        let body_expr = helper_get_expression(stmt);
+        helper_test_infix_expression(body_expr, Literal::Str("x"), "+", Literal::Str("y"));
+    }
 
-    // #[test]
-    // fn test_parse_call_expression() {
-    //     let input = "add(1, 2 * 3, 4 + 5, x);";
-    //     let mut program = helper_prepare_parser(input);
-    //     assert_eq!(program.statements.len(), 1);
+    #[test]
+    fn test_parse_fn_literal_parameters() {
+        // (input, expected_params)
+        let input = [
+            ("fn() {};", vec![]),
+            ("fn(x,y,z) {}", vec!["x", "y", "z"]),
+            ("fn(x){}", vec!["x"]),
+        ];
 
-    //     let stmt = program.statements.remove(0);
-    //     let call_expr = helper_get_expression_any(stmt)
-    //         .downcast::<CallExpression>()
-    //         .expect(EXPECTED_CALL);
-    //     helper_test_identifier(call_expr.function, "add");
+        for tc in input {
+            let mut program = helper_prepare_parser(tc.0);
+            assert_eq!(program.statements.len(), 1);
+            let fn_expr = match helper_get_expression(program.statements.remove(0)) {
+                AllExpression::FunctionLiteral(v) => v,
+                _ => panic!("{}", EXPECTED_FUNC),
+            };
+            assert_eq!(fn_expr.parameters.len(), tc.1.len());
 
-    //     let mut args = call_expr.arguments;
-    //     assert_eq!(args.len(), 4);
-    //     helper_test_integer_literal(args.remove(0), 1);
-    //     helper_test_infix_expression(args.remove(0).into_any(), Box::new(2), "*", Box::new(3));
-    //     helper_test_infix_expression(args.remove(0).into_any(), Box::new(4), "+", Box::new(5));
-    //     helper_test_identifier(args.remove(0), "x");
+            tc.1.into_iter()
+                .enumerate()
+                .for_each(|(i, param)| assert_eq!(fn_expr.parameters[i].value, param));
+        }
+    }
 
-    //     let input = "print();";
-    //     let mut program = helper_prepare_parser(input);
-    //     assert_eq!(program.statements.len(), 1);
-    //     let call_expr = helper_get_expression_any(program.statements.remove(0))
-    //         .downcast::<CallExpression>()
-    //         .unwrap();
-    //     helper_test_identifier(call_expr.function, "print");
-    //     assert_eq!(call_expr.arguments.len(), 0);
-    // }
+    #[test]
+    fn test_parse_call_expression() {
+        let input = "add(1, 2 * 3, 4 + 5, x);";
+        let mut program = helper_prepare_parser(input);
+        assert_eq!(program.statements.len(), 1);
+
+        let call_expr = match helper_get_expression(program.statements.remove(0)) {
+            AllExpression::CallExpression(v) => v,
+            _ => panic!("{}", EXPECTED_CALL),
+        };
+
+        helper_test_identifier(*call_expr.function, "add");
+
+        let mut args = call_expr.arguments;
+        assert_eq!(args.len(), 4);
+        helper_test_integer_literal(args.remove(0), 1);
+        helper_test_infix_expression(args.remove(0), Literal::Int(2), "*", Literal::Int(3));
+        helper_test_infix_expression(args.remove(0), Literal::Int(4), "+", Literal::Int(5));
+        helper_test_identifier(args.remove(0), "x");
+
+        let input = "print();";
+        let mut program = helper_prepare_parser(input);
+        assert_eq!(program.statements.len(), 1);
+        let call_expr = match helper_get_expression(program.statements.remove(0)) {
+            AllExpression::CallExpression(v) => v,
+            _ => panic!("{}", EXPECTED_CALL),
+        };
+        helper_test_identifier(*call_expr.function, "print");
+        assert_eq!(call_expr.arguments.len(), 0);
+    }
 }
 
 /// Contains helper functions and constants useful for testing parsing
 #[cfg(test)]
 mod test_helpers {
     use super::{Lexer, Parser};
-    use crate::ast::expressions::{AllExpression, InfixExpression};
+    use crate::ast::expressions::AllExpression;
     use crate::ast::program::Program;
     use crate::ast::statements::AllStatements;
     use crate::ast::Node;
-    use std::any::{Any, TypeId};
+
+    pub enum Literal<'a> {
+        Int(i64),
+        Bool(bool),
+        Str(&'a str),
+    }
 
     pub fn helper_check_parser_errors(errors: &Vec<String>) {
         if errors.is_empty() {
@@ -459,18 +469,18 @@ mod test_helpers {
     }
 
     pub fn helper_test_infix_expression(
-        expr_any: Box<dyn Any>,
-        left: Box<dyn Any>,
+        expr: AllExpression,
+        left: Literal,
         operator: &str,
-        right: Box<dyn Any>,
+        right: Literal,
     ) {
-        let infix_expr = expr_any
-            .downcast::<InfixExpression>()
-            .expect(EXPECTED_INFIX);
-
-        helper_test_literal(left, *infix_expr.left.expect(EXPECTED_LEFT));
-        assert_eq!(infix_expr.operator, operator);
-        helper_test_literal(right, *infix_expr.right.expect(EXPECTED_RIGHT));
+        if let AllExpression::InfixExpression(infix_expr) = expr {
+            helper_test_literal(left, *infix_expr.left.expect(EXPECTED_LEFT));
+            assert_eq!(infix_expr.operator, operator);
+            helper_test_literal(right, *infix_expr.right.expect(EXPECTED_RIGHT));
+        } else {
+            panic!("{}", EXPECTED_INFIX)
+        }
     }
 
     pub fn helper_prepare_parser(input: &str) -> Program {
@@ -481,14 +491,6 @@ mod test_helpers {
         program
     }
 
-    // pub fn helper_get_expression_any(stmt: AllStatements) -> Box<dyn Any> {
-    //     if let AllStatements::Expression(expr_stmt) = stmt {
-    //         return expr_stmt.expression.expect(EXPECTED_EXPRESSION).into_any();
-    //     } else {
-    //         panic!("{}", EXPECTED_EXPRESSION_STATEMENT);
-    //     }
-    // }
-
     pub fn helper_get_expression(stmt: AllStatements) -> AllExpression {
         if let AllStatements::Expression(expr_stmt) = stmt {
             return *expr_stmt.expression.expect(EXPECTED_EXPRESSION);
@@ -497,18 +499,11 @@ mod test_helpers {
         }
     }
 
-    pub fn helper_test_literal(expected: Box<dyn Any>, actual: AllExpression) {
-        let expected_type_id = (&*expected).type_id();
-
-        if TypeId::of::<i64>() == expected_type_id {
-            let val = expected.downcast::<i64>().unwrap();
-            helper_test_integer_literal(actual, *val);
-        } else if TypeId::of::<bool>() == expected_type_id {
-            let val = expected.downcast::<bool>().unwrap();
-            helper_test_boolean_literal(actual, *val);
-        } else if TypeId::of::<&str>() == expected_type_id {
-            let val = expected.downcast::<&str>().unwrap();
-            helper_test_identifier(actual, *val);
+    pub fn helper_test_literal(expected: Literal, expr: AllExpression) {
+        match expected {
+            Literal::Int(val) => helper_test_integer_literal(expr, val),
+            Literal::Bool(val) => helper_test_boolean_literal(expr, val),
+            Literal::Str(val) => helper_test_identifier(expr, val),
         }
     }
 
