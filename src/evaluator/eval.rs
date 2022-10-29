@@ -6,11 +6,12 @@ use crate::{
     },
 };
 
+// constants that can be reused without extra allocations
 const TRUE: AllObjects = AllObjects::Boolean(Boolean { value: true });
 const FALSE: AllObjects = AllObjects::Boolean(Boolean { value: false });
 const NULL: AllObjects = AllObjects::Null(Null);
 
-/// eval takes in any type of node and applies the appropriate logic
+/// eval takes in any type of node and applies the appropriate evaluation logic
 pub fn eval(node: AllNodes) -> Option<AllObjects> {
     match node {
         AllNodes::Program(p) => eval_statements(p.statements),
@@ -45,34 +46,89 @@ fn eval_expression(exprs: AllExpressions) -> Option<AllObjects> {
 
         AllExpressions::Boolean(node) => {
             if node.value {
-                Some(TRUE)
-            } else {
-                Some(FALSE)
+                return Some(TRUE);
             }
+            Some(FALSE)
         }
 
         AllExpressions::PrefixExpression(node) => {
             let right = node.right?;
             let right_evaluated = eval(AllNodes::Expressions(*right))?;
-            Some(eval_prefix_expression(node.operator, right_evaluated))
+            Some(eval_prefix_expression(&node.operator, right_evaluated))
+        }
+
+        AllExpressions::InfixExpression(node) => {
+            let left = node.left?;
+            let right = node.right?;
+
+            let left_eval = eval(AllNodes::Expressions(*left))?;
+            let right_eval = eval(AllNodes::Expressions(*right))?;
+
+            Some(eval_infix_expression(left_eval, &node.operator, right_eval))
         }
 
         _ => None,
     }
 }
 
-fn eval_prefix_expression(operator: String, right: AllObjects) -> AllObjects {
-    match operator.as_str() {
-        "!" => eval_bang_op_expression(right),
+fn eval_prefix_expression(operator: &str, right: AllObjects) -> AllObjects {
+    match operator {
+        "!" => eval_bang_operator(right),
+        "-" => eval_minus_operator(right),
         _ => NULL,
     }
 }
 
-fn eval_bang_op_expression(right: AllObjects) -> AllObjects {
+fn eval_infix_expression(left: AllObjects, operator: &str, right: AllObjects) -> AllObjects {
+    if left.is_integer() && right.is_integer() {
+        return eval_arithmetic_operators(left, operator, right);
+    }
+    NULL
+}
+
+fn eval_bang_operator(right: AllObjects) -> AllObjects {
     match right {
         TRUE => FALSE,
         FALSE => TRUE,
         NULL => TRUE,
         _ => FALSE,
+    }
+}
+
+fn eval_minus_operator(right: AllObjects) -> AllObjects {
+    if let AllObjects::Integer(v) = right {
+        return AllObjects::Integer(Integer { value: -v.value });
+    }
+
+    NULL
+}
+
+fn eval_arithmetic_operators(left: AllObjects, operator: &str, right: AllObjects) -> AllObjects {
+    let left_int_val = match left {
+        AllObjects::Integer(v) => v,
+        _ => return NULL,
+    }
+    .value;
+
+    let right_int_val = match right {
+        AllObjects::Integer(v) => v,
+        _ => return NULL,
+    }
+    .value;
+
+    match operator {
+        "+" => AllObjects::Integer(Integer {
+            value: left_int_val + right_int_val,
+        }),
+        "-" => AllObjects::Integer(Integer {
+            value: left_int_val - right_int_val,
+        }),
+        "*" => AllObjects::Integer(Integer {
+            value: left_int_val * right_int_val,
+        }),
+        "/" => AllObjects::Integer(Integer {
+            value: left_int_val / right_int_val,
+        }),
+        _ => NULL,
     }
 }

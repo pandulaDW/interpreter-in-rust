@@ -1,5 +1,9 @@
 pub mod objects;
 
+pub trait Object {
+    fn inspect(&self) -> String;
+}
+
 #[derive(PartialEq, Eq)]
 pub enum AllObjects {
     Integer(objects::Integer),
@@ -7,8 +11,27 @@ pub enum AllObjects {
     Null(objects::Null),
 }
 
-pub trait Object {
-    fn inspect(&self) -> String;
+impl AllObjects {
+    pub fn is_integer(&self) -> bool {
+        if let AllObjects::Integer(_) = self {
+            return true;
+        }
+        false
+    }
+
+    fn _is_boolean(&self) -> bool {
+        if let AllObjects::Boolean(_) = self {
+            return true;
+        }
+        false
+    }
+
+    fn _is_null(&self) -> bool {
+        if let AllObjects::Null(_) = self {
+            return true;
+        }
+        false
+    }
 }
 
 impl Object for AllObjects {
