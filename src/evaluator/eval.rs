@@ -1,10 +1,15 @@
 use crate::{
-    ast::{expressions::AllExpressions, statements::AllStatements, AllNodes},
+    ast::{
+        expressions::{AllExpressions, IfExpression},
+        statements::AllStatements,
+        AllNodes,
+    },
     object::{
         objects::{Boolean, Integer, Null},
         AllObjects,
     },
 };
+
 // constants that can be reused without extra allocations
 const TRUE: AllObjects = AllObjects::Boolean(Boolean { value: true });
 const FALSE: AllObjects = AllObjects::Boolean(Boolean { value: false });
@@ -24,6 +29,20 @@ fn eval_statements(stmts: Vec<AllStatements>) -> Option<AllObjects> {
 
     for stmt in stmts {
         result = eval(AllNodes::Statements(stmt));
+
+        // if the value is a ReturnValue, return early
+        match result {
+            Some(v) => {
+                if let AllObjects::ReturnValue(v) = v {
+                    return Some(*v);
+                } else {
+                    result = Some(v)
+                }
+            }
+            None => {
+                result = None;
+            }
+        }
     }
 
     result
@@ -31,9 +50,12 @@ fn eval_statements(stmts: Vec<AllStatements>) -> Option<AllObjects> {
 
 fn eval_statement(stmt: AllStatements) -> Option<AllObjects> {
     match stmt {
-        AllStatements::Let(_) => todo!(),
-        AllStatements::Return(_) => todo!(),
-        AllStatements::Expression(expr_stmt) => eval_expression(*expr_stmt.expression?),
+        AllStatements::Let(_) => None,
+        AllStatements::Return(stmt) => {
+            let evaluated = eval(AllNodes::Expressions(*stmt.return_value))?;
+            Some(AllObjects::ReturnValue(Box::new(evaluated)))
+        }
+        AllStatements::Expression(stmt) => eval_expression(*stmt.expression?),
     }
 }
 
@@ -66,6 +88,8 @@ fn eval_expression(exprs: AllExpressions) -> Option<AllObjects> {
             Some(eval_infix_expression(left_eval, &node.operator, right_eval))
         }
 
+        AllExpressions::IfExpression(node) => eval_if_expression(node),
+
         _ => None,
     }
 }
@@ -86,6 +110,21 @@ fn eval_infix_expression(left: AllObjects, operator: &str, right: AllObjects) ->
         return eval_comparison_for_booleans(left, operator, right);
     }
     NULL
+}
+
+fn eval_if_expression(expr: IfExpression) -> Option<AllObjects> {
+    let condition = eval(AllNodes::Expressions(*expr.condition))?;
+
+    if is_truthy(condition) {
+        return eval_statements(expr.consequence.statements);
+    }
+
+    if expr.alternative.is_none() {
+        return Some(NULL);
+    }
+
+    let alternative = expr.alternative?;
+    eval_statements(alternative.statements)
 }
 
 fn eval_bang_operator(right: AllObjects) -> AllObjects {
@@ -154,6 +193,14 @@ fn eval_comparison_for_booleans(left: AllObjects, operator: &str, right: AllObje
         "==" => get_bool_consts(left_val.value == right_val.value),
         "!=" => get_bool_consts(left_val.value != right_val.value),
         _ => NULL,
+    }
+}
+
+fn is_truthy(obj: AllObjects) -> bool {
+    match obj {
+        AllObjects::Boolean(v) => v.value,
+        AllObjects::Null(_) => false,
+        _ => true,
     }
 }
 

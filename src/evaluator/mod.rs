@@ -79,6 +79,44 @@ mod tests {
             helper_test_boolean_obj(evaluated, tc.1);
         }
     }
+
+    #[test]
+    fn test_if_expressions() {
+        let test_cases = [
+            ("if (true) { 10 }", Some(10)),
+            ("if (false) { 10 }", None),
+            ("if (1) { 10 }", Some(10)),
+            ("if (1 < 2) { 10 }", Some(10)),
+            ("if (1 > 2) { 10 }", None),
+            ("if (1 > 2) { 10 } else { 20 }", Some(20)),
+            ("if (1 < 2) { 10 } else { 20 }", Some(10)),
+        ];
+
+        for tc in test_cases {
+            let evaluated = helper_test_eval(tc.0);
+
+            if tc.1.is_some() {
+                helper_test_integer_obj(evaluated, tc.1.unwrap());
+            } else {
+                helper_test_null(evaluated);
+            }
+        }
+    }
+
+    #[test]
+    fn test_return_statement() {
+        let test_cases = [
+            ("return 10;", 10),
+            ("return 10; 9;", 10),
+            ("return 2 * 5; 9;", 10),
+            ("9; return 2 * 5; 9;", 10),
+        ];
+
+        for tc in test_cases {
+            let evaluated = helper_test_eval(tc.0);
+            helper_test_integer_obj(evaluated, tc.1);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -110,6 +148,14 @@ mod test_helpers {
         }
     }
 
+    pub fn helper_test_null(obj: Option<AllObjects>) {
+        match obj.unwrap() {
+            AllObjects::Null(_) => {}
+            _ => panic!("{}", EXPECTED_NULL),
+        }
+    }
+
     const EXPECTED_OBJECT: &str = "expected an object";
     const EXPECTED_INT_OBJECT: &str = "expected an integer object";
+    const EXPECTED_NULL: &str = "expected null";
 }

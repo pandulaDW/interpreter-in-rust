@@ -9,6 +9,7 @@ pub enum AllObjects {
     Integer(objects::Integer),
     Boolean(objects::Boolean),
     Null(objects::Null),
+    ReturnValue(Box<AllObjects>),
 }
 
 impl AllObjects {
@@ -25,13 +26,6 @@ impl AllObjects {
         }
         false
     }
-
-    fn _is_null(&self) -> bool {
-        if let AllObjects::Null(_) = self {
-            return true;
-        }
-        false
-    }
 }
 
 impl Object for AllObjects {
@@ -40,6 +34,7 @@ impl Object for AllObjects {
             AllObjects::Integer(v) => v.inspect(),
             AllObjects::Boolean(v) => v.inspect(),
             AllObjects::Null(v) => v.inspect(),
+            AllObjects::ReturnValue(v) => v.inspect(),
         }
     }
 }
