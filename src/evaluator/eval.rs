@@ -5,7 +5,6 @@ use crate::{
         AllObjects,
     },
 };
-
 // constants that can be reused without extra allocations
 const TRUE: AllObjects = AllObjects::Boolean(Boolean { value: true });
 const FALSE: AllObjects = AllObjects::Boolean(Boolean { value: false });
@@ -81,7 +80,10 @@ fn eval_prefix_expression(operator: &str, right: AllObjects) -> AllObjects {
 
 fn eval_infix_expression(left: AllObjects, operator: &str, right: AllObjects) -> AllObjects {
     if left.is_integer() && right.is_integer() {
-        return eval_arithmetic_operators(left, operator, right);
+        return eval_integer_calculations(left, operator, right);
+    }
+    if left.is_boolean() && right.is_boolean() {
+        return eval_comparison_for_booleans(left, operator, right);
     }
     NULL
 }
@@ -103,7 +105,7 @@ fn eval_minus_operator(right: AllObjects) -> AllObjects {
     NULL
 }
 
-fn eval_arithmetic_operators(left: AllObjects, operator: &str, right: AllObjects) -> AllObjects {
+fn eval_integer_calculations(left: AllObjects, operator: &str, right: AllObjects) -> AllObjects {
     let left_int_val = match left {
         AllObjects::Integer(v) => v,
         _ => return NULL,
@@ -129,6 +131,35 @@ fn eval_arithmetic_operators(left: AllObjects, operator: &str, right: AllObjects
         "/" => AllObjects::Integer(Integer {
             value: left_int_val / right_int_val,
         }),
+        "<" => get_bool_consts(left_int_val < right_int_val),
+        ">" => get_bool_consts(left_int_val > right_int_val),
+        "!=" => get_bool_consts(left_int_val != right_int_val),
+        "==" => get_bool_consts(left_int_val == right_int_val),
         _ => NULL,
     }
+}
+
+fn eval_comparison_for_booleans(left: AllObjects, operator: &str, right: AllObjects) -> AllObjects {
+    let left_val = match left {
+        AllObjects::Boolean(v) => v,
+        _ => return NULL,
+    };
+
+    let right_val = match right {
+        AllObjects::Boolean(v) => v,
+        _ => return NULL,
+    };
+
+    match operator {
+        "==" => get_bool_consts(left_val.value == right_val.value),
+        "!=" => get_bool_consts(left_val.value != right_val.value),
+        _ => NULL,
+    }
+}
+
+fn get_bool_consts(val: bool) -> AllObjects {
+    if val {
+        return TRUE;
+    }
+    FALSE
 }

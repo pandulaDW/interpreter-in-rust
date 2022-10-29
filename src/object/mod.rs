@@ -19,7 +19,7 @@ impl AllObjects {
         false
     }
 
-    fn _is_boolean(&self) -> bool {
+    pub fn is_boolean(&self) -> bool {
         if let AllObjects::Boolean(_) = self {
             return true;
         }
