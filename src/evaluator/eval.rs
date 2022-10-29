@@ -1,7 +1,7 @@
 use crate::{
     ast::{
         expressions::{AllExpressions, IfExpression},
-        statements::AllStatements,
+        statements::{AllStatements, BlockStatement},
         AllNodes,
     },
     object::{
@@ -18,13 +18,13 @@ const NULL: AllObjects = AllObjects::Null(Null);
 /// eval takes in any type of node and applies the appropriate evaluation logic
 pub fn eval(node: AllNodes) -> Option<AllObjects> {
     match node {
-        AllNodes::Program(p) => eval_statements(p.statements),
+        AllNodes::Program(p) => eval_program(p.statements),
         AllNodes::Statements(s) => eval_statement(s),
         AllNodes::Expressions(e) => eval_expression(e),
     }
 }
 
-fn eval_statements(stmts: Vec<AllStatements>) -> Option<AllObjects> {
+fn eval_program(stmts: Vec<AllStatements>) -> Option<AllObjects> {
     let mut result = None;
 
     for stmt in stmts {
@@ -56,7 +56,29 @@ fn eval_statement(stmt: AllStatements) -> Option<AllObjects> {
             Some(AllObjects::ReturnValue(Box::new(evaluated)))
         }
         AllStatements::Expression(stmt) => eval_expression(*stmt.expression?),
+        AllStatements::_Block(block) => eval_block_statement(block),
     }
+}
+
+fn eval_block_statement(block: BlockStatement) -> Option<AllObjects> {
+    let mut result = None;
+
+    for stmt in block.statements {
+        result = eval(AllNodes::Statements(stmt));
+
+        match result {
+            Some(ref v) => {
+                if let AllObjects::ReturnValue(_) = v {
+                    return result;
+                }
+            }
+            None => {
+                result = None;
+            }
+        }
+    }
+
+    result
 }
 
 fn eval_expression(exprs: AllExpressions) -> Option<AllObjects> {
@@ -116,7 +138,7 @@ fn eval_if_expression(expr: IfExpression) -> Option<AllObjects> {
     let condition = eval(AllNodes::Expressions(*expr.condition))?;
 
     if is_truthy(condition) {
-        return eval_statements(expr.consequence.statements);
+        return eval_block_statement(expr.consequence);
     }
 
     if expr.alternative.is_none() {
@@ -124,7 +146,7 @@ fn eval_if_expression(expr: IfExpression) -> Option<AllObjects> {
     }
 
     let alternative = expr.alternative?;
-    eval_statements(alternative.statements)
+    eval_block_statement(alternative)
 }
 
 fn eval_bang_operator(right: AllObjects) -> AllObjects {
