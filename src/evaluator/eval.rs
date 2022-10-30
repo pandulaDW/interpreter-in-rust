@@ -1,7 +1,8 @@
+use super::errors;
 use crate::{
     ast::{
-        expressions::{AllExpressions, IfExpression},
-        statements::{AllStatements, BlockStatement},
+        expressions::{AllExpressions, IfExpression, InfixExpression, PrefixExpression},
+        statements::{AllStatements, BlockStatement, ReturnStatement},
         AllNodes,
     },
     object::{
@@ -30,15 +31,14 @@ fn eval_program(stmts: Vec<AllStatements>) -> Option<AllObjects> {
     for stmt in stmts {
         result = eval(AllNodes::Statements(stmt));
 
-        // if the value is a ReturnValue, return early
+        // if the value is a ReturnValue then return early with its underlying value.
+        // if the value is an error, return early with the error
         match result {
-            Some(v) => {
-                if let AllObjects::ReturnValue(v) = v {
-                    return Some(*v);
-                } else {
-                    result = Some(v)
-                }
-            }
+            Some(v) => match v {
+                AllObjects::ReturnValue(r_val) => return Some(*r_val),
+                AllObjects::Error(_) => return Some(v),
+                _ => result = Some(v),
+            },
             None => {
                 result = None;
             }
@@ -51,10 +51,7 @@ fn eval_program(stmts: Vec<AllStatements>) -> Option<AllObjects> {
 fn eval_statement(stmt: AllStatements) -> Option<AllObjects> {
     match stmt {
         AllStatements::Let(_) => None,
-        AllStatements::Return(stmt) => {
-            let evaluated = eval(AllNodes::Expressions(*stmt.return_value))?;
-            Some(AllObjects::ReturnValue(Box::new(evaluated)))
-        }
+        AllStatements::Return(stmt) => eval_return_statement(stmt),
         AllStatements::Expression(stmt) => eval_expression(*stmt.expression?),
         AllStatements::_Block(block) => eval_block_statement(block),
     }
@@ -67,18 +64,23 @@ fn eval_block_statement(block: BlockStatement) -> Option<AllObjects> {
         result = eval(AllNodes::Statements(stmt));
 
         match result {
-            Some(ref v) => {
-                if let AllObjects::ReturnValue(_) = v {
-                    return result;
-                }
-            }
-            None => {
-                result = None;
-            }
+            Some(ref v) => match v {
+                AllObjects::ReturnValue(_) | AllObjects::Error(_) => return result,
+                _ => {}
+            },
+            None => {}
         }
     }
 
     result
+}
+
+fn eval_return_statement(stmt: ReturnStatement) -> Option<AllObjects> {
+    let evaluated = eval(AllNodes::Expressions(*stmt.return_value))?;
+    if evaluated.is_error() {
+        return Some(evaluated);
+    }
+    Some(AllObjects::ReturnValue(Box::new(evaluated)))
 }
 
 fn eval_expression(exprs: AllExpressions) -> Option<AllObjects> {
@@ -86,56 +88,58 @@ fn eval_expression(exprs: AllExpressions) -> Option<AllObjects> {
         AllExpressions::IntegerLiteral(node) => {
             Some(AllObjects::Integer(Integer { value: node.value }))
         }
-
-        AllExpressions::Boolean(node) => {
-            if node.value {
-                return Some(TRUE);
-            }
-            Some(FALSE)
-        }
-
-        AllExpressions::PrefixExpression(node) => {
-            let right = node.right?;
-            let right_evaluated = eval(AllNodes::Expressions(*right))?;
-            Some(eval_prefix_expression(&node.operator, right_evaluated))
-        }
-
-        AllExpressions::InfixExpression(node) => {
-            let left = node.left?;
-            let right = node.right?;
-
-            let left_eval = eval(AllNodes::Expressions(*left))?;
-            let right_eval = eval(AllNodes::Expressions(*right))?;
-
-            Some(eval_infix_expression(left_eval, &node.operator, right_eval))
-        }
-
+        AllExpressions::Boolean(node) => Some(get_bool_consts(node.value)),
+        AllExpressions::PrefixExpression(node) => eval_prefix_expression(node),
+        AllExpressions::InfixExpression(node) => eval_infix_expression(node),
         AllExpressions::IfExpression(node) => eval_if_expression(node),
-
         _ => None,
     }
 }
 
-fn eval_prefix_expression(operator: &str, right: AllObjects) -> AllObjects {
-    match operator {
-        "!" => eval_bang_operator(right),
-        "-" => eval_minus_operator(right),
-        _ => NULL,
+fn eval_prefix_expression(node: PrefixExpression) -> Option<AllObjects> {
+    let right = node.right?;
+    let right_evaluated = eval(AllNodes::Expressions(*right))?;
+
+    if right_evaluated.is_error() {
+        return Some(right_evaluated);
     }
+
+    let result = match node.operator.as_str() {
+        "!" => eval_bang_operator(right_evaluated),
+        "-" => eval_minus_operator(right_evaluated),
+        _ => NULL,
+    };
+
+    Some(result)
 }
 
-fn eval_infix_expression(left: AllObjects, operator: &str, right: AllObjects) -> AllObjects {
+fn eval_infix_expression(node: InfixExpression) -> Option<AllObjects> {
+    let left = eval(AllNodes::Expressions(*node.left?))?;
+    let right = eval(AllNodes::Expressions(*node.right?))?;
+
+    if left.object_type() != right.object_type() {
+        return Some(errors::type_mismatch(&left, &node.operator, &right));
+    };
+
     if left.is_integer() && right.is_integer() {
-        return eval_integer_calculations(left, operator, right);
+        return Some(eval_integer_calculations(left, &node.operator, right));
     }
     if left.is_boolean() && right.is_boolean() {
-        return eval_comparison_for_booleans(left, operator, right);
+        return Some(eval_comparison_for_booleans(left, &node.operator, right));
     }
-    NULL
+
+    Some(errors::unknown_operator(
+        Some(&left),
+        &node.operator,
+        &right,
+    ))
 }
 
 fn eval_if_expression(expr: IfExpression) -> Option<AllObjects> {
     let condition = eval(AllNodes::Expressions(*expr.condition))?;
+    if condition.is_error() {
+        return Some(condition);
+    }
 
     if is_truthy(condition) {
         return eval_block_statement(expr.consequence);
@@ -162,8 +166,7 @@ fn eval_minus_operator(right: AllObjects) -> AllObjects {
     if let AllObjects::Integer(v) = right {
         return AllObjects::Integer(Integer { value: -v.value });
     }
-
-    NULL
+    errors::unknown_operator(None, "-", &right)
 }
 
 fn eval_integer_calculations(left: AllObjects, operator: &str, right: AllObjects) -> AllObjects {
@@ -201,12 +204,12 @@ fn eval_integer_calculations(left: AllObjects, operator: &str, right: AllObjects
 }
 
 fn eval_comparison_for_booleans(left: AllObjects, operator: &str, right: AllObjects) -> AllObjects {
-    let left_val = match left {
+    let left_val = match &left {
         AllObjects::Boolean(v) => v,
         _ => return NULL,
     };
 
-    let right_val = match right {
+    let right_val = match &right {
         AllObjects::Boolean(v) => v,
         _ => return NULL,
     };
@@ -214,7 +217,7 @@ fn eval_comparison_for_booleans(left: AllObjects, operator: &str, right: AllObje
     match operator {
         "==" => get_bool_consts(left_val.value == right_val.value),
         "!=" => get_bool_consts(left_val.value != right_val.value),
-        _ => NULL,
+        _ => errors::unknown_operator(Some(&left), operator, &right),
     }
 }
 

@@ -1,3 +1,4 @@
+mod errors;
 mod eval;
 
 pub use eval::eval;
@@ -5,6 +6,7 @@ pub use eval::eval;
 #[cfg(test)]
 mod tests {
     use super::test_helpers::*;
+    use crate::object::AllObjects;
 
     #[test]
     fn test_eval_integer_expression() {
@@ -126,6 +128,37 @@ mod tests {
             helper_test_integer_obj(evaluated, tc.1);
         }
     }
+
+    #[test]
+    fn test_error_handling() {
+        let test_cases = [
+            ("5 + true;", "type mismatch: INTEGER + BOOLEAN"),
+            ("5 + true; 5;", "type mismatch: INTEGER + BOOLEAN"),
+            ("-true", "unknown operator: -BOOLEAN"),
+            ("true + false;", "unknown operator: BOOLEAN + BOOLEAN"),
+            ("5; true + false; 5", "unknown operator: BOOLEAN + BOOLEAN"),
+            (
+                "if (10 > 1) { true + false; }",
+                "unknown operator: BOOLEAN + BOOLEAN",
+            ),
+            (
+                "if (10 > 1) {
+                if (10 > 1) {
+                  return true + false;
+                }
+              return 1; }",
+                "unknown operator: BOOLEAN + BOOLEAN",
+            ),
+        ];
+
+        for tc in test_cases {
+            let evaluated = helper_test_eval(tc.0);
+            match evaluated.expect(EXPECTED_ERROR) {
+                AllObjects::Error(e) => assert_eq!(e.message, tc.1),
+                _ => panic!("{}", EXPECTED_ERROR),
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -164,6 +197,7 @@ mod test_helpers {
         }
     }
 
+    pub const EXPECTED_ERROR: &str = "expected an error object";
     const EXPECTED_OBJECT: &str = "expected an object";
     const EXPECTED_INT_OBJECT: &str = "expected an integer object";
     const EXPECTED_NULL: &str = "expected null";

@@ -30,3 +30,14 @@ impl Object for Null {
         "null".to_string()
     }
 }
+
+#[derive(PartialEq, Eq)]
+pub struct Error {
+    pub message: String,
+}
+
+impl Object for Error {
+    fn inspect(&self) -> String {
+        format!("Error: {}", self.message)
+    }
+}
