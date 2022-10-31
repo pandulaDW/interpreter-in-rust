@@ -149,6 +149,7 @@ mod tests {
               return 1; }",
                 "unknown operator: BOOLEAN + BOOLEAN",
             ),
+            ("foobar", "identifier not found: foobar"),
         ];
 
         for tc in test_cases {
@@ -159,19 +160,41 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_let_statements() {
+        let test_cases = [
+            ("let a = 5;", 5),
+            ("let a = 5; a;", 5),
+            ("let a = 5; let a = 10; a;", 10),
+            ("let a = 5 * 5; a;", 25),
+            ("let a = 5; let b = a; b;", 5),
+            ("let a = 5; let b = a; let c = a + b + 5; c;", 15),
+        ];
+
+        for tc in test_cases {
+            let evaluated = helper_test_eval(tc.0);
+            helper_test_integer_obj(evaluated, tc.1);
+        }
+    }
 }
 
 #[cfg(test)]
 mod test_helpers {
     use super::eval::eval;
-    use crate::{lexer::Lexer, object::AllObjects, parser};
+    use crate::{
+        lexer::Lexer,
+        object::{objects::Environment, AllObjects},
+        parser,
+    };
 
     pub fn helper_test_eval(input: &str) -> Option<AllObjects> {
         let l = Lexer::new(input);
         let mut p = parser::Parser::new(l);
         let program = p.parse_program();
+        let mut new_env = Environment::new();
 
-        eval(program.make_node())
+        eval(program.make_node(), &mut new_env)
     }
 
     pub fn helper_test_integer_obj(obj: Option<AllObjects>, expected: i64) {

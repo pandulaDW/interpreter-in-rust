@@ -2,7 +2,7 @@ use crate::object::AllObjects;
 
 pub fn type_mismatch(left: &AllObjects, operator: &str, right: &AllObjects) -> AllObjects {
     AllObjects::new_error(format!(
-        "type mismatch: {:?} {} {:?}",
+        "type mismatch: {} {} {}",
         left.object_type(),
         operator,
         right.object_type()
@@ -16,15 +16,19 @@ pub fn unknown_operator(
 ) -> AllObjects {
     if let Some(l) = left {
         return AllObjects::new_error(format!(
-            "unknown operator: {:?} {} {:?}",
+            "unknown operator: {} {} {}",
             l.object_type(),
             operator,
             right.object_type()
         ));
     }
     AllObjects::new_error(format!(
-        "unknown operator: {}{:?}",
+        "unknown operator: {}{}",
         operator,
         right.object_type()
     ))
+}
+
+pub fn identifier_not_found(ident: &str) -> AllObjects {
+    AllObjects::new_error(format!("identifier not found: {}", ident))
 }

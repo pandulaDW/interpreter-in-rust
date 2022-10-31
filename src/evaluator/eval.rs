@@ -1,12 +1,15 @@
-use super::errors;
+use super::errors::{self, identifier_not_found};
 use crate::{
     ast::{
-        expressions::{AllExpressions, IfExpression, InfixExpression, PrefixExpression},
-        statements::{AllStatements, BlockStatement, ReturnStatement},
+        expressions::{
+            AllExpressions, Identifier, IfExpression, InfixExpression, IntegerLiteral,
+            PrefixExpression,
+        },
+        statements::{AllStatements, BlockStatement, LetStatement, ReturnStatement},
         AllNodes,
     },
     object::{
-        objects::{Boolean, Integer, Null},
+        objects::{Boolean, Environment, Integer, Null},
         AllObjects,
     },
 };
@@ -17,19 +20,19 @@ const FALSE: AllObjects = AllObjects::Boolean(Boolean { value: false });
 const NULL: AllObjects = AllObjects::Null(Null);
 
 /// eval takes in any type of node and applies the appropriate evaluation logic
-pub fn eval(node: AllNodes) -> Option<AllObjects> {
+pub fn eval(node: AllNodes, env: &mut Environment) -> Option<AllObjects> {
     match node {
-        AllNodes::Program(p) => eval_program(p.statements),
-        AllNodes::Statements(s) => eval_statement(s),
-        AllNodes::Expressions(e) => eval_expression(e),
+        AllNodes::Program(p) => eval_program(p.statements, env),
+        AllNodes::Statements(s) => eval_statement(s, env),
+        AllNodes::Expressions(e) => eval_expression(e, env),
     }
 }
 
-fn eval_program(stmts: Vec<AllStatements>) -> Option<AllObjects> {
+fn eval_program(stmts: Vec<AllStatements>, env: &mut Environment) -> Option<AllObjects> {
     let mut result = None;
 
     for stmt in stmts {
-        result = eval(AllNodes::Statements(stmt));
+        result = eval(AllNodes::Statements(stmt), env);
 
         // if the value is a ReturnValue then return early with its underlying value.
         // if the value is an error, return early with the error
@@ -48,57 +51,64 @@ fn eval_program(stmts: Vec<AllStatements>) -> Option<AllObjects> {
     result
 }
 
-fn eval_statement(stmt: AllStatements) -> Option<AllObjects> {
+fn eval_statement(stmt: AllStatements, env: &mut Environment) -> Option<AllObjects> {
     match stmt {
-        AllStatements::Let(_) => None,
-        AllStatements::Return(stmt) => eval_return_statement(stmt),
-        AllStatements::Expression(stmt) => eval_expression(*stmt.expression?),
-        AllStatements::_Block(block) => eval_block_statement(block),
+        AllStatements::Let(stmt) => eval_let_statement(stmt, env),
+        AllStatements::Return(stmt) => eval_return_statement(stmt, env),
+        AllStatements::Expression(stmt) => eval_expression(*stmt.expression?, env),
+        AllStatements::_Block(block) => eval_block_statement(block, env),
     }
 }
 
-fn eval_block_statement(block: BlockStatement) -> Option<AllObjects> {
+fn eval_let_statement(stmt: LetStatement, env: &mut Environment) -> Option<AllObjects> {
+    let value = eval(AllNodes::Expressions(*stmt.value), env)?;
+    if value.is_error() {
+        return Some(value);
+    }
+
+    Some(env.set(stmt.name.value, value))
+}
+
+fn eval_block_statement(block: BlockStatement, env: &mut Environment) -> Option<AllObjects> {
     let mut result = None;
 
     for stmt in block.statements {
-        result = eval(AllNodes::Statements(stmt));
+        result = eval(AllNodes::Statements(stmt), env);
 
-        match result {
-            Some(ref v) => match v {
+        if let Some(ref v) = result {
+            match v {
                 AllObjects::ReturnValue(_) | AllObjects::Error(_) => return result,
                 _ => {}
-            },
-            None => {}
+            }
         }
     }
 
     result
 }
 
-fn eval_return_statement(stmt: ReturnStatement) -> Option<AllObjects> {
-    let evaluated = eval(AllNodes::Expressions(*stmt.return_value))?;
+fn eval_return_statement(stmt: ReturnStatement, env: &mut Environment) -> Option<AllObjects> {
+    let evaluated = eval(AllNodes::Expressions(*stmt.return_value), env)?;
     if evaluated.is_error() {
         return Some(evaluated);
     }
     Some(AllObjects::ReturnValue(Box::new(evaluated)))
 }
 
-fn eval_expression(exprs: AllExpressions) -> Option<AllObjects> {
+fn eval_expression(exprs: AllExpressions, env: &mut Environment) -> Option<AllObjects> {
     match exprs {
-        AllExpressions::IntegerLiteral(node) => {
-            Some(AllObjects::Integer(Integer { value: node.value }))
-        }
+        AllExpressions::IntegerLiteral(node) => Some(get_int_object(node)),
         AllExpressions::Boolean(node) => Some(get_bool_consts(node.value)),
-        AllExpressions::PrefixExpression(node) => eval_prefix_expression(node),
-        AllExpressions::InfixExpression(node) => eval_infix_expression(node),
-        AllExpressions::IfExpression(node) => eval_if_expression(node),
+        AllExpressions::PrefixExpression(node) => eval_prefix_expression(node, env),
+        AllExpressions::InfixExpression(node) => eval_infix_expression(node, env),
+        AllExpressions::IfExpression(node) => eval_if_expression(node, env),
+        AllExpressions::Identifier(node) => eval_identifier(node, env),
         _ => None,
     }
 }
 
-fn eval_prefix_expression(node: PrefixExpression) -> Option<AllObjects> {
+fn eval_prefix_expression(node: PrefixExpression, env: &mut Environment) -> Option<AllObjects> {
     let right = node.right?;
-    let right_evaluated = eval(AllNodes::Expressions(*right))?;
+    let right_evaluated = eval(AllNodes::Expressions(*right), env)?;
 
     if right_evaluated.is_error() {
         return Some(right_evaluated);
@@ -113,9 +123,16 @@ fn eval_prefix_expression(node: PrefixExpression) -> Option<AllObjects> {
     Some(result)
 }
 
-fn eval_infix_expression(node: InfixExpression) -> Option<AllObjects> {
-    let left = eval(AllNodes::Expressions(*node.left?))?;
-    let right = eval(AllNodes::Expressions(*node.right?))?;
+fn eval_infix_expression(node: InfixExpression, env: &mut Environment) -> Option<AllObjects> {
+    let left = eval(AllNodes::Expressions(*node.left?), env)?;
+    if left.is_error() {
+        return Some(left);
+    }
+
+    let right = eval(AllNodes::Expressions(*node.right?), env)?;
+    if right.is_error() {
+        return Some(right);
+    }
 
     if left.object_type() != right.object_type() {
         return Some(errors::type_mismatch(&left, &node.operator, &right));
@@ -135,14 +152,14 @@ fn eval_infix_expression(node: InfixExpression) -> Option<AllObjects> {
     ))
 }
 
-fn eval_if_expression(expr: IfExpression) -> Option<AllObjects> {
-    let condition = eval(AllNodes::Expressions(*expr.condition))?;
+fn eval_if_expression(expr: IfExpression, env: &mut Environment) -> Option<AllObjects> {
+    let condition = eval(AllNodes::Expressions(*expr.condition), env)?;
     if condition.is_error() {
         return Some(condition);
     }
 
     if is_truthy(condition) {
-        return eval_block_statement(expr.consequence);
+        return eval_block_statement(expr.consequence, env);
     }
 
     if expr.alternative.is_none() {
@@ -150,7 +167,15 @@ fn eval_if_expression(expr: IfExpression) -> Option<AllObjects> {
     }
 
     let alternative = expr.alternative?;
-    eval_block_statement(alternative)
+    eval_block_statement(alternative, env)
+}
+
+fn eval_identifier(node: Identifier, env: &mut Environment) -> Option<AllObjects> {
+    let ident = env.get(&node.value);
+    if ident.is_none() {
+        return Some(identifier_not_found(&node.value));
+    }
+    ident.cloned()
 }
 
 fn eval_bang_operator(right: AllObjects) -> AllObjects {
@@ -234,4 +259,8 @@ fn get_bool_consts(val: bool) -> AllObjects {
         return TRUE;
     }
     FALSE
+}
+
+fn get_int_object(node: IntegerLiteral) -> AllObjects {
+    AllObjects::Integer(Integer { value: node.value })
 }

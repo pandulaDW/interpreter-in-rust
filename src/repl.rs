@@ -1,7 +1,7 @@
 use crate::{
     evaluator,
     lexer::Lexer,
-    object::Object,
+    object::{objects::Environment, Object},
     parser::{Parser, TRACING_ENABLED},
 };
 use clap::Parser as ClapParser;
@@ -26,6 +26,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
     greet();
 
     let mut text = String::new();
+    let mut program_env = Environment::new();
 
     loop {
         write!(output, "{}", PROMPT)?;
@@ -48,7 +49,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
             continue;
         }
 
-        let evaluated = evaluator::eval(program.make_node());
+        let evaluated = evaluator::eval(program.make_node(), &mut program_env);
         if let Some(e) = evaluated {
             println!("{}", e.inspect());
         }
