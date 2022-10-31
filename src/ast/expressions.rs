@@ -195,8 +195,8 @@ impl Display for FunctionLiteral {
 }
 
 pub struct CallExpression {
-    pub token: token::Token, // ( LPAREN
-    pub function: Box<AllExpressions>,
+    pub token: token::Token,           // ( LPAREN
+    pub function: Box<AllExpressions>, // Identifier or FunctionLiteral
     pub arguments: Vec<AllExpressions>,
 }
 

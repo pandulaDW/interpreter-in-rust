@@ -1,9 +1,9 @@
-use super::errors::{self, identifier_not_found};
+use super::errors;
 use crate::{
     ast::{
         expressions::{
-            AllExpressions, Identifier, IfExpression, InfixExpression, IntegerLiteral,
-            PrefixExpression,
+            AllExpressions, CallExpression, Identifier, IfExpression, InfixExpression,
+            IntegerLiteral, PrefixExpression,
         },
         statements::{AllStatements, BlockStatement, LetStatement, ReturnStatement},
         AllNodes,
@@ -65,7 +65,6 @@ fn eval_let_statement(stmt: LetStatement, env: &mut Environment) -> Option<AllOb
     if value.is_error() {
         return Some(value);
     }
-
     Some(env.set(stmt.name.value, value))
 }
 
@@ -103,7 +102,7 @@ fn eval_expression(exprs: AllExpressions, env: &mut Environment) -> Option<AllOb
         AllExpressions::IfExpression(node) => eval_if_expression(node, env),
         AllExpressions::Identifier(node) => eval_identifier(node, env),
         AllExpressions::FunctionLiteral(node) => Some(AllObjects::new_function(node)),
-        _ => None,
+        AllExpressions::CallExpression(node) => eval_call_expression(node, env),
     }
 }
 
@@ -174,9 +173,49 @@ fn eval_if_expression(expr: IfExpression, env: &mut Environment) -> Option<AllOb
 fn eval_identifier(node: Identifier, env: &mut Environment) -> Option<AllObjects> {
     let ident = env.get(&node.value);
     if ident.is_none() {
-        return Some(identifier_not_found(&node.value));
+        return Some(errors::identifier_not_found(&node.value));
     }
-    ident.cloned()
+    ident
+}
+
+fn eval_call_expression(node: CallExpression, env: &mut Environment) -> Option<AllObjects> {
+    let function = eval(AllNodes::Expressions(*node.function), env)?;
+    if function.is_error() {
+        return Some(function);
+    }
+
+    let mut args = eval_expressions(node.arguments, env)?;
+    if args.len() == 1 && args[0].is_error() {
+        return Some(args.remove(0));
+    }
+
+    if let AllObjects::Function(f) = function {
+        env.new_enclosed_environment(f.clone());
+
+        for (param_idx, param) in f.definition.parameters.iter().enumerate() {
+            env.set(param.value.clone(), args[param_idx].clone());
+        }
+        // eval_block_statement(f.definition.body, env);
+        // let evaluated = eval(f.definition.body);
+    }
+
+    None
+}
+
+fn eval_expressions(exprs: Vec<AllExpressions>, env: &mut Environment) -> Option<Vec<AllObjects>> {
+    let mut v = Vec::with_capacity(exprs.len());
+
+    for expr in exprs {
+        let evaluated = eval(AllNodes::Expressions(expr), env)?;
+
+        if evaluated.is_error() {
+            return Some(vec![evaluated]);
+        }
+
+        v.push(evaluated);
+    }
+
+    Some(v)
 }
 
 fn eval_bang_operator(right: AllObjects) -> AllObjects {

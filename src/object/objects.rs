@@ -44,9 +44,13 @@ impl Object for Error {
     }
 }
 
-/// Environment is what is used to keep track of values by associating them with an identifier
+/// Environment is what is used to keep track of values by associating them with an identifier.
+///
+/// It includes a store to collect variables of the main scope and an outer variable to keep track
+/// of a function variables.
 pub struct Environment {
     store: HashMap<String, AllObjects>,
+    outer: Option<Function>,
 }
 
 impl Environment {
@@ -54,12 +58,30 @@ impl Environment {
     pub fn new() -> Self {
         Environment {
             store: HashMap::new(),
+            outer: None,
         }
     }
 
-    /// Returns a reference to the `Object` corresponding to the `identifier`.
-    pub fn get(&self, name: &str) -> Option<&AllObjects> {
-        self.store.get(name)
+    /// Enclose the environment with the given environment
+    pub fn new_enclosed_environment(&mut self, outer: Function) {
+        self.outer = Some(outer);
+    }
+
+    /// Returns a clone of the `Object` corresponding to the `identifier` after recursively
+    /// examining all the chained scopes.
+    pub fn get(&self, name: &str) -> Option<AllObjects> {
+        let obj = self.store.get(name);
+        let mut result = None;
+
+        if obj.is_none() && self.outer.is_some() {
+            if let Some(ref outer) = self.outer {
+                result = outer.definition.env.get(name);
+            }
+        } else if obj.is_some() {
+            result = Some(obj.unwrap().clone());
+        }
+
+        result
     }
 
     /// Inserts a identifier-object pair into the store and return the passed object.
