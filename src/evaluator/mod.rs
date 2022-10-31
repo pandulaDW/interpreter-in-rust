@@ -177,6 +177,19 @@ mod tests {
             helper_test_integer_obj(evaluated, tc.1);
         }
     }
+
+    #[test]
+    fn test_function_object() {
+        let input = "fn(x) { x + 2; }";
+        let evaluated = helper_test_eval(input).expect(EXPECTED_ERROR);
+        if let AllObjects::Function(v) = evaluated {
+            assert_eq!(v.definition.parameters.len(), 1);
+            assert_eq!(v.definition.parameters[0].to_string(), "x");
+            assert_eq!(v.definition.body.to_string(), "(x + 2)");
+        } else {
+            panic!("{}", EXPECTED_FUNCTION);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -221,7 +234,8 @@ mod test_helpers {
     }
 
     pub const EXPECTED_ERROR: &str = "expected an error object";
-    const EXPECTED_OBJECT: &str = "expected an object";
+    pub const EXPECTED_OBJECT: &str = "expected an object";
+    pub const EXPECTED_FUNCTION: &str = "expected a function";
     const EXPECTED_INT_OBJECT: &str = "expected an integer object";
     const EXPECTED_NULL: &str = "expected null";
 }

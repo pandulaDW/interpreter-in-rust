@@ -1,5 +1,6 @@
 use super::{AllObjects, Object};
-use std::collections::HashMap;
+use crate::ast::{expressions::Identifier, statements::BlockStatement};
+use std::{collections::HashMap, rc::Rc};
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Integer {
@@ -67,5 +68,53 @@ impl Environment {
     pub fn set(&mut self, name: String, value: AllObjects) -> AllObjects {
         self.store.insert(name, value.clone());
         value
+    }
+}
+
+/// Includes the name of the function and the definition of the function which wraps around in RC to be
+/// clonable to fit the API of the other clonable objects.
+pub struct Function {
+    pub name: String,
+    pub definition: Rc<FunctionDefinition>,
+}
+
+/// This definition of object.Function has the Parameters and Body fields. But it also has Env,
+/// a field that holds a pointer to an object.Environment, because functions in Monkey carry their
+/// own environment with them. That allows for closures, which “close over” the environment they’re
+/// defined in and can later access it.
+pub struct FunctionDefinition {
+    pub parameters: Vec<Identifier>,
+    pub body: BlockStatement,
+    pub env: Environment,
+}
+
+impl PartialEq for Function {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
+impl Eq for Function {}
+
+impl Clone for Function {
+    fn clone(&self) -> Self {
+        Self {
+            name: self.name.clone(),
+            definition: self.definition.clone(),
+        }
+    }
+}
+
+impl Object for Function {
+    fn inspect(&self) -> String {
+        let params = self
+            .definition
+            .parameters
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        format!("fn({}){{\n{}\n}}", params, self.definition.body)
     }
 }

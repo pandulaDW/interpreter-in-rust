@@ -1,4 +1,10 @@
-use std::fmt::{self, Display};
+use self::objects::{Environment, Function, FunctionDefinition};
+use crate::ast::expressions::FunctionLiteral;
+use std::{
+    fmt::{self, Display},
+    rc::Rc,
+};
+use uuid::Uuid;
 
 pub mod objects;
 
@@ -14,6 +20,7 @@ pub enum ObjectType {
     Null,
     Error,
     Return,
+    Function,
 }
 
 impl Display for ObjectType {
@@ -24,6 +31,7 @@ impl Display for ObjectType {
             ObjectType::Null => "NULL",
             ObjectType::Error => "ERROR",
             ObjectType::Return => "RETURN",
+            ObjectType::Function => "FUNCTION",
         };
         write!(f, "{}", out)
     }
@@ -39,6 +47,7 @@ pub enum AllObjects {
     Null(objects::Null),
     Error(objects::Error),
     ReturnValue(Box<AllObjects>),
+    Function(objects::Function),
 }
 
 impl Object for AllObjects {
@@ -49,6 +58,7 @@ impl Object for AllObjects {
             Self::Null(v) => v.inspect(),
             Self::Error(v) => v.inspect(),
             Self::ReturnValue(v) => v.inspect(),
+            Self::Function(v) => v.inspect(),
         }
     }
 }
@@ -61,6 +71,7 @@ impl AllObjects {
             Self::Null(_) => ObjectType::Null,
             Self::Error(_) => ObjectType::Error,
             Self::ReturnValue(_) => ObjectType::Return,
+            Self::Function(_) => ObjectType::Function,
         }
     }
 
@@ -78,5 +89,22 @@ impl AllObjects {
 
     pub fn is_error(&self) -> bool {
         self.object_type() == ObjectType::Error
+    }
+
+    /// Creates a new function object with a uniquely assigned name and a new environment
+    pub fn new_function(node: FunctionLiteral) -> AllObjects {
+        let name = format!("fn_{}", Uuid::new_v4());
+        let env = Environment::new();
+
+        let definition = FunctionDefinition {
+            parameters: node.parameters,
+            body: node.body,
+            env,
+        };
+
+        Self::Function(Function {
+            name,
+            definition: Rc::new(definition),
+        })
     }
 }

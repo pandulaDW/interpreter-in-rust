@@ -102,6 +102,7 @@ fn eval_expression(exprs: AllExpressions, env: &mut Environment) -> Option<AllOb
         AllExpressions::InfixExpression(node) => eval_infix_expression(node, env),
         AllExpressions::IfExpression(node) => eval_if_expression(node, env),
         AllExpressions::Identifier(node) => eval_identifier(node, env),
+        AllExpressions::FunctionLiteral(node) => Some(AllObjects::new_function(node)),
         _ => None,
     }
 }
