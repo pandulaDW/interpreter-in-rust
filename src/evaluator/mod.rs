@@ -242,7 +242,7 @@ mod test_helpers {
     use super::eval::eval;
     use crate::{
         lexer::Lexer,
-        object::{objects::Environment, AllObjects},
+        object::{environment::Environment, AllObjects},
         parser,
     };
 

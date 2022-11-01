@@ -9,7 +9,8 @@ use crate::{
         AllNodes,
     },
     object::{
-        objects::{Boolean, Environment, Function, Integer, Null},
+        environment::Environment,
+        objects::{Boolean, Function, Integer, Null},
         AllObjects,
     },
 };

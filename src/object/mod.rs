@@ -1,5 +1,6 @@
 use std::fmt::{self, Display};
 
+pub mod environment;
 pub mod objects;
 
 pub trait Object {

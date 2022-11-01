@@ -1,7 +1,7 @@
 use crate::{
     evaluator,
     lexer::Lexer,
-    object::{objects::Environment, Object},
+    object::{environment::Environment, Object},
     parser::{Parser, TRACING_ENABLED},
 };
 use clap::Parser as ClapParser;
