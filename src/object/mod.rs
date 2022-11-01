@@ -98,12 +98,12 @@ impl AllObjects {
 
         let definition = FunctionDefinition {
             parameters: node.parameters,
-            body: node.body,
             env,
         };
 
         Self::Function(Function {
             name,
+            body: node.body,
             definition: Rc::new(definition),
         })
     }

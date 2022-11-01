@@ -6,6 +6,7 @@ use super::{
 };
 use crate::lexer::{keywords, token};
 
+#[derive(Clone)]
 pub enum AllStatements {
     Let(LetStatement),
     Return(ReturnStatement),
@@ -37,6 +38,7 @@ impl Display for AllStatements {
     }
 }
 
+#[derive(Clone)]
 pub struct LetStatement {
     pub token: token::Token, // Let token
     pub name: expressions::Identifier,
@@ -61,6 +63,7 @@ impl Display for LetStatement {
     }
 }
 
+#[derive(Clone)]
 pub struct ReturnStatement {
     pub token: token::Token, // Return token
     pub return_value: Box<AllExpressions>,
@@ -84,6 +87,7 @@ impl Display for ReturnStatement {
 
 /// ExpressionStatement is not really a distinct statement; it’s a statement that
 /// consists solely of one expression
+#[derive(Clone)]
 pub struct ExpressionStatement {
     pub token: token::Token,
     pub expression: Option<Box<AllExpressions>>,
@@ -104,6 +108,7 @@ impl Display for ExpressionStatement {
     }
 }
 
+#[derive(Clone)]
 pub struct BlockStatement {
     pub token: token::Token,
     pub statements: Vec<AllStatements>,

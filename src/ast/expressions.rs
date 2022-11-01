@@ -3,6 +3,7 @@ use std::fmt::Display;
 use super::{statements::BlockStatement, Node};
 use crate::lexer::token;
 
+#[derive(Clone)]
 pub enum AllExpressions {
     Identifier(Identifier),
     IntegerLiteral(IntegerLiteral),
@@ -30,6 +31,7 @@ impl Display for AllExpressions {
     }
 }
 
+#[derive(Clone)]
 pub struct Identifier {
     pub token: token::Token, // Ident token
     pub value: String,
@@ -47,6 +49,7 @@ impl Display for Identifier {
     }
 }
 
+#[derive(Clone)]
 pub struct IntegerLiteral {
     pub token: token::Token, // Int token
     pub value: i64,
@@ -64,6 +67,7 @@ impl Display for IntegerLiteral {
     }
 }
 
+#[derive(Clone)]
 pub struct PrefixExpression {
     pub token: token::Token, // The prefix token, e.g. !
     pub operator: String,
@@ -85,6 +89,7 @@ impl Display for PrefixExpression {
     }
 }
 
+#[derive(Clone)]
 pub struct InfixExpression {
     pub token: token::Token, // The infix token, e.g. !
     pub left: Option<Box<AllExpressions>>,
@@ -116,6 +121,7 @@ impl Display for InfixExpression {
     }
 }
 
+#[derive(Clone)]
 pub struct Boolean {
     pub token: token::Token,
     pub value: bool,
@@ -133,6 +139,7 @@ impl Display for Boolean {
     }
 }
 
+#[derive(Clone)]
 pub struct IfExpression {
     pub token: token::Token,
     pub condition: Box<AllExpressions>,
@@ -164,6 +171,7 @@ impl Display for IfExpression {
     }
 }
 
+#[derive(Clone)]
 pub struct FunctionLiteral {
     pub token: token::Token,
     pub parameters: Vec<Identifier>,
@@ -194,6 +202,7 @@ impl Display for FunctionLiteral {
     }
 }
 
+#[derive(Clone)]
 pub struct CallExpression {
     pub token: token::Token,           // ( LPAREN
     pub function: Box<AllExpressions>, // Identifier or FunctionLiteral

@@ -97,6 +97,7 @@ impl Environment {
 /// clonable to fit the API of the other clonable objects.
 pub struct Function {
     pub name: String,
+    pub body: BlockStatement,
     pub definition: Rc<FunctionDefinition>,
 }
 
@@ -106,7 +107,6 @@ pub struct Function {
 /// defined in and can later access it.
 pub struct FunctionDefinition {
     pub parameters: Vec<Identifier>,
-    pub body: BlockStatement,
     pub env: Environment,
 }
 
@@ -122,6 +122,7 @@ impl Clone for Function {
     fn clone(&self) -> Self {
         Self {
             name: self.name.clone(),
+            body: self.body.clone(),
             definition: self.definition.clone(),
         }
     }
@@ -137,6 +138,6 @@ impl Object for Function {
             .collect::<Vec<String>>()
             .join(", ");
 
-        format!("fn({}){{\n{}\n}}", params, self.definition.body)
+        format!("fn({}){{\n{}\n}}", params, self.body)
     }
 }

@@ -195,8 +195,13 @@ fn eval_call_expression(node: CallExpression, env: &mut Environment) -> Option<A
         for (param_idx, param) in f.definition.parameters.iter().enumerate() {
             env.set(param.value.clone(), args[param_idx].clone());
         }
-        // eval_block_statement(f.definition.body, env);
-        // let evaluated = eval(f.definition.body);
+
+        let evaluated = eval_block_statement(f.body, env);
+        if let Some(AllObjects::ReturnValue(r_val)) = evaluated {
+            return Some(*r_val);
+        } else {
+            return evaluated;
+        };
     }
 
     None
