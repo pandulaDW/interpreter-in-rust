@@ -1,10 +1,4 @@
-use self::objects::{Environment, Function, FunctionDefinition};
-use crate::ast::expressions::FunctionLiteral;
-use std::{
-    fmt::{self, Display},
-    rc::Rc,
-};
-use uuid::Uuid;
+use std::fmt::{self, Display};
 
 pub mod objects;
 
@@ -89,22 +83,5 @@ impl AllObjects {
 
     pub fn is_error(&self) -> bool {
         self.object_type() == ObjectType::Error
-    }
-
-    /// Creates a new function object with a uniquely assigned name and a new environment
-    pub fn new_function(node: FunctionLiteral) -> AllObjects {
-        let name = format!("fn_{}", Uuid::new_v4());
-        let env = Environment::new();
-
-        let definition = FunctionDefinition {
-            parameters: node.parameters,
-            env,
-        };
-
-        Self::Function(Function {
-            name,
-            body: node.body,
-            definition: Rc::new(definition),
-        })
     }
 }

@@ -5,7 +5,10 @@ use crate::{
     parser::{Parser, TRACING_ENABLED},
 };
 use clap::Parser as ClapParser;
-use std::io::{BufRead, Result, Write};
+use std::{
+    io::{BufRead, Result, Write},
+    rc::Rc,
+};
 
 const PROMPT: &str = ">> ";
 
@@ -26,7 +29,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
     greet();
 
     let mut text = String::new();
-    let mut program_env = Environment::new();
+    let program_env = Rc::new(Environment::new());
 
     loop {
         write!(output, "{}", PROMPT)?;
@@ -49,7 +52,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
             continue;
         }
 
-        let evaluated = evaluator::eval(program.make_node(), &mut program_env);
+        let evaluated = evaluator::eval(program.make_node(), program_env.clone());
         if let Some(e) = evaluated {
             println!("{}", e.inspect());
         }
