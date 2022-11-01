@@ -192,7 +192,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "reason"]
     fn test_function_application() {
         let test_cases = [
             ("let identity = fn(x) { x; }; identity(5);", 5),
@@ -204,12 +203,35 @@ mod tests {
             ("let add = fn(x, y) { x + y; }; add(5, 5);", 10),
             ("let add = fn(x, y) { x + y; }; add(5 + 5, add(6, 10));", 26),
             ("fn(x) { x; }(5)", 5),
+            (
+                "
+            let a = 20;
+            let add_using_outer_var = fn() {
+                let c = a + 12;
+                return c;
+            }
+            add_using_outer_var();
+            ",
+                32,
+            ),
         ];
 
         for tc in test_cases {
             let evaluated = helper_test_eval(tc.0);
             helper_test_integer_obj(evaluated, tc.1);
         }
+    }
+
+    #[test]
+    fn test_closures() {
+        let input = "
+        let newAdder = fn(x) {
+            fn(y) { x + y };
+            };
+          let addTwo = newAdder(2);
+          addTwo(3);";
+        let evaluated = helper_test_eval(input);
+        helper_test_integer_obj(evaluated, 5);
     }
 }
 

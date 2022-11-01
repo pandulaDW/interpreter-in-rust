@@ -2,8 +2,8 @@ use super::errors;
 use crate::{
     ast::{
         expressions::{
-            AllExpressions, FunctionLiteral, Identifier, IfExpression, InfixExpression,
-            IntegerLiteral, PrefixExpression,
+            AllExpressions, CallExpression, FunctionLiteral, Identifier, IfExpression,
+            InfixExpression, IntegerLiteral, PrefixExpression,
         },
         statements::{AllStatements, BlockStatement, LetStatement, ReturnStatement},
         AllNodes,
@@ -104,7 +104,7 @@ fn eval_expression(exprs: AllExpressions, env: Rc<Environment>) -> Option<AllObj
         AllExpressions::IfExpression(node) => eval_if_expression(node, env),
         AllExpressions::Identifier(node) => eval_identifier(node, env),
         AllExpressions::FunctionLiteral(node) => Some(new_function_literal(node, env)),
-        AllExpressions::CallExpression(_node) => todo!(), //eval_call_expression(node, env),
+        AllExpressions::CallExpression(node) => eval_call_expression(node, env),
     }
 }
 
@@ -180,36 +180,36 @@ fn eval_identifier(node: Identifier, env: Rc<Environment>) -> Option<AllObjects>
     ident
 }
 
-// fn eval_call_expression(node: CallExpression, env: Rc<Environment>) -> Option<AllObjects> {
-//     let function = eval(AllNodes::Expressions(*node.function), env.clone())?;
-//     if function.is_error() {
-//         return Some(function);
-//     }
+fn eval_call_expression(node: CallExpression, env: Rc<Environment>) -> Option<AllObjects> {
+    let function = eval(AllNodes::Expressions(*node.function), env.clone())?;
+    if function.is_error() {
+        return Some(function);
+    }
 
-//     let mut args = eval_expressions(node.arguments, env.clone())?;
-//     if args.len() == 1 && args[0].is_error() {
-//         return Some(args.remove(0));
-//     }
+    let mut args = eval_expressions(node.arguments, env.clone())?;
+    if args.len() == 1 && args[0].is_error() {
+        return Some(args.remove(0));
+    }
 
-//     if let AllObjects::Function(f) = function {
-//         env.new_enclosed_environment(f.clone());
+    if let AllObjects::Function(f) = function {
+        let func_env = Environment::new_enclosed_environment(f.env);
 
-//         for (param_idx, param) in f.parameters.iter().enumerate() {
-//             env.set(param.value.clone(), args[param_idx].clone());
-//         }
+        for (param_idx, param) in f.parameters.iter().enumerate() {
+            func_env.set(param.value.clone(), args[param_idx].clone());
+        }
 
-//         let evaluated = eval_block_statement(f.body, env);
-//         if let Some(AllObjects::ReturnValue(r_val)) = evaluated {
-//             return Some(*r_val);
-//         } else {
-//             return evaluated;
-//         };
-//     }
+        let evaluated = eval_block_statement(f.body, Rc::new(func_env));
+        if let Some(AllObjects::ReturnValue(r_val)) = evaluated {
+            return Some(*r_val);
+        } else {
+            return evaluated;
+        };
+    }
 
-//     None
-// }
+    None
+}
 
-fn _eval_expressions(exprs: Vec<AllExpressions>, env: Rc<Environment>) -> Option<Vec<AllObjects>> {
+fn eval_expressions(exprs: Vec<AllExpressions>, env: Rc<Environment>) -> Option<Vec<AllObjects>> {
     let mut v = Vec::with_capacity(exprs.len());
 
     for expr in exprs {
@@ -293,14 +293,13 @@ fn eval_comparison_for_booleans(left: AllObjects, operator: &str, right: AllObje
     }
 }
 
-fn new_function_literal(node: FunctionLiteral, _env: Rc<Environment>) -> AllObjects {
+fn new_function_literal(node: FunctionLiteral, env: Rc<Environment>) -> AllObjects {
     let name = format!("fn_{}", Uuid::new_v4());
-    let env = Environment::new();
 
     AllObjects::Function(Function {
         name,
         body: node.body,
-        env: Rc::new(env),
+        env,
         parameters: node.parameters,
     })
 }

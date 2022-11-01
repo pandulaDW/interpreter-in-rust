@@ -50,7 +50,7 @@ impl Object for Error {
 /// of a function variables.
 pub struct Environment {
     store: RefCell<HashMap<String, AllObjects>>,
-    outer: Option<Function>,
+    outer: Option<Rc<Environment>>,
 }
 
 impl Environment {
@@ -63,8 +63,10 @@ impl Environment {
     }
 
     /// Enclose the environment with the given environment
-    pub fn _new_enclosed_environment(&mut self, outer: Function) {
-        self.outer = Some(outer);
+    pub fn new_enclosed_environment(outer: Rc<Environment>) -> Environment {
+        let mut new_env = Self::new();
+        new_env.outer = Some(outer);
+        new_env
     }
 
     /// Returns a clone of the `Object` corresponding to the `identifier` after recursively
@@ -76,7 +78,7 @@ impl Environment {
 
         if obj.is_none() && self.outer.is_some() {
             if let Some(ref outer) = self.outer {
-                result = outer.env.get(name);
+                result = outer.get(name);
             }
         } else if obj.is_some() {
             result = Some(obj.unwrap().clone());
