@@ -106,6 +106,17 @@ mod tests {
     }
 
     #[test]
+    fn test_if_expression_scope() {
+        let input = "if (1 < 2) { 
+           let x = 10;
+        }
+        x - 10;
+        ";
+        let evaluated = helper_test_eval(input);
+        helper_test_error(evaluated, "identifier not found: x");
+    }
+
+    #[test]
     fn test_return_statement() {
         let test_cases = [
             ("return 10;", 10),
@@ -202,7 +213,7 @@ mod tests {
             ("let double = fn(x) { x * 2; }; double(5);", 10),
             ("let add = fn(x, y) { x + y; }; add(5, 5);", 10),
             ("let add = fn(x, y) { x + y; }; add(5 + 5, add(6, 10));", 26),
-            ("fn(x) { x; }(5)", 5),
+            ("fn(x) { x + 2; }(5)", 7),
             (
                 "
             let a = 20;
@@ -226,7 +237,7 @@ mod tests {
     fn test_closures() {
         let input = "
         let newAdder = fn(x) {
-            fn(y) { x + y };
+            return fn(y) { x + y };
             };
           let addTwo = newAdder(2);
           addTwo(3);";
@@ -275,6 +286,13 @@ mod test_helpers {
         match obj.unwrap() {
             AllObjects::Null(_) => {}
             _ => panic!("{}", EXPECTED_NULL),
+        }
+    }
+
+    pub fn helper_test_error(obj: Option<AllObjects>, message: &str) {
+        match obj.unwrap() {
+            AllObjects::Error(e) => assert_eq!(e.message, message),
+            _ => panic!("{}", EXPECTED_ERROR),
         }
     }
 

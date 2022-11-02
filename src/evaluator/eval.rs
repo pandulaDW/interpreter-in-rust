@@ -161,8 +161,9 @@ fn eval_if_expression(expr: IfExpression, env: Rc<Environment>) -> Option<AllObj
         return Some(condition);
     }
 
+    let new_env = Environment::new_enclosed_environment(env);
     if is_truthy(condition) {
-        return eval_block_statement(expr.consequence, env);
+        return eval_block_statement(expr.consequence, new_env.into());
     }
 
     if expr.alternative.is_none() {
@@ -170,7 +171,7 @@ fn eval_if_expression(expr: IfExpression, env: Rc<Environment>) -> Option<AllObj
     }
 
     let alternative = expr.alternative?;
-    eval_block_statement(alternative, env)
+    eval_block_statement(alternative, new_env.into())
 }
 
 fn eval_identifier(node: Identifier, env: Rc<Environment>) -> Option<AllObjects> {
@@ -187,7 +188,7 @@ fn eval_call_expression(node: CallExpression, env: Rc<Environment>) -> Option<Al
         return Some(function);
     }
 
-    let mut args = eval_expressions(node.arguments, env.clone())?;
+    let mut args = eval_expressions(node.arguments, env)?;
     if args.len() == 1 && args[0].is_error() {
         return Some(args.remove(0));
     }
@@ -199,7 +200,7 @@ fn eval_call_expression(node: CallExpression, env: Rc<Environment>) -> Option<Al
             func_env.set(param.value.clone(), args[param_idx].clone());
         }
 
-        let evaluated = eval_block_statement(f.body, Rc::new(func_env));
+        let evaluated = eval_block_statement(f.body, func_env.into());
         if let Some(AllObjects::ReturnValue(r_val)) = evaluated {
             return Some(*r_val);
         } else {

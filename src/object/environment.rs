@@ -19,7 +19,7 @@ impl Environment {
         }
     }
 
-    /// Enclose the environment with the given environment
+    /// Enclose a new environment with the given environment
     pub fn new_enclosed_environment(outer: Rc<Environment>) -> Environment {
         let mut new_env = Self::new();
         new_env.outer = Some(outer);
