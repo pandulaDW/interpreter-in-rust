@@ -12,22 +12,29 @@ pub struct Environment {
 
 impl Environment {
     /// Creates a new Environment
-    pub fn new() -> Self {
-        Environment {
+    pub fn new() -> Rc<Environment> {
+        let env = Environment {
             store: RefCell::new(HashMap::new()),
             outer: None,
-        }
+        };
+        Rc::new(env)
     }
 
     /// Enclose a new environment with the given environment
-    pub fn new_enclosed_environment(outer: Rc<Environment>) -> Environment {
-        let mut new_env = Self::new();
+    pub fn new_enclosed_environment(outer: Rc<Environment>) -> Rc<Environment> {
+        let mut new_env = Environment {
+            store: RefCell::new(HashMap::new()),
+            outer: None,
+        };
         new_env.outer = Some(outer);
-        new_env
+        Rc::new(new_env)
     }
 
     /// Returns a clone of the `Object` corresponding to the `identifier` after recursively
     /// examining all the chained scopes.
+    ///
+    /// It is safe to use `borrow` rather than `try_borrow` in this situation because, in a single-threaded environment,
+    /// it is guaranteed that no `set` call will be made within this `get` call. So, only shared references will be made.
     pub fn get(&self, name: &str) -> Option<AllObjects> {
         let binding = self.store.borrow();
         let obj = binding.get(name);

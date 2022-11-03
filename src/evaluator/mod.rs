@@ -248,8 +248,6 @@ mod tests {
 
 #[cfg(test)]
 mod test_helpers {
-    use std::rc::Rc;
-
     use super::eval::eval;
     use crate::{
         lexer::Lexer,
@@ -263,7 +261,7 @@ mod test_helpers {
         let program = p.parse_program();
         let new_env = Environment::new();
 
-        eval(program.make_node(), Rc::new(new_env))
+        eval(program.make_node(), new_env)
     }
 
     pub fn helper_test_integer_obj(obj: Option<AllObjects>, expected: i64) {

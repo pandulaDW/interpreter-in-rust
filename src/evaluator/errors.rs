@@ -32,3 +32,10 @@ pub fn unknown_operator(
 pub fn identifier_not_found(ident: &str) -> AllObjects {
     AllObjects::new_error(format!("identifier not found: {}", ident))
 }
+
+pub fn incorrect_arg_num(expected: usize, actual: usize) -> AllObjects {
+    AllObjects::new_error(format!(
+        "incorrect number of arguments supplied, expected: {}, supplied {}",
+        expected, actual
+    ))
+}

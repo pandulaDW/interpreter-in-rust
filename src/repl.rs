@@ -6,7 +6,7 @@ use crate::{
 };
 use clap::Parser as ClapParser;
 use std::{
-    io::{BufRead, Result, Write},
+    io::{self, BufRead, Write},
     rc::Rc,
 };
 
@@ -21,7 +21,7 @@ struct Args {
     tracing: bool,
 }
 
-pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result<()> {
+pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> io::Result<()> {
     let args = Args::parse();
     unsafe {
         TRACING_ENABLED = args.tracing;
@@ -29,7 +29,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
     greet();
 
     let mut text = String::new();
-    let program_env = Rc::new(Environment::new());
+    let program_env = Environment::new();
 
     loop {
         write!(output, "{}", PROMPT)?;
@@ -42,20 +42,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> Result
             break;
         }
 
-        let l = Lexer::new(&text);
-        let mut p = Parser::new(l);
-        let program = p.parse_program();
-
-        if !p.errors.is_empty() {
-            print_parser_errors(&p.errors);
-            text.clear();
-            continue;
-        }
-
-        let evaluated = evaluator::eval(program.make_node(), program_env.clone());
-        if let Some(e) = evaluated {
-            println!("{}", e.inspect());
-        }
+        execute_program(&text, program_env.clone());
 
         text.clear();
     }
@@ -91,3 +78,19 @@ const MONKEY_FACE: &str = r#"
         '._ '-=-' _.'
            '-----'
 "#;
+
+pub fn execute_program(text: &str, program_env: Rc<Environment>) {
+    let l = Lexer::new(text);
+    let mut p = Parser::new(l);
+    let program = p.parse_program();
+
+    if !p.errors.is_empty() {
+        print_parser_errors(&p.errors);
+        return;
+    }
+
+    let evaluated = evaluator::eval(program.make_node(), program_env);
+    if let Some(e) = evaluated {
+        println!("{}", e.inspect());
+    }
+}
