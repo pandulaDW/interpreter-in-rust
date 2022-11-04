@@ -1,0 +1,14 @@
+let global_var = 1024;
+
+let main = fn() {
+  let a = 10;
+  let b = 20;
+
+  return add(a, b) + global_var;
+}
+
+let add = fn(x, y) {
+  return x + y;
+}
+
+main();
