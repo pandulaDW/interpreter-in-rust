@@ -148,6 +148,9 @@ fn eval_infix_expression(node: InfixExpression, env: Rc<Environment>) -> Option<
     if left.is_boolean() && right.is_boolean() {
         return Some(eval_comparison_for_booleans(left, &node.operator, right));
     }
+    if left.is_string() && right.is_string() {
+        return Some(eval_string_operations(left, &node.operator, right));
+    }
 
     Some(errors::unknown_operator(
         Some(&left),
@@ -298,6 +301,51 @@ fn eval_comparison_for_booleans(left: AllObjects, operator: &str, right: AllObje
         "!=" => get_bool_consts(left_val.value != right_val.value),
         _ => errors::unknown_operator(Some(&left), operator, &right),
     }
+}
+
+fn eval_string_operations(left: AllObjects, operator: &str, right: AllObjects) -> AllObjects {
+    let left_val = match &left {
+        AllObjects::StringObj(v) => v,
+        _ => return NULL,
+    }
+    .value
+    .clone();
+
+    let right_val = match &right {
+        AllObjects::StringObj(v) => v,
+        _ => return NULL,
+    }
+    .value
+    .clone();
+
+    match operator {
+        "+" => AllObjects::StringObj(StringObj {
+            value: Rc::new(format!("{}{}", left_val, right_val)),
+        }),
+        ">" | "==" | "<" | "!=" => {
+            if let Some(v) = eval_string_comparisons(left_val, operator, right_val) {
+                return v;
+            } else {
+                return errors::unknown_operator(Some(&left), operator, &right);
+            }
+        }
+        _ => return errors::unknown_operator(Some(&left), operator, &right),
+    }
+}
+
+fn eval_string_comparisons(
+    left: Rc<String>,
+    operator: &str,
+    right: Rc<String>,
+) -> Option<AllObjects> {
+    let value = match operator {
+        ">" => left > right,
+        "<" => left < right,
+        "==" => left == right,
+        "!=" => left != right,
+        _ => return None,
+    };
+    return Some(AllObjects::Boolean(Boolean { value }));
 }
 
 fn new_function_literal(node: FunctionLiteral, env: Rc<Environment>) -> AllObjects {

@@ -1,0 +1,12 @@
+let makeGreeter = fn(greeting) { 
+    let greetFn = fn(name) { 
+        return greeting + " " + name + "!" 
+    };
+    return greetFn;
+};
+
+let helloFn = makeGreeter("hello");
+let byeFn = makeGreeter("bye");
+
+helloFn("Vimu") + " " + byeFn("Vimu");
+

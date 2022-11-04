@@ -5,6 +5,10 @@ fn input_works() {
     let test_cases = vec![
         ("tests/testfiles/basic_functions.mok", "1054"),
         ("tests/testfiles/if_statements.mok", "8750"),
+        (
+            "tests/testfiles/higher_order_functions.mok",
+            "hello Vimu! bye Vimu!",
+        ),
     ];
 
     for tc in test_cases {

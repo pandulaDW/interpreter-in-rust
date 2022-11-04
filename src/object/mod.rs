@@ -87,6 +87,10 @@ impl AllObjects {
         self.object_type() == ObjectType::Boolean
     }
 
+    pub fn is_string(&self) -> bool {
+        self.object_type() == ObjectType::String
+    }
+
     pub fn is_error(&self) -> bool {
         self.object_type() == ObjectType::Error
     }

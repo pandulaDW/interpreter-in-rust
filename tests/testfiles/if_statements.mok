@@ -1,8 +1,8 @@
-let global_var1 = 1024;
+let global_var1 = "foo";
 let global_var2 = 350;
 
 let main = fn() {
-  if (global_var1 > 10) {
+  if (global_var1 == "foo") {
     let foo = 25;
     return foo * global_var2;
   } else {

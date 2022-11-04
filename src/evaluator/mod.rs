@@ -57,6 +57,13 @@ mod tests {
             ("(1 < 2) == false", false),
             ("(1 > 2) == true", false),
             ("(1 > 2) == false", true),
+            (r#" "foobar" == "foobar" "#, true),
+            (r#" "foo" != "baz" "#, true),
+            (r#" "x" < "y" "#, true),
+            (
+                r#" "a slightly long text" == "not so slightly long text" "#,
+                false,
+            ),
         ];
 
         for tc in test_cases {
@@ -266,6 +273,13 @@ mod tests {
           addTwo(3);";
         let evaluated = helper_test_eval(input);
         helper_test_integer_obj(evaluated, 5);
+    }
+
+    #[test]
+    fn test_string_concatenation() {
+        let input = r#""foo" + " " + "bar""#;
+        let evaluated = helper_test_eval(input);
+        helper_test_string_literal(evaluated, "foo bar");
     }
 }
 
