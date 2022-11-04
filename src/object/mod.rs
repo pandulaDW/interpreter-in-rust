@@ -11,6 +11,7 @@ pub trait Object {
 #[derive(PartialEq, Eq)]
 pub enum ObjectType {
     Integer,
+    String,
     Boolean,
     Null,
     Error,
@@ -22,6 +23,7 @@ impl Display for ObjectType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
         let out = match self {
             ObjectType::Integer => "INTEGER",
+            ObjectType::String => "STRING",
             ObjectType::Boolean => "BOOLEAN",
             ObjectType::Null => "NULL",
             ObjectType::Error => "ERROR",
@@ -38,6 +40,7 @@ impl Display for ObjectType {
 #[derive(PartialEq, Eq, Clone)]
 pub enum AllObjects {
     Integer(objects::Integer),
+    StringObj(objects::StringObj),
     Boolean(objects::Boolean),
     Null(objects::Null),
     Error(objects::Error),
@@ -49,6 +52,7 @@ impl Object for AllObjects {
     fn inspect(&self) -> String {
         match self {
             Self::Integer(v) => v.inspect(),
+            Self::StringObj(v) => v.inspect(),
             Self::Boolean(v) => v.inspect(),
             Self::Null(v) => v.inspect(),
             Self::Error(v) => v.inspect(),
@@ -62,6 +66,7 @@ impl AllObjects {
     pub fn object_type(&self) -> ObjectType {
         match self {
             Self::Integer(_) => ObjectType::Integer,
+            Self::StringObj(_) => ObjectType::String,
             Self::Boolean(_) => ObjectType::Boolean,
             Self::Null(_) => ObjectType::Null,
             Self::Error(_) => ObjectType::Error,

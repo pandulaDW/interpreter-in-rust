@@ -9,7 +9,7 @@ use crate::ast::program::Program;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 use crate::parser::parse_expressions::{
-    parse_call_expression, parse_function_literal, parse_if_expression,
+    parse_call_expression, parse_function_literal, parse_if_expression, parse_string_literal,
 };
 
 pub type PrefixParseFn = dyn Fn(&mut Parser) -> Option<Box<AllExpressions>>;
@@ -72,6 +72,7 @@ impl Parser {
         match token_type {
             Ident => Some(Box::new(parse_identifier)),
             Int => Some(Box::new(parse_integer_literal)),
+            String => Some(Box::new(parse_string_literal)),
             Bang | Minus | Plus => Some(Box::new(parse_prefix_expression)),
             True | False => Some(Box::new(parse_boolean_expression)),
             Lparen => Some(Box::new(parse_grouped_expression)),
@@ -110,7 +111,8 @@ mod tests {
         let tests = vec![
             ("let x = 5", "x", Int(5)),
             ("let y = true;", "y", Bool(true)),
-            ("let foobar = y", "foobar", Str("y")),
+            ("let foobar = y", "foobar", Ident("y")),
+            ("let x = \"foobar\"", "x", Str("foobar")),
         ];
 
         for tc in tests {
@@ -136,7 +138,7 @@ mod tests {
         let tests = vec![
             ("return 5", Int(5)),
             ("return false;", Bool(false)),
-            ("return x", Str("x")),
+            ("return x", Ident("x")),
         ];
 
         for tc in tests {
@@ -155,7 +157,7 @@ mod tests {
         assert_eq!(program.statements.len(), 1);
         if let AllStatements::Return(return_stmt) = program.statements.remove(0) {
             let return_expr = return_stmt.return_value;
-            helper_test_infix_expression(*return_expr, Str("x"), "+", Str("y"));
+            helper_test_infix_expression(*return_expr, Ident("x"), "+", Ident("y"));
         } else {
             panic!("{}", EXPECTED_RETURN);
         }
@@ -228,7 +230,8 @@ mod tests {
             ("true == true", Bool(true), "==", Bool(true)),
             ("true != false", Bool(true), "!=", Bool(false)),
             ("false == false", Bool(false), "==", Bool(false)),
-            ("alice * bob", Str("alice"), "*", Str("bob")),
+            ("alice * bob", Ident("alice"), "*", Ident("bob")),
+            ("\"foo\" != \"bar\"", Str("foo"), "!=", Str("bar")),
         ];
         for tc in infix_tests {
             let mut program = helper_prepare_parser(tc.0);
@@ -291,7 +294,7 @@ mod tests {
 
     #[test]
     fn test_if_expression() {
-        use Literal::Str;
+        use Literal::Ident;
 
         let mut program = helper_prepare_parser("if (x < y) { x };");
         assert_eq!(program.statements.len(), 1);
@@ -302,7 +305,7 @@ mod tests {
         };
         assert_eq!(if_expr.consequence.statements.len(), 1);
 
-        helper_test_infix_expression(*if_expr.condition, Str("x"), "<", Str("y"));
+        helper_test_infix_expression(*if_expr.condition, Ident("x"), "<", Ident("y"));
 
         let consequence = if_expr.consequence.statements.remove(0);
         let consequence_expr = helper_get_expression(consequence);
@@ -314,7 +317,7 @@ mod tests {
 
     #[test]
     fn test_if_else_expression() {
-        use Literal::Str;
+        use Literal::Ident;
 
         let mut program = helper_prepare_parser("if (x > y) { x } else { y + z; }");
         assert_eq!(program.statements.len(), 1);
@@ -325,7 +328,7 @@ mod tests {
         };
         assert_eq!(if_expr.consequence.statements.len(), 1);
 
-        helper_test_infix_expression(*if_expr.condition, Str("x"), ">", Str("y"));
+        helper_test_infix_expression(*if_expr.condition, Ident("x"), ">", Ident("y"));
 
         let consequence = if_expr.consequence.statements.remove(0);
         let consequence_expr = helper_get_expression(consequence);
@@ -334,7 +337,12 @@ mod tests {
         assert!(if_expr.alternative.is_some());
         let alternative = if_expr.alternative.unwrap().statements.remove(0);
         let alternative_expr = helper_get_expression(alternative);
-        helper_test_infix_expression(alternative_expr, Literal::Str("y"), "+", Literal::Str("z"));
+        helper_test_infix_expression(
+            alternative_expr,
+            Literal::Ident("y"),
+            "+",
+            Literal::Ident("z"),
+        );
     }
 
     #[test]
@@ -354,7 +362,7 @@ mod tests {
         assert_eq!(fn_expr.body.statements.len(), 1);
         let stmt = fn_expr.body.statements.remove(0);
         let body_expr = helper_get_expression(stmt);
-        helper_test_infix_expression(body_expr, Literal::Str("x"), "+", Literal::Str("y"));
+        helper_test_infix_expression(body_expr, Literal::Ident("x"), "+", Literal::Ident("y"));
     }
 
     #[test]
@@ -425,6 +433,7 @@ mod test_helpers {
     pub enum Literal<'a> {
         Int(i64),
         Bool(bool),
+        Ident(&'a str),
         Str(&'a str),
     }
 
@@ -447,6 +456,14 @@ mod test_helpers {
             assert_eq!(integer_literal.token_literal(), format!("{}", value));
         } else {
             panic!("{}", EXPECTED_INTEGER);
+        }
+    }
+
+    pub fn helper_test_string_literal(expr: AllExpressions, value: &str) {
+        if let AllExpressions::StringLiteral(str_literal) = expr {
+            assert_eq!(str_literal.token.literal, value);
+        } else {
+            panic!("{}", EXPECTED_STRING);
         }
     }
 
@@ -503,7 +520,8 @@ mod test_helpers {
         match expected {
             Literal::Int(val) => helper_test_integer_literal(expr, val),
             Literal::Bool(val) => helper_test_boolean_literal(expr, val),
-            Literal::Str(val) => helper_test_identifier(expr, val),
+            Literal::Ident(val) => helper_test_identifier(expr, val),
+            Literal::Str(val) => helper_test_string_literal(expr, val),
         }
     }
 
@@ -511,6 +529,7 @@ mod test_helpers {
     pub const EXPECTED_LET: &str = "expected a let statement";
     pub const EXPECTED_RETURN: &str = "expected a return statement";
     pub const EXPECTED_INTEGER: &str = "expected an integer literal";
+    pub const EXPECTED_STRING: &str = "expected a string literal";
     pub const EXPECTED_BOOLEAN: &str = "expected a boolean expression";
     pub const EXPECTED_PREFIX: &str = "expected a prefix expression";
     pub const EXPECTED_INFIX: &str = "expected an infix expression";

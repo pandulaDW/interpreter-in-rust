@@ -1,6 +1,7 @@
 use super::{program::Parser, Precedence};
 use crate::ast::expressions::{
     self, AllExpressions, Boolean, CallExpression, FunctionLiteral, Identifier, IfExpression,
+    StringLiteral,
 };
 use crate::ast::statements::ExpressionStatement;
 use crate::ast::statements::{AllStatements, BlockStatement};
@@ -80,6 +81,15 @@ pub fn parse_integer_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
 
     p.tracer.un_trace(trace_msg);
     Some(Box::new(AllExpressions::IntegerLiteral(expr)))
+}
+
+pub fn parse_string_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
+    let trace_msg = p.tracer.trace("parseStringLiteral");
+    let str_literal = StringLiteral {
+        token: p.current_token.clone(),
+    };
+    p.tracer.un_trace(trace_msg);
+    Some(Box::new(AllExpressions::StringLiteral(str_literal)))
 }
 
 pub fn parse_boolean_expression(p: &mut Parser) -> Option<Box<AllExpressions>> {

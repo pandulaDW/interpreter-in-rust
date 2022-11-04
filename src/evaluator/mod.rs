@@ -199,6 +199,20 @@ mod tests {
     }
 
     #[test]
+    fn test_string_literals() {
+        let test_cases = [
+            ("let a = \"foobar\";a;", "foobar"),
+            ("return \"baz\"", "baz"),
+            ("let x = \"iron\"; return x;", "iron"),
+        ];
+
+        for tc in test_cases {
+            let evaluated = helper_test_eval(tc.0);
+            helper_test_string_literal(evaluated, tc.1);
+        }
+    }
+
+    #[test]
     fn test_function_object() {
         let input = "fn(x) { x + 2; }";
         let evaluated = helper_test_eval(input).expect(EXPECTED_ERROR);
@@ -281,6 +295,14 @@ mod test_helpers {
         }
     }
 
+    pub fn helper_test_string_literal(obj: Option<AllObjects>, expected: &str) {
+        if let AllObjects::StringObj(obj) = obj.expect(EXPECTED_OBJECT) {
+            assert_eq!(*obj.value, expected);
+        } else {
+            panic!("{}", EXPECTED_STRING_OBJECT);
+        }
+    }
+
     pub fn helper_test_boolean_obj(obj: Option<AllObjects>, expected: bool) {
         if let AllObjects::Boolean(obj) = obj.expect(EXPECTED_OBJECT) {
             assert_eq!(obj.value, expected);
@@ -307,5 +329,6 @@ mod test_helpers {
     pub const EXPECTED_OBJECT: &str = "expected an object";
     pub const EXPECTED_FUNCTION: &str = "expected a function";
     const EXPECTED_INT_OBJECT: &str = "expected an integer object";
+    const EXPECTED_STRING_OBJECT: &str = "expected a string object";
     const EXPECTED_NULL: &str = "expected null";
 }

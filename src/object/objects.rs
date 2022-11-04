@@ -14,6 +14,17 @@ impl Object for Integer {
 }
 
 #[derive(PartialEq, Eq, Clone)]
+pub struct StringObj {
+    pub value: Rc<String>,
+}
+
+impl Object for StringObj {
+    fn inspect(&self) -> String {
+        format!("{}", self.value)
+    }
+}
+
+#[derive(PartialEq, Eq, Clone)]
 pub struct Boolean {
     pub value: bool,
 }

@@ -7,6 +7,7 @@ use crate::lexer::token;
 pub enum AllExpressions {
     Identifier(Identifier),
     IntegerLiteral(IntegerLiteral),
+    StringLiteral(StringLiteral),
     PrefixExpression(PrefixExpression),
     InfixExpression(InfixExpression),
     Boolean(Boolean),
@@ -20,6 +21,7 @@ impl Display for AllExpressions {
         let out = match self {
             AllExpressions::Identifier(v) => v.to_string(),
             AllExpressions::IntegerLiteral(v) => v.to_string(),
+            AllExpressions::StringLiteral(v) => v.to_string(),
             AllExpressions::PrefixExpression(v) => v.to_string(),
             AllExpressions::InfixExpression(v) => v.to_string(),
             AllExpressions::Boolean(v) => v.to_string(),
@@ -64,6 +66,23 @@ impl Node for IntegerLiteral {
 impl Display for IntegerLiteral {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
+    }
+}
+
+#[derive(Clone)]
+pub struct StringLiteral {
+    pub token: token::Token, // String token
+}
+
+impl Node for StringLiteral {
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+}
+
+impl Display for StringLiteral {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.token.literal)
     }
 }
 

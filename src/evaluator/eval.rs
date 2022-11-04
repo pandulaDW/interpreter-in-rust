@@ -3,14 +3,14 @@ use crate::{
     ast::{
         expressions::{
             AllExpressions, CallExpression, FunctionLiteral, Identifier, IfExpression,
-            InfixExpression, IntegerLiteral, PrefixExpression,
+            InfixExpression, IntegerLiteral, PrefixExpression, StringLiteral,
         },
         statements::{AllStatements, BlockStatement, LetStatement, ReturnStatement},
         AllNodes,
     },
     object::{
         environment::Environment,
-        objects::{Boolean, Function, Integer, Null},
+        objects::{Boolean, Function, Integer, Null, StringObj},
         AllObjects,
     },
 };
@@ -99,6 +99,7 @@ fn eval_return_statement(stmt: ReturnStatement, env: Rc<Environment>) -> Option<
 fn eval_expression(exprs: AllExpressions, env: Rc<Environment>) -> Option<AllObjects> {
     match exprs {
         AllExpressions::IntegerLiteral(node) => Some(get_int_object(node)),
+        AllExpressions::StringLiteral(node) => Some(get_string_object(node)),
         AllExpressions::Boolean(node) => Some(get_bool_consts(node.value)),
         AllExpressions::PrefixExpression(node) => eval_prefix_expression(node, env),
         AllExpressions::InfixExpression(node) => eval_infix_expression(node, env),
@@ -327,4 +328,10 @@ fn get_bool_consts(val: bool) -> AllObjects {
 
 fn get_int_object(node: IntegerLiteral) -> AllObjects {
     AllObjects::Integer(Integer { value: node.value })
+}
+
+fn get_string_object(node: StringLiteral) -> AllObjects {
+    AllObjects::StringObj(StringObj {
+        value: Rc::new(node.token.literal),
+    })
 }

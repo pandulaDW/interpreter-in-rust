@@ -55,6 +55,7 @@ impl Lexer {
             '>' => new_token(TokenType::Gt, self.ch),
             '{' => new_token(TokenType::Lbrace, self.ch),
             '}' => new_token(TokenType::Rbrace, self.ch),
+            '"' => new_token(TokenType::String, self.read_string()),
             NULL_CHAR => new_token(TokenType::Eof, NULL_CHAR),
             _ => {
                 if is_letter(self.ch) {
@@ -109,6 +110,18 @@ impl Lexer {
             .collect()
     }
 
+    /// Reads a string by iteratively calling the read_char method and returns the string literal
+    fn read_string(&mut self) -> String {
+        let position = self.position + 1;
+        loop {
+            self.read_char();
+            if self.ch == '"' || self.ch == NULL_CHAR {
+                break;
+            }
+        }
+        self.input[position..self.position].iter().collect()
+    }
+
     /// Returns the character corresponding to the read_position
     fn peek_char(&self) -> char {
         self.input
@@ -125,7 +138,7 @@ fn is_letter(ch: char) -> bool {
 
 /// Checks if the given character is an ASCII alphabetic character, _ or a digit
 fn is_letter_or_digit(ch: char) -> bool {
-    ch.is_ascii_alphabetic() || ch == '_' || ch.is_digit(10)
+    ch.is_ascii_alphabetic() || ch == '_' || ch.is_ascii_digit()
 }
 
 #[cfg(test)]
@@ -184,7 +197,10 @@ mod tests {
                     return false;
                 }
                 10 == 10; 
-                10 != 9;";
+                10 != 9;
+                \"foobar\"
+                \"foo bar\"
+                ";
         let mut l = Lexer::new(input);
 
         let test_cases = vec![
@@ -261,6 +277,8 @@ mod tests {
             new_token(NotEq, "!="),
             new_token(Int, "9"),
             new_token(Semicolon, ';'),
+            new_token(String, "foobar"),
+            new_token(String, "foo bar"),
             new_token(Eof, NULL_CHAR),
         ];
 
