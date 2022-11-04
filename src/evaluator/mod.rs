@@ -114,6 +114,15 @@ mod tests {
         ";
         let evaluated = helper_test_eval(input);
         helper_test_error(evaluated, "identifier not found: x");
+
+        let input = "if (1 > 2) { 
+            let x = 10;
+         } else {
+            return 20 + x;
+         }
+         ";
+        let evaluated = helper_test_eval(input);
+        helper_test_error(evaluated, "identifier not found: x");
     }
 
     #[test]

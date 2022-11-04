@@ -26,7 +26,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> io::Re
     unsafe {
         TRACING_ENABLED = args.tracing;
     }
-    greet();
+    greet(output)?;
 
     let mut text = String::new();
     let program_env = Environment::new();
@@ -42,7 +42,7 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> io::Re
             break;
         }
 
-        execute_program(&text, program_env.clone());
+        execute_program(&text, output, program_env.clone())?;
 
         text.clear();
     }
@@ -50,19 +50,24 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> io::Re
     Ok(())
 }
 
-fn greet() {
-    println!(
+fn greet<U: Write>(output: &mut U) -> io::Result<()> {
+    writeln!(
+        output,
         "Hello {}!, This is the Monkey programming language!",
         whoami::username()
-    );
-    println!("Feel free to type in commands");
+    )?;
+    writeln!(output, "Feel free to type in commands")?;
+    Ok(())
 }
 
-fn print_parser_errors(errors: &[String]) {
-    println!("{}", MONKEY_FACE);
-    println!("Woops! We ran into some monkey business here 🥴");
-    println!("parser Errors:");
-    errors.iter().for_each(|v| println!("\t- {}", v));
+fn write_parser_errors<U: Write>(errors: &[String], output: &mut U) -> io::Result<()> {
+    writeln!(output, "{}", MONKEY_FACE)?;
+    writeln!(output, "Woops! We ran into some monkey business here 🥴")?;
+    writeln!(output, "parser Errors:")?;
+    for e in errors {
+        writeln!(output, "\t- {}", e)?;
+    }
+    Ok(())
 }
 
 const MONKEY_FACE: &str = r#"
@@ -79,18 +84,24 @@ const MONKEY_FACE: &str = r#"
            '-----'
 "#;
 
-pub fn execute_program(text: &str, program_env: Rc<Environment>) {
+pub fn execute_program<U: Write>(
+    text: &str,
+    output: &mut U,
+    program_env: Rc<Environment>,
+) -> io::Result<()> {
     let l = Lexer::new(text);
     let mut p = Parser::new(l);
     let program = p.parse_program();
 
     if !p.errors.is_empty() {
-        print_parser_errors(&p.errors);
-        return;
+        write_parser_errors(&p.errors, output)?;
+        return Ok(());
     }
 
     let evaluated = evaluator::eval(program.make_node(), program_env);
     if let Some(e) = evaluated {
-        println!("{}", e.inspect());
+        writeln!(output, "{}", e.inspect())?;
     }
+
+    Ok(())
 }

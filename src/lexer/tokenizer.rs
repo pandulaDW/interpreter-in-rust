@@ -90,7 +90,7 @@ impl Lexer {
     /// Reads an identifier by iteratively calling the read_char method and returns the string literal
     fn read_identifier(&mut self) -> String {
         let current_position = self.position;
-        while is_letter(self.peek_char()) {
+        while is_letter_or_digit(self.peek_char()) {
             self.read_char();
         }
         self.input[current_position..self.read_position]
@@ -121,6 +121,11 @@ impl Lexer {
 /// Checks if the given character is an ASCII alphabetic character or an _ character
 fn is_letter(ch: char) -> bool {
     ch.is_ascii_alphabetic() || ch == '_'
+}
+
+/// Checks if the given character is an ASCII alphabetic character, _ or a digit
+fn is_letter_or_digit(ch: char) -> bool {
+    ch.is_ascii_alphabetic() || ch == '_' || ch.is_digit(10)
 }
 
 #[cfg(test)]
