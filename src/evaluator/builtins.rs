@@ -60,7 +60,7 @@ pub fn print(env: Rc<Environment>) -> AllObjects {
         print!("{} ", arg.inspect());
     }
 
-    if env.all_vars().len() == 0 {
+    if env.all_vars().is_empty() {
         println!();
     }
 

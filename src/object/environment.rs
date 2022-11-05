@@ -61,13 +61,7 @@ impl Environment {
 
     /// Returns a list of all variables in the environment. Useful for variadic functions
     pub fn all_vars(&self) -> Vec<String> {
-        let mut v = self
-            .store
-            .borrow()
-            .keys()
-            .map(|v| v.clone())
-            .collect::<Vec<_>>();
-
+        let mut v = self.store.borrow().keys().cloned().collect::<Vec<_>>();
         v.sort();
         v
     }

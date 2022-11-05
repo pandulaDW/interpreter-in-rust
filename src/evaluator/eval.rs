@@ -212,12 +212,14 @@ fn eval_call_expression(node: CallExpression, env: Rc<Environment>) -> Option<Al
         }
 
         let evaluated = eval_block_statement(f.body, func_env);
+
         if let Some(AllObjects::ReturnValue(r_val)) = evaluated {
             return Some(*r_val);
-        } else {
-            return evaluated;
-        };
-    } else if let AllObjects::BuiltinFunction(f) = function {
+        }
+        return evaluated;
+    }
+
+    if let AllObjects::BuiltinFunction(f) = function {
         let new_env = Environment::new();
 
         match f.parameters {
