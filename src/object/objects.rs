@@ -1,4 +1,4 @@
-use super::{environment::Environment, Object};
+use super::{environment::Environment, AllObjects, Object};
 use crate::ast::{expressions::Identifier, statements::BlockStatement};
 use std::rc::Rc;
 
@@ -88,5 +88,18 @@ impl Object for Function {
             .join(", ");
 
         format!("fn({}){{\n{}\n}}", params, self.body)
+    }
+}
+
+#[derive(PartialEq, Eq, Clone)]
+pub struct BuiltinFunction {
+    pub fn_name: String,
+    pub parameters: Vec<String>,
+    pub func: fn(Rc<Environment>) -> AllObjects,
+}
+
+impl Object for BuiltinFunction {
+    fn inspect(&self) -> String {
+        format!("{}", self.fn_name)
     }
 }

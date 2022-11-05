@@ -1,26 +1,22 @@
+use super::builtins;
 use super::errors;
+use super::helpers::*;
 use crate::{
     ast::{
         expressions::{
-            AllExpressions, CallExpression, FunctionLiteral, Identifier, IfExpression,
-            InfixExpression, IntegerLiteral, PrefixExpression, StringLiteral,
+            AllExpressions, CallExpression, Identifier, IfExpression, InfixExpression,
+            PrefixExpression,
         },
         statements::{AllStatements, BlockStatement, LetStatement, ReturnStatement},
         AllNodes,
     },
     object::{
         environment::Environment,
-        objects::{Boolean, Function, Integer, Null, StringObj},
+        objects::{Boolean, Integer, StringObj},
         AllObjects,
     },
 };
 use std::rc::Rc;
-use uuid::Uuid;
-
-// constants that can be reused without extra allocations
-const TRUE: AllObjects = AllObjects::Boolean(Boolean { value: true });
-const FALSE: AllObjects = AllObjects::Boolean(Boolean { value: false });
-const NULL: AllObjects = AllObjects::Null(Null);
 
 /// eval takes in any type of node and applies the appropriate evaluation logic
 pub fn eval(node: AllNodes, env: Rc<Environment>) -> Option<AllObjects> {
@@ -178,9 +174,16 @@ fn eval_if_expression(expr: IfExpression, env: Rc<Environment>) -> Option<AllObj
     eval_block_statement(alternative, new_env)
 }
 
+/// Returns the associated object from the environment.
+///
+/// If the value is not found, an additional check is performed to check on the builtins.
 fn eval_identifier(node: Identifier, env: Rc<Environment>) -> Option<AllObjects> {
     let ident = env.get(&node.value);
     if ident.is_none() {
+        let builtin_function = builtins::get_builtin_function(&node);
+        if builtin_function.is_some() {
+            return builtin_function;
+        }
         return Some(errors::identifier_not_found(&node.value));
     }
     ident
@@ -214,6 +217,15 @@ fn eval_call_expression(node: CallExpression, env: Rc<Environment>) -> Option<Al
         } else {
             return evaluated;
         };
+    } else if let AllObjects::BuiltinFunction(f) = function {
+        let new_env = Environment::new();
+
+        for (param_idx, param) in f.parameters.iter().enumerate() {
+            new_env.set(param.clone(), args[param_idx].clone());
+        }
+
+        let result = (f.func)(new_env);
+        return Some(result);
     }
 
     None
@@ -235,15 +247,6 @@ fn eval_expressions(exprs: Vec<AllExpressions>, env: Rc<Environment>) -> Option<
     Some(v)
 }
 
-fn eval_bang_operator(right: AllObjects) -> AllObjects {
-    match right {
-        TRUE => FALSE,
-        FALSE => TRUE,
-        NULL => TRUE,
-        _ => FALSE,
-    }
-}
-
 fn eval_minus_operator(right: AllObjects) -> AllObjects {
     if let AllObjects::Integer(v) = right {
         return AllObjects::Integer(Integer { value: -v.value });
@@ -252,35 +255,27 @@ fn eval_minus_operator(right: AllObjects) -> AllObjects {
 }
 
 fn eval_integer_calculations(left: AllObjects, operator: &str, right: AllObjects) -> AllObjects {
-    let left_int_val = match left {
+    let left_int = match left {
         AllObjects::Integer(v) => v,
         _ => return NULL,
     }
     .value;
 
-    let right_int_val = match right {
+    let right_int = match right {
         AllObjects::Integer(v) => v,
         _ => return NULL,
     }
     .value;
 
     match operator {
-        "+" => AllObjects::Integer(Integer {
-            value: left_int_val + right_int_val,
-        }),
-        "-" => AllObjects::Integer(Integer {
-            value: left_int_val - right_int_val,
-        }),
-        "*" => AllObjects::Integer(Integer {
-            value: left_int_val * right_int_val,
-        }),
-        "/" => AllObjects::Integer(Integer {
-            value: left_int_val / right_int_val,
-        }),
-        "<" => get_bool_consts(left_int_val < right_int_val),
-        ">" => get_bool_consts(left_int_val > right_int_val),
-        "!=" => get_bool_consts(left_int_val != right_int_val),
-        "==" => get_bool_consts(left_int_val == right_int_val),
+        "+" => get_int_object_for_value(left_int + right_int),
+        "-" => get_int_object_for_value(left_int - right_int),
+        "*" => get_int_object_for_value(left_int * right_int),
+        "/" => get_int_object_for_value(left_int / right_int),
+        "<" => get_bool_consts(left_int < right_int),
+        ">" => get_bool_consts(left_int > right_int),
+        "!=" => get_bool_consts(left_int != right_int),
+        "==" => get_bool_consts(left_int == right_int),
         _ => NULL,
     }
 }
@@ -346,40 +341,4 @@ fn eval_string_comparisons(
         _ => return None,
     };
     return Some(AllObjects::Boolean(Boolean { value }));
-}
-
-fn new_function_literal(node: FunctionLiteral, env: Rc<Environment>) -> AllObjects {
-    let name = format!("fn_{}", Uuid::new_v4());
-
-    AllObjects::Function(Function {
-        name,
-        body: node.body,
-        env,
-        parameters: node.parameters,
-    })
-}
-
-fn is_truthy(obj: AllObjects) -> bool {
-    match obj {
-        AllObjects::Boolean(v) => v.value,
-        AllObjects::Null(_) => false,
-        _ => true,
-    }
-}
-
-fn get_bool_consts(val: bool) -> AllObjects {
-    if val {
-        return TRUE;
-    }
-    FALSE
-}
-
-fn get_int_object(node: IntegerLiteral) -> AllObjects {
-    AllObjects::Integer(Integer { value: node.value })
-}
-
-fn get_string_object(node: StringLiteral) -> AllObjects {
-    AllObjects::StringObj(StringObj {
-        value: Rc::new(node.token.literal),
-    })
 }
