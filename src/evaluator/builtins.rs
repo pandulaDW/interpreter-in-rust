@@ -1,9 +1,9 @@
-use super::{errors, helpers::get_int_object_for_value};
+use super::{errors, helpers};
 use crate::{
     ast::expressions::Identifier,
     object::{
         objects::{BuiltinFunction, ParamsType},
-        AllObjects, ObjectType,
+        AllObjects, Object, ObjectType,
     },
     Environment,
 };
@@ -15,6 +15,11 @@ pub fn get_builtin_function(ident: &Identifier) -> Option<AllObjects> {
             fn_name: ident.value.clone(),
             parameters: ParamsType::Fixed(vec!["value".to_string()]),
             func: len,
+        },
+        "print" => BuiltinFunction {
+            fn_name: ident.value.clone(),
+            parameters: ParamsType::Variadic,
+            func: print,
         },
         _ => return None,
     };
@@ -39,5 +44,19 @@ pub fn len(env: Rc<Environment>) -> AllObjects {
     // panic of conversion from usize to i64 is highly unlikely
     let length = str_obj.value.len().try_into().unwrap();
 
-    get_int_object_for_value(length)
+    helpers::get_int_object_for_value(length)
+}
+
+/// Takes a variable number of arguments and prints each one consecutively to the stdout with a single space separator.
+pub fn print(env: Rc<Environment>) -> AllObjects {
+    for var in env.all_vars() {
+        let arg = match env.get(&var) {
+            Some(v) => v,
+            None => return errors::identifier_not_found(&var),
+        };
+
+        print!("{} ", arg.inspect());
+    }
+
+    helpers::NULL
 }

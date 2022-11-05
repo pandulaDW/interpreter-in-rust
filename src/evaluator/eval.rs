@@ -221,16 +221,23 @@ fn eval_call_expression(node: CallExpression, env: Rc<Environment>) -> Option<Al
         let new_env = Environment::new();
 
         match f.parameters {
-            ParamsType::Fixed(v) => v.iter().enumerate().for_each(|(param_idx, param)| {
-                new_env.set(param.clone(), args[param_idx].clone());
-            }),
+            ParamsType::Fixed(v) => {
+                if v.len() != args.len() {
+                    return Some(errors::incorrect_arg_num(v.len(), args.len()));
+                }
+                v.iter().enumerate().for_each(|(param_idx, param)| {
+                    new_env.set(param.clone(), args[param_idx].clone());
+                })
+            }
             ParamsType::Variadic => args.into_iter().enumerate().for_each(|(i, arg)| {
-                new_env.set(format!("{}", i), arg);
+                new_env.set(format!("arg_{}", i), arg);
             }),
         }
 
-        let result = (f.func)(new_env);
-        return Some(result);
+        return match (f.func)(new_env) {
+            AllObjects::Null(_) => None,
+            v => Some(v),
+        };
     }
 
     None

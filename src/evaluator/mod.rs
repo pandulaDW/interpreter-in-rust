@@ -289,6 +289,13 @@ mod tests {
         let input = r#" len("foobar"); "#;
         let evaluated = helper_test_eval(input);
         helper_test_integer_obj(evaluated, 6);
+
+        let input = r#" len(12); "#;
+        let evaluated = helper_test_eval(input);
+        helper_test_error(
+            evaluated,
+            "expected a STRING argument, but received a INTEGER",
+        );
     }
 }
 

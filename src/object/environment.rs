@@ -58,4 +58,17 @@ impl Environment {
         self.store.borrow_mut().insert(name, value.clone());
         value
     }
+
+    /// Returns a list of all variables in the environment. Useful for variadic functions
+    pub fn all_vars(&self) -> Vec<String> {
+        let mut v = self
+            .store
+            .borrow()
+            .keys()
+            .map(|v| v.clone())
+            .collect::<Vec<_>>();
+
+        v.sort();
+        v
+    }
 }
