@@ -319,12 +319,12 @@ fn eval_string_operations(left: AllObjects, operator: &str, right: AllObjects) -
         }),
         ">" | "==" | "<" | "!=" => {
             if let Some(v) = eval_string_comparisons(left_val, operator, right_val) {
-                return v;
+                v
             } else {
-                return errors::unknown_operator(Some(&left), operator, &right);
+                errors::unknown_operator(Some(&left), operator, &right)
             }
         }
-        _ => return errors::unknown_operator(Some(&left), operator, &right),
+        _ => errors::unknown_operator(Some(&left), operator, &right),
     }
 }
 
@@ -340,5 +340,5 @@ fn eval_string_comparisons(
         "!=" => left != right,
         _ => return None,
     };
-    return Some(AllObjects::Boolean(Boolean { value }));
+    Some(AllObjects::Boolean(Boolean { value }))
 }

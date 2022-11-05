@@ -100,6 +100,6 @@ pub struct BuiltinFunction {
 
 impl Object for BuiltinFunction {
     fn inspect(&self) -> String {
-        format!("{}", self.fn_name)
+        self.fn_name.to_string()
     }
 }
