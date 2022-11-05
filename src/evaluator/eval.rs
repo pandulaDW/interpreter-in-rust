@@ -55,7 +55,7 @@ fn eval_statement(stmt: AllStatements, env: Rc<Environment>) -> Option<AllObject
         AllStatements::Let(stmt) => eval_let_statement(stmt, env),
         AllStatements::Return(stmt) => eval_return_statement(stmt, env),
         AllStatements::Expression(stmt) => eval_expression(*stmt.expression?, env),
-        AllStatements::_Block(block) => eval_block_statement(block, env),
+        AllStatements::Block(block) => eval_block_statement(block, env),
     }
 }
 
@@ -137,7 +137,6 @@ fn eval_infix_expression(node: InfixExpression, env: Rc<Environment>) -> Option<
     if left.object_type() != right.object_type() {
         return Some(errors::type_mismatch(&left, &node.operator, &right));
     };
-
     if left.is_integer() && right.is_integer() {
         return Some(eval_integer_calculations(left, &node.operator, right));
     }
@@ -176,7 +175,7 @@ fn eval_if_expression(expr: IfExpression, env: Rc<Environment>) -> Option<AllObj
 
 /// Returns the associated object from the environment.
 ///
-/// If the value is not found, an additional check is performed to check on the builtins.
+/// If the value is not found, an additional check is performed on the builtins.
 fn eval_identifier(node: Identifier, env: Rc<Environment>) -> Option<AllObjects> {
     let ident = env.get(&node.value);
     if ident.is_none() {

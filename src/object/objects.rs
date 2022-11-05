@@ -20,7 +20,8 @@ pub struct StringObj {
 
 impl Object for StringObj {
     fn inspect(&self) -> String {
-        format!("{}", self.value)
+        let v = self.value.replace("\\n", "\n").replace("\\t", "\t");
+        v.clone()
     }
 }
 

@@ -304,7 +304,7 @@ mod tests {
     fn test_print_function() {
         io::set_output_capture(Some(Default::default()));
 
-        let input = r#" print(12, 34, "foobar", true); "#;
+        let input = r#" print(12, 34, "foobar\n", true); "#;
         _ = helper_test_eval(input);
 
         let captured = std::io::set_output_capture(None);
@@ -313,7 +313,7 @@ mod tests {
         let captured = captured.into_inner().unwrap();
         let captured = String::from_utf8(captured).unwrap();
 
-        assert_eq!(captured, "12 34 foobar true ");
+        assert_eq!(captured, "12 34 foobar\n true ");
     }
 }
 

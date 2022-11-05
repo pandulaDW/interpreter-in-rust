@@ -11,7 +11,7 @@ pub enum AllStatements {
     Let(LetStatement),
     Return(ReturnStatement),
     Expression(ExpressionStatement),
-    _Block(BlockStatement),
+    Block(BlockStatement),
 }
 
 impl Node for AllStatements {
@@ -20,7 +20,7 @@ impl Node for AllStatements {
             AllStatements::Let(v) => v.token_literal(),
             AllStatements::Return(v) => v.token_literal(),
             AllStatements::Expression(v) => v.token_literal(),
-            AllStatements::_Block(v) => v.token_literal(),
+            AllStatements::Block(v) => v.token_literal(),
         }
     }
 }
@@ -31,7 +31,7 @@ impl Display for AllStatements {
             AllStatements::Let(v) => v.to_string(),
             AllStatements::Return(v) => v.to_string(),
             AllStatements::Expression(v) => v.to_string(),
-            AllStatements::_Block(v) => v.to_string(),
+            AllStatements::Block(v) => v.to_string(),
         };
 
         write!(f, "{}", out)

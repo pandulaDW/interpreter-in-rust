@@ -53,13 +53,13 @@ impl Environment {
 
     /// Inserts a identifier-object pair into the store and return the passed object.
     ///
-    /// The passed object will be cloned while inserting as they need to be persisted throughout the program.
+    /// The passed object will be cloned while inserting as they need to be persisted throughout life of the environment.
     pub fn set(&self, name: String, value: AllObjects) -> AllObjects {
         self.store.borrow_mut().insert(name, value.clone());
         value
     }
 
-    /// Returns a list of all variables in the environment. Useful for variadic functions
+    /// Returns a list of all variables in the environment. Useful for variadic functions.
     pub fn all_vars(&self) -> Vec<String> {
         let mut v = self.store.borrow().keys().cloned().collect::<Vec<_>>();
         v.sort();
