@@ -1,3 +1,6 @@
+// for testing stdout in print function
+#![feature(internal_output_capture)]
+
 mod ast;
 mod evaluator;
 mod lexer;

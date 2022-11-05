@@ -9,6 +9,8 @@ pub use eval::eval;
 mod tests {
     use super::test_helpers::*;
     use crate::object::AllObjects;
+    use std::io;
+    use std::sync::Arc;
 
     #[test]
     fn test_eval_integer_expression() {
@@ -296,6 +298,22 @@ mod tests {
             evaluated,
             "expected a STRING argument, but received a INTEGER",
         );
+    }
+
+    #[test]
+    fn test_print_function() {
+        io::set_output_capture(Some(Default::default()));
+
+        let input = r#" print(12, 34, "foobar", true); "#;
+        _ = helper_test_eval(input);
+
+        let captured = std::io::set_output_capture(None);
+        let captured = captured.unwrap();
+        let captured = Arc::try_unwrap(captured).unwrap();
+        let captured = captured.into_inner().unwrap();
+        let captured = String::from_utf8(captured).unwrap();
+
+        assert_eq!(captured, "12 34 foobar true ");
     }
 }
 

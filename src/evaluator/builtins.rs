@@ -48,6 +48,8 @@ pub fn len(env: Rc<Environment>) -> AllObjects {
 }
 
 /// Takes a variable number of arguments and prints each one consecutively to the stdout with a single space separator.
+///
+/// If no arguments are provided, it will print a newline.
 pub fn print(env: Rc<Environment>) -> AllObjects {
     for var in env.all_vars() {
         let arg = match env.get(&var) {
@@ -56,6 +58,10 @@ pub fn print(env: Rc<Environment>) -> AllObjects {
         };
 
         print!("{} ", arg.inspect());
+    }
+
+    if env.all_vars().len() == 0 {
+        println!();
     }
 
     helpers::NULL
