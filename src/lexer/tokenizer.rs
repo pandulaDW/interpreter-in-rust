@@ -64,7 +64,7 @@ impl Lexer {
                     new_token(token_type, &identifier)
                 } else if self.ch.is_ascii_digit() {
                     let num_literal = self.read_number();
-                    new_token(TokenType::Int, &num_literal)
+                    new_token(TokenType::Int, num_literal)
                 } else {
                     new_token(TokenType::Illegal, self.ch)
                 }
