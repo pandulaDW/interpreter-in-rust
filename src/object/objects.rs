@@ -94,8 +94,14 @@ impl Object for Function {
 #[derive(PartialEq, Eq, Clone)]
 pub struct BuiltinFunction {
     pub fn_name: String,
-    pub parameters: Vec<String>,
+    pub parameters: ParamsType,
     pub func: fn(Rc<Environment>) -> AllObjects,
+}
+
+#[derive(PartialEq, Eq, Clone)]
+pub enum ParamsType {
+    Fixed(Vec<String>),
+    Variadic,
 }
 
 impl Object for BuiltinFunction {

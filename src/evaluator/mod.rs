@@ -283,6 +283,13 @@ mod tests {
         let evaluated = helper_test_eval(input);
         helper_test_string_literal(evaluated, "foo bar");
     }
+
+    #[test]
+    fn test_string_len() {
+        let input = r#" len("foobar"); "#;
+        let evaluated = helper_test_eval(input);
+        helper_test_integer_obj(evaluated, 6);
+    }
 }
 
 #[cfg(test)]

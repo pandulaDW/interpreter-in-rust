@@ -1,22 +1,25 @@
 use super::{errors, helpers::get_int_object_for_value};
 use crate::{
     ast::expressions::Identifier,
-    object::{objects::BuiltinFunction, AllObjects, ObjectType},
+    object::{
+        objects::{BuiltinFunction, ParamsType},
+        AllObjects, ObjectType,
+    },
     Environment,
 };
 use std::rc::Rc;
 
 pub fn get_builtin_function(ident: &Identifier) -> Option<AllObjects> {
     let func = match ident.value.as_str() {
-        "len" => len,
+        "len" => BuiltinFunction {
+            fn_name: ident.value.clone(),
+            parameters: ParamsType::Fixed(vec!["value".to_string()]),
+            func: len,
+        },
         _ => return None,
     };
 
-    Some(AllObjects::BuiltinFunction(BuiltinFunction {
-        fn_name: ident.value.clone(),
-        parameters: vec!["value".to_string()],
-        func,
-    }))
+    Some(AllObjects::BuiltinFunction(func))
 }
 
 /// Returns the length of a string, an array or a hashmap.

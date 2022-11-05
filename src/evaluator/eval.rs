@@ -12,7 +12,7 @@ use crate::{
     },
     object::{
         environment::Environment,
-        objects::{Boolean, Integer, StringObj},
+        objects::{Boolean, Integer, ParamsType, StringObj},
         AllObjects,
     },
 };
@@ -220,8 +220,13 @@ fn eval_call_expression(node: CallExpression, env: Rc<Environment>) -> Option<Al
     } else if let AllObjects::BuiltinFunction(f) = function {
         let new_env = Environment::new();
 
-        for (param_idx, param) in f.parameters.iter().enumerate() {
-            new_env.set(param.clone(), args[param_idx].clone());
+        match f.parameters {
+            ParamsType::Fixed(v) => v.iter().enumerate().for_each(|(param_idx, param)| {
+                new_env.set(param.clone(), args[param_idx].clone());
+            }),
+            ParamsType::Variadic => args.into_iter().enumerate().for_each(|(i, arg)| {
+                new_env.set(format!("{}", i), arg);
+            }),
         }
 
         let result = (f.func)(new_env);
