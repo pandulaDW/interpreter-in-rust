@@ -109,3 +109,21 @@ impl Object for BuiltinFunction {
         self.fn_name.to_string()
     }
 }
+
+#[derive(PartialEq, Eq, Clone)]
+pub struct ArrayObj {
+    pub elements: Rc<Vec<AllObjects>>,
+}
+
+impl Object for ArrayObj {
+    fn inspect(&self) -> String {
+        format!(
+            "[{}]",
+            self.elements
+                .iter()
+                .map(|v| v.inspect())
+                .collect::<Vec<String>>()
+                .join(", ")
+        )
+    }
+}

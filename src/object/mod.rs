@@ -18,6 +18,7 @@ pub enum ObjectType {
     Return,
     Function,
     BuiltInFunction,
+    Array,
 }
 
 impl Display for ObjectType {
@@ -31,6 +32,7 @@ impl Display for ObjectType {
             ObjectType::Return => "RETURN",
             ObjectType::Function => "FUNCTION",
             ObjectType::BuiltInFunction => "BUILTIN_FUNCTION",
+            ObjectType::Array => "ARRAY",
         };
         write!(f, "{}", out)
     }
@@ -49,6 +51,7 @@ pub enum AllObjects {
     ReturnValue(Box<AllObjects>),
     Function(objects::Function),
     BuiltinFunction(objects::BuiltinFunction),
+    ArrayObj(objects::ArrayObj),
 }
 
 impl Object for AllObjects {
@@ -62,6 +65,7 @@ impl Object for AllObjects {
             Self::ReturnValue(v) => v.inspect(),
             Self::Function(v) => v.inspect(),
             Self::BuiltinFunction(v) => v.inspect(),
+            Self::ArrayObj(v) => v.inspect(),
         }
     }
 }
@@ -77,6 +81,7 @@ impl AllObjects {
             Self::ReturnValue(_) => ObjectType::Return,
             Self::Function(_) => ObjectType::Function,
             Self::BuiltinFunction(_) => ObjectType::Function,
+            Self::ArrayObj(_) => ObjectType::Array,
         }
     }
 

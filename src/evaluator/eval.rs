@@ -1,11 +1,12 @@
 use super::builtins;
 use super::errors;
 use super::helpers::*;
+use crate::object::objects::ArrayObj;
 use crate::{
     ast::{
         expressions::{
-            AllExpressions, CallExpression, Identifier, IfExpression, InfixExpression,
-            PrefixExpression,
+            AllExpressions, ArrayLiteral, CallExpression, Identifier, IfExpression,
+            InfixExpression, PrefixExpression,
         },
         statements::{AllStatements, BlockStatement, LetStatement, ReturnStatement},
         AllNodes,
@@ -103,7 +104,7 @@ fn eval_expression(exprs: AllExpressions, env: Rc<Environment>) -> Option<AllObj
         AllExpressions::Identifier(node) => eval_identifier(node, env),
         AllExpressions::FunctionLiteral(node) => Some(new_function_literal(node, env)),
         AllExpressions::CallExpression(node) => eval_call_expression(node, env),
-        _ => None,
+        AllExpressions::ArrayLiteral(node) => eval_array_literal(node, env),
     }
 }
 
@@ -243,6 +244,18 @@ fn eval_call_expression(node: CallExpression, env: Rc<Environment>) -> Option<Al
     }
 
     None
+}
+
+fn eval_array_literal(node: ArrayLiteral, env: Rc<Environment>) -> Option<AllObjects> {
+    let mut v = Vec::with_capacity(node.elements.len());
+    for expr in node.elements {
+        let evaluated = eval(AllNodes::Expressions(expr), env.clone())?;
+        v.push(evaluated);
+    }
+
+    Some(AllObjects::ArrayObj(ArrayObj {
+        elements: Rc::new(v),
+    }))
 }
 
 fn eval_expressions(exprs: Vec<AllExpressions>, env: Rc<Environment>) -> Option<Vec<AllObjects>> {

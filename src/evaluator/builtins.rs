@@ -36,13 +36,14 @@ pub fn len(env: Rc<Environment>) -> AllObjects {
         None => return errors::argument_not_found("value", ObjectType::String),
     };
 
-    let str_obj = match value {
-        AllObjects::StringObj(v) => v,
+    let length = match value {
+        AllObjects::StringObj(v) => v.value.len(),
+        AllObjects::ArrayObj(v) => v.elements.len(),
         v => return errors::unexpected_argument_type(ObjectType::String, v),
     };
 
     // panic of conversion from usize to i64 is highly unlikely
-    let length = str_obj.value.len().try_into().unwrap();
+    let length = length.try_into().unwrap();
 
     helpers::get_int_object_for_value(length)
 }

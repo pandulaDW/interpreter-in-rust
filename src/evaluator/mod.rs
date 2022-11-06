@@ -287,10 +287,17 @@ mod tests {
     }
 
     #[test]
-    fn test_string_len() {
-        let input = r#" len("foobar"); "#;
-        let evaluated = helper_test_eval(input);
-        helper_test_integer_obj(evaluated, 6);
+    fn test_len() {
+        let test_cases = [
+            (r#" len("foobar"); "#, 6),
+            ("len([1, 2, true, 10, 20, false, \"foo\"])", 7),
+            ("len([])", 0),
+            ("len(\"\")", 0),
+        ];
+        for tc in test_cases {
+            let evaluated = helper_test_eval(tc.0);
+            helper_test_integer_obj(evaluated, tc.1);
+        }
 
         let input = r#" len(12); "#;
         let evaluated = helper_test_eval(input);

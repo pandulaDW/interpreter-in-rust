@@ -227,7 +227,7 @@ pub fn parse_call_expression(
     let token = p.current_token.clone(); // (
     let function = left?;
 
-    let arguments = parse_fn_call_arguments(p)?;
+    let arguments = parse_comma_sep_arguments(p, &TokenType::Rparen)?;
     p.next_token(); // consumes )
 
     let expr = CallExpression {
@@ -237,6 +237,16 @@ pub fn parse_call_expression(
     };
 
     Some(Box::new(AllExpressions::CallExpression(expr)))
+}
+
+pub fn parse_array_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
+    let token = p.current_token.clone(); // [
+
+    let elements = parse_comma_sep_arguments(p, &TokenType::Rbracket)?;
+    p.next_token(); // consume ]
+
+    let array = AllExpressions::ArrayLiteral(ArrayLiteral { token, elements });
+    Some(Box::new(array))
 }
 
 fn parse_fn_literal_parameters(p: &mut Parser) -> Option<Vec<Identifier>> {
@@ -262,15 +272,15 @@ fn parse_fn_literal_parameters(p: &mut Parser) -> Option<Vec<Identifier>> {
     Some(parameters)
 }
 
-fn parse_fn_call_arguments(p: &mut Parser) -> Option<Vec<AllExpressions>> {
+fn parse_comma_sep_arguments(p: &mut Parser, end: &TokenType) -> Option<Vec<AllExpressions>> {
     let mut args = Vec::new();
 
-    while !p.peek_token_is(&TokenType::Rparen) {
+    while !p.peek_token_is(end) {
         p.next_token(); // consumes ( OR ,
         let arg = p.parse_expression(Precedence::Lowest)?;
         args.push(*arg);
 
-        if p.peek_token_is(&TokenType::Rparen) {
+        if p.peek_token_is(end) {
             break;
         }
 
@@ -299,28 +309,4 @@ fn parse_block_statement(p: &mut Parser) -> BlockStatement {
     }
 
     block
-}
-
-pub fn parse_array_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
-    let token = p.current_token.clone(); // [
-    let mut elements = Vec::new();
-
-    while !p.peek_token_is(&TokenType::Rbracket) {
-        p.next_token(); // consumes [ OR ,
-        let element = p.parse_expression(Precedence::Lowest)?;
-        elements.push(*element);
-
-        if p.peek_token_is(&TokenType::Rbracket) {
-            break;
-        }
-
-        if !p.expect_peek(TokenType::Comma) {
-            return None;
-        }
-    }
-    p.next_token(); // consume ]
-
-    let array = AllExpressions::ArrayLiteral(ArrayLiteral { token, elements });
-
-    Some(Box::new(array))
 }

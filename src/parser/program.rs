@@ -439,6 +439,17 @@ mod tests {
         helper_test_integer_literal(array.elements.remove(0), 1);
         helper_test_infix_expression(array.elements.remove(0), Int(2), "*", Int(3));
         helper_test_infix_expression(array.elements.remove(0), Int(3), "+", Int(3));
+
+        // asserting empty array
+        let input = "[]";
+        let mut program = helper_prepare_parser(input);
+        assert_eq!(program.statements.len(), 1);
+
+        let array = match helper_get_expression(program.statements.remove(0)) {
+            AllExpressions::ArrayLiteral(v) => v,
+            _ => panic!("{}", EXPECTED_ARRAY_LITERAL),
+        };
+        assert!(array.elements.is_empty());
     }
 }
 
