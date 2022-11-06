@@ -56,6 +56,8 @@ impl Lexer {
             '{' => new_token(TokenType::Lbrace, self.ch),
             '}' => new_token(TokenType::Rbrace, self.ch),
             '"' => new_token(TokenType::String, self.read_string()),
+            '[' => new_token(TokenType::Lbracket, self.ch),
+            ']' => new_token(TokenType::Rbracket, self.ch),
             NULL_CHAR => new_token(TokenType::Eof, NULL_CHAR),
             _ => {
                 if is_letter(self.ch) {
@@ -182,7 +184,7 @@ mod tests {
 
     #[test]
     fn test_next_token_source_code() {
-        let input = "let five = 5;
+        let input = r#"let five = 5;
                     let ten = 10;
                     let add = fn(x, y) {
                         x + y;
@@ -198,9 +200,10 @@ mod tests {
                 }
                 10 == 10; 
                 10 != 9;
-                \"foobar\"
-                \"foo bar\"
-                ";
+                "foobar"
+                "foo bar"
+                [1, 2];
+                "#;
         let mut l = Lexer::new(input);
 
         let test_cases = vec![
@@ -279,6 +282,12 @@ mod tests {
             new_token(Semicolon, ';'),
             new_token(String, "foobar"),
             new_token(String, "foo bar"),
+            new_token(Lbracket, "["),
+            new_token(Int, "1"),
+            new_token(Comma, ","),
+            new_token(Int, "2"),
+            new_token(Rbracket, "]"),
+            new_token(Semicolon, ';'),
             new_token(Eof, NULL_CHAR),
         ];
 

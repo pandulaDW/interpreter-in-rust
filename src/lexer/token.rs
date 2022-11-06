@@ -39,6 +39,8 @@ pub enum TokenType {
     Rparen,
     Lbrace,
     Rbrace,
+    Lbracket,
+    Rbracket,
 
     // Keywords
     Function,

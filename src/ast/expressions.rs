@@ -14,6 +14,7 @@ pub enum AllExpressions {
     IfExpression(IfExpression),
     FunctionLiteral(FunctionLiteral),
     CallExpression(CallExpression),
+    ArrayLiteral(ArrayLiteral),
 }
 
 impl Display for AllExpressions {
@@ -28,6 +29,7 @@ impl Display for AllExpressions {
             AllExpressions::IfExpression(v) => v.to_string(),
             AllExpressions::FunctionLiteral(v) => v.to_string(),
             AllExpressions::CallExpression(v) => v.to_string(),
+            AllExpressions::ArrayLiteral(v) => v.to_string(),
         };
         write!(f, "{}", out)
     }
@@ -245,6 +247,34 @@ impl Display for CallExpression {
                 .collect::<Vec<String>>()
                 .join(", ")
         );
+        write!(f, "{}", out)
+    }
+}
+
+// Cloning this structure is not a problem, as it is only the user defined portion of the (usually small) arrays
+// that will get cloned across the program.
+#[derive(Clone)]
+pub struct ArrayLiteral {
+    pub token: token::Token,
+    pub elements: Vec<AllExpressions>,
+}
+
+impl Node for ArrayLiteral {
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+}
+
+impl Display for ArrayLiteral {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let elements = self
+            .elements
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        let out = format!("[{}]", elements);
         write!(f, "{}", out)
     }
 }

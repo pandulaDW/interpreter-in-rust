@@ -1,7 +1,7 @@
 use super::{program::Parser, Precedence};
 use crate::ast::expressions::{
-    self, AllExpressions, Boolean, CallExpression, FunctionLiteral, Identifier, IfExpression,
-    StringLiteral,
+    self, AllExpressions, ArrayLiteral, Boolean, CallExpression, FunctionLiteral, Identifier,
+    IfExpression, StringLiteral,
 };
 use crate::ast::statements::ExpressionStatement;
 use crate::ast::statements::{AllStatements, BlockStatement};
@@ -299,4 +299,28 @@ fn parse_block_statement(p: &mut Parser) -> BlockStatement {
     }
 
     block
+}
+
+pub fn parse_array_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
+    let token = p.current_token.clone(); // [
+    let mut elements = Vec::new();
+
+    while !p.peek_token_is(&TokenType::Rbracket) {
+        p.next_token(); // consumes [ OR ,
+        let element = p.parse_expression(Precedence::Lowest)?;
+        elements.push(*element);
+
+        if p.peek_token_is(&TokenType::Rbracket) {
+            break;
+        }
+
+        if !p.expect_peek(TokenType::Comma) {
+            return None;
+        }
+    }
+    p.next_token(); // consume ]
+
+    let array = AllExpressions::ArrayLiteral(ArrayLiteral { token, elements });
+
+    Some(Box::new(array))
 }

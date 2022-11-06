@@ -103,6 +103,7 @@ fn eval_expression(exprs: AllExpressions, env: Rc<Environment>) -> Option<AllObj
         AllExpressions::Identifier(node) => eval_identifier(node, env),
         AllExpressions::FunctionLiteral(node) => Some(new_function_literal(node, env)),
         AllExpressions::CallExpression(node) => eval_call_expression(node, env),
+        _ => None,
     }
 }
 

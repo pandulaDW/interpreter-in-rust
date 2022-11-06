@@ -12,12 +12,12 @@ use std::rc::Rc;
 pub fn get_builtin_function(ident: &Identifier) -> Option<AllObjects> {
     let func = match ident.value.as_str() {
         "len" => BuiltinFunction {
-            fn_name: ident.value.clone(),
+            fn_name: "len".to_string(),
             parameters: ParamsType::Fixed(vec!["value".to_string()]),
             func: len,
         },
         "print" => BuiltinFunction {
-            fn_name: ident.value.clone(),
+            fn_name: "print".to_string(),
             parameters: ParamsType::Variadic,
             func: print,
         },

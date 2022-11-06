@@ -9,7 +9,8 @@ use crate::ast::program::Program;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 use crate::parser::parse_expressions::{
-    parse_call_expression, parse_function_literal, parse_if_expression, parse_string_literal,
+    parse_array_literal, parse_call_expression, parse_function_literal, parse_if_expression,
+    parse_string_literal,
 };
 
 pub type PrefixParseFn = dyn Fn(&mut Parser) -> Option<Box<AllExpressions>>;
@@ -78,6 +79,7 @@ impl Parser {
             Lparen => Some(Box::new(parse_grouped_expression)),
             If => Some(Box::new(parse_if_expression)),
             Function => Some(Box::new(parse_function_literal)),
+            Lbracket => Some(Box::new(parse_array_literal)),
             _ => None,
         }
     }
@@ -419,6 +421,25 @@ mod tests {
         helper_test_identifier(*call_expr.function, "print");
         assert_eq!(call_expr.arguments.len(), 0);
     }
+
+    #[test]
+    fn test_parse_array_literals() {
+        use Literal::Int;
+
+        let input = "[1, 2 * 3, 3 + 3]";
+        let mut program = helper_prepare_parser(input);
+        assert_eq!(program.statements.len(), 1);
+
+        let mut array = match helper_get_expression(program.statements.remove(0)) {
+            AllExpressions::ArrayLiteral(v) => v,
+            _ => panic!("{}", EXPECTED_ARRAY_LITERAL),
+        };
+
+        assert_eq!(array.elements.len(), 3);
+        helper_test_integer_literal(array.elements.remove(0), 1);
+        helper_test_infix_expression(array.elements.remove(0), Int(2), "*", Int(3));
+        helper_test_infix_expression(array.elements.remove(0), Int(3), "+", Int(3));
+    }
 }
 
 /// Contains helper functions and constants useful for testing parsing
@@ -540,4 +561,5 @@ mod test_helpers {
     pub const EXPECTED_RIGHT: &str = "expected the right expression to exist";
     pub const EXPECTED_EXPRESSION_STATEMENT: &str = "expected an expression statement";
     pub const EXPECTED_EXPRESSION: &str = "expected an expression";
+    pub const EXPECTED_ARRAY_LITERAL: &str = "expected an array literal";
 }
