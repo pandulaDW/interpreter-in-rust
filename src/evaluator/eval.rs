@@ -17,6 +17,7 @@ use crate::{
         AllObjects,
     },
 };
+use std::cell::RefCell;
 use std::rc::Rc;
 
 /// eval takes in any type of node and applies the appropriate evaluation logic
@@ -237,10 +238,7 @@ fn eval_call_expression(node: CallExpression, env: Rc<Environment>) -> Option<Al
             }),
         }
 
-        return match (f.func)(new_env) {
-            AllObjects::Null(_) => None,
-            v => Some(v),
-        };
+        return Some((f.func)(new_env));
     }
 
     None
@@ -254,7 +252,7 @@ fn eval_array_literal(node: ArrayLiteral, env: Rc<Environment>) -> Option<AllObj
     }
 
     Some(AllObjects::ArrayObj(ArrayObj {
-        elements: Rc::new(v),
+        elements: Rc::new(RefCell::new(v)),
     }))
 }
 

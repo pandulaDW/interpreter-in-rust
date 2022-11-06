@@ -1,6 +1,6 @@
 use super::{environment::Environment, AllObjects, Object};
 use crate::ast::{expressions::Identifier, statements::BlockStatement};
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Integer {
@@ -112,7 +112,7 @@ impl Object for BuiltinFunction {
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct ArrayObj {
-    pub elements: Rc<Vec<AllObjects>>,
+    pub elements: Rc<RefCell<Vec<AllObjects>>>,
 }
 
 impl Object for ArrayObj {
@@ -120,6 +120,7 @@ impl Object for ArrayObj {
         format!(
             "[{}]",
             self.elements
+                .borrow()
                 .iter()
                 .map(|v| v.inspect())
                 .collect::<Vec<String>>()

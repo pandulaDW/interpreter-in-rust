@@ -320,7 +320,47 @@ mod tests {
         let captured = captured.into_inner().unwrap();
         let captured = String::from_utf8(captured).unwrap();
 
-        assert_eq!(captured, "12 34 foobar\n true ");
+        assert_eq!(captured, "12 34 foobar\n true");
+    }
+
+    #[test]
+    fn test_arrays() {
+        let input = r#"
+            let x = [12, "foo", true];
+            push(x, false);            
+            push(x, "bar");
+            pop(x);
+            x;
+        "#;
+
+        let binding = match helper_test_eval(input).expect(EXPECTED_OBJECT) {
+            AllObjects::ArrayObj(v) => v,
+            _ => panic!("{}", EXPECTED_ARRAY),
+        };
+
+        let mut array = binding.elements.borrow_mut();
+
+        assert_eq!(array.len(), 4);
+        helper_test_integer_obj(Some(array.remove(0)), 12);
+        helper_test_string_literal(Some(array.remove(0)), "foo");
+        helper_test_boolean_obj(Some(array.remove(0)), true);
+        helper_test_boolean_obj(Some(array.remove(0)), false);
+    }
+
+    #[test]
+    fn test_array_pop() {
+        let input = r#"
+            let x = [12, "foo", true];
+            let v = pop(x);
+            v
+        "#;
+
+        let evaluated = helper_test_eval(input);
+        helper_test_boolean_obj(evaluated, true);
+
+        let input = r#"let x = []; pop(x);"#;
+        let evaluated = helper_test_eval(input);
+        helper_test_null(evaluated);
     }
 }
 
@@ -383,6 +423,7 @@ mod test_helpers {
     pub const EXPECTED_ERROR: &str = "expected an error object";
     pub const EXPECTED_OBJECT: &str = "expected an object";
     pub const EXPECTED_FUNCTION: &str = "expected a function";
+    pub const EXPECTED_ARRAY: &str = "expected an array";
     const EXPECTED_INT_OBJECT: &str = "expected an integer object";
     const EXPECTED_STRING_OBJECT: &str = "expected a string object";
     const EXPECTED_NULL: &str = "expected null";

@@ -99,10 +99,11 @@ pub fn execute_program<U: Write>(
     }
 
     let evaluated = evaluator::eval(program.make_node(), program_env);
-    if let Some(e) = evaluated {
-        writeln!(output, "{}", e.inspect())?;
-    } else {
-        writeln!(output)?;
+    match evaluated {
+        Some(e) if !e.is_null() => {
+            writeln!(output, "{}", e.inspect())?;
+        }
+        Some(_) | None => writeln!(output)?,
     }
 
     Ok(())
