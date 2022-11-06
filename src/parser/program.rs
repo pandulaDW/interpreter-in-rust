@@ -120,15 +120,13 @@ mod tests {
         for tc in tests {
             let mut program = helper_prepare_parser(tc.0);
             assert_eq!(program.statements.len(), 1);
-
-            if let AllStatements::Let(let_stmt) = program.statements.remove(0) {
-                assert_eq!(let_stmt.token_literal(), keywords::LET);
-                assert_eq!(let_stmt.name.value, tc.1);
-                assert_eq!(let_stmt.name.token_literal(), tc.1);
-                helper_test_literal(tc.2, *let_stmt.value);
-            } else {
-                panic!("{}", EXPECTED_LET);
-            }
+            let AllStatements::Let(let_stmt) = program.statements.remove(0) else {
+                panic!("{}", EXPECTED_LET);    
+            };
+            assert_eq!(let_stmt.token_literal(), keywords::LET);
+            assert_eq!(let_stmt.name.value, tc.1);
+            assert_eq!(let_stmt.name.token_literal(), tc.1);
+            helper_test_literal(tc.2, *let_stmt.value);
         }
     }
 
@@ -147,22 +145,20 @@ mod tests {
             let mut program = helper_prepare_parser(tc.0);
             assert_eq!(program.statements.len(), 1);
 
-            if let AllStatements::Return(return_stmt) = program.statements.remove(0) {
-                assert_eq!(return_stmt.token_literal(), keywords::RETURN);
-                helper_test_literal(tc.1, *return_stmt.return_value);
-            } else {
-                panic!("{}", EXPECTED_RETURN);
-            }
+            let AllStatements::Return(return_stmt) = program.statements.remove(0) else {
+                panic!("{}", EXPECTED_RETURN);    
+            };
+            assert_eq!(return_stmt.token_literal(), keywords::RETURN);
+            helper_test_literal(tc.1, *return_stmt.return_value);
         }
 
         let mut program = helper_prepare_parser("return x+y;");
         assert_eq!(program.statements.len(), 1);
-        if let AllStatements::Return(return_stmt) = program.statements.remove(0) {
-            let return_expr = return_stmt.return_value;
-            helper_test_infix_expression(*return_expr, Ident("x"), "+", Ident("y"));
-        } else {
+        let AllStatements::Return(return_stmt) = program.statements.remove(0) else {
             panic!("{}", EXPECTED_RETURN);
-        }
+        };
+        let return_expr = return_stmt.return_value;
+        helper_test_infix_expression(*return_expr, Ident("x"), "+", Ident("y"));
     }
 
     #[test]
@@ -483,38 +479,34 @@ mod test_helpers {
     }
 
     pub fn helper_test_integer_literal(expr: AllExpressions, value: i64) {
-        if let AllExpressions::IntegerLiteral(integer_literal) = expr {
-            assert_eq!(integer_literal.value, value);
-            assert_eq!(integer_literal.token_literal(), format!("{}", value));
-        } else {
+        let AllExpressions::IntegerLiteral(integer_literal) = expr else {
             panic!("{}", EXPECTED_INTEGER);
-        }
+        };
+        assert_eq!(integer_literal.value, value);
+        assert_eq!(integer_literal.token_literal(), format!("{}", value));
     }
 
     pub fn helper_test_string_literal(expr: AllExpressions, value: &str) {
-        if let AllExpressions::StringLiteral(str_literal) = expr {
-            assert_eq!(str_literal.token.literal, value);
-        } else {
+        let AllExpressions::StringLiteral(str_literal) = expr else {
             panic!("{}", EXPECTED_STRING);
-        }
+        };
+        assert_eq!(str_literal.token.literal, value);
     }
 
     pub fn helper_test_identifier(expr: AllExpressions, value: &str) {
-        if let AllExpressions::Identifier(identifier) = expr {
-            assert_eq!(identifier.value, value);
-            assert_eq!(identifier.token_literal(), format!("{}", value));
-        } else {
+        let AllExpressions::Identifier(identifier) = expr else {
             panic!("{}", EXPECTED_IDENT);
-        }
+        };
+        assert_eq!(identifier.value, value);
+        assert_eq!(identifier.token_literal(), format!("{}", value));
     }
 
     pub fn helper_test_boolean_literal(expr: AllExpressions, value: bool) {
-        if let AllExpressions::Boolean(boolean) = expr {
-            assert_eq!(boolean.value, value);
-            assert_eq!(boolean.token_literal(), value.to_string());
-        } else {
+        let AllExpressions::Boolean(boolean) = expr else {
             panic!("{}", EXPECTED_BOOLEAN);
-        }
+        };
+        assert_eq!(boolean.value, value);
+        assert_eq!(boolean.token_literal(), value.to_string());
     }
 
     pub fn helper_test_infix_expression(
@@ -523,13 +515,12 @@ mod test_helpers {
         operator: &str,
         right: Literal,
     ) {
-        if let AllExpressions::InfixExpression(infix_expr) = expr {
-            helper_test_literal(left, *infix_expr.left.expect(EXPECTED_LEFT));
-            assert_eq!(infix_expr.operator, operator);
-            helper_test_literal(right, *infix_expr.right.expect(EXPECTED_RIGHT));
-        } else {
-            panic!("{}", EXPECTED_INFIX)
-        }
+        let AllExpressions::InfixExpression(infix_expr) = expr else {
+            panic!("{}", EXPECTED_INFIX);
+        };
+        helper_test_literal(left, *infix_expr.left.expect(EXPECTED_LEFT));
+        assert_eq!(infix_expr.operator, operator);
+        helper_test_literal(right, *infix_expr.right.expect(EXPECTED_RIGHT));
     }
 
     pub fn helper_prepare_parser(input: &str) -> Program {
@@ -541,11 +532,10 @@ mod test_helpers {
     }
 
     pub fn helper_get_expression(stmt: AllStatements) -> AllExpressions {
-        if let AllStatements::Expression(expr_stmt) = stmt {
-            return *expr_stmt.expression.expect(EXPECTED_EXPRESSION);
-        } else {
-            panic!("{}", EXPECTED_EXPRESSION_STATEMENT);
-        }
+        let AllStatements::Expression(expr_stmt) = stmt else {
+            panic!("{}", EXPECTED_EXPRESSION_STATEMENT); 
+        };
+        return *expr_stmt.expression.expect(EXPECTED_EXPRESSION);
     }
 
     pub fn helper_test_literal(expected: Literal, expr: AllExpressions) {

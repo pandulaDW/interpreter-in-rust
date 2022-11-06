@@ -343,11 +343,10 @@ fn eval_string_operations(left: AllObjects, operator: &str, right: AllObjects) -
             value: Rc::new(format!("{}{}", left_val, right_val)),
         }),
         ">" | "==" | "<" | "!=" => {
-            if let Some(v) = eval_string_comparisons(left_val, operator, right_val) {
-                v
-            } else {
-                errors::unknown_operator(Some(&left), operator, &right)
-            }
+            let Some(v) = eval_string_comparisons(left_val, operator, right_val) else {
+              return errors::unknown_operator(Some(&left), operator, &right);
+            };
+            v
         }
         _ => errors::unknown_operator(Some(&left), operator, &right),
     }

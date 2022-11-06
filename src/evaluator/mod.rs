@@ -227,13 +227,12 @@ mod tests {
     fn test_function_object() {
         let input = "fn(x) { x + 2; }";
         let evaluated = helper_test_eval(input).expect(EXPECTED_ERROR);
-        if let AllObjects::Function(v) = evaluated {
-            assert_eq!(v.parameters.len(), 1);
-            assert_eq!(v.parameters[0].to_string(), "x");
-            assert_eq!(v.body.to_string(), "(x + 2)");
-        } else {
+        let AllObjects::Function(v) = evaluated else {
             panic!("{}", EXPECTED_FUNCTION);
-        }
+        };
+        assert_eq!(v.parameters.len(), 1);
+        assert_eq!(v.parameters[0].to_string(), "x");
+        assert_eq!(v.body.to_string(), "(x + 2)");
     }
 
     #[test]
@@ -383,27 +382,24 @@ mod test_helpers {
     }
 
     pub fn helper_test_integer_obj(obj: Option<AllObjects>, expected: i64) {
-        if let AllObjects::Integer(obj) = obj.expect(EXPECTED_OBJECT) {
-            assert_eq!(obj.value, expected);
-        } else {
+        let AllObjects::Integer(obj) = obj.expect(EXPECTED_OBJECT) else {
             panic!("{}", EXPECTED_INT_OBJECT);
-        }
+        };
+        assert_eq!(obj.value, expected);
     }
 
     pub fn helper_test_string_literal(obj: Option<AllObjects>, expected: &str) {
-        if let AllObjects::StringObj(obj) = obj.expect(EXPECTED_OBJECT) {
-            assert_eq!(*obj.value, expected);
-        } else {
+        let AllObjects::StringObj(obj) = obj.expect(EXPECTED_OBJECT) else{
             panic!("{}", EXPECTED_STRING_OBJECT);
-        }
+        };
+        assert_eq!(*obj.value, expected);
     }
 
     pub fn helper_test_boolean_obj(obj: Option<AllObjects>, expected: bool) {
-        if let AllObjects::Boolean(obj) = obj.expect(EXPECTED_OBJECT) {
-            assert_eq!(obj.value, expected);
-        } else {
+        let AllObjects::Boolean(obj) = obj.expect(EXPECTED_OBJECT) else {
             panic!("{}", EXPECTED_INT_OBJECT);
-        }
+        };
+        assert_eq!(obj.value, expected);
     }
 
     pub fn helper_test_null(obj: Option<AllObjects>) {

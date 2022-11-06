@@ -75,7 +75,7 @@ pub fn print(env: Rc<Environment>) -> AllObjects {
         }
     }
 
-    if env.all_vars().is_empty() {
+    if all_vars.is_empty() {
         println!();
     }
 
@@ -98,7 +98,7 @@ pub fn push(env: Rc<Environment>) -> AllObjects {
     helpers::NULL
 }
 
-/// Removes the last element from a vector and returns it.
+/// Removes the last element from an array and returns it.
 ///
 /// Returns null, if the array is empty
 pub fn pop(env: Rc<Environment>) -> AllObjects {
