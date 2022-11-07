@@ -210,6 +210,13 @@ mod tests {
     }
 
     #[test]
+    fn test_null_literal() {
+        let input = "let x = null; x;";
+        let evaluated = helper_test_eval(input);
+        helper_test_null(evaluated);
+    }
+
+    #[test]
     fn test_string_literals() {
         let test_cases = [
             ("let a = \"foobar\";a;", "foobar"),
@@ -397,7 +404,7 @@ mod test_helpers {
 
     pub fn helper_test_boolean_obj(obj: Option<AllObjects>, expected: bool) {
         let AllObjects::Boolean(obj) = obj.expect(EXPECTED_OBJECT) else {
-            panic!("{}", EXPECTED_INT_OBJECT);
+            panic!("{}", EXPECTED_BOOLEAN_OBJECT);
         };
         assert_eq!(obj.value, expected);
     }
@@ -421,6 +428,7 @@ mod test_helpers {
     pub const EXPECTED_FUNCTION: &str = "expected a function";
     pub const EXPECTED_ARRAY: &str = "expected an array";
     const EXPECTED_INT_OBJECT: &str = "expected an integer object";
+    const EXPECTED_BOOLEAN_OBJECT: &str = "expected a boolean object";
     const EXPECTED_STRING_OBJECT: &str = "expected a string object";
     const EXPECTED_NULL: &str = "expected null";
 }

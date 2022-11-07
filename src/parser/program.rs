@@ -10,7 +10,7 @@ use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 use crate::parser::parse_expressions::{
     parse_array_literal, parse_call_expression, parse_function_literal, parse_if_expression,
-    parse_string_literal,
+    parse_null_literal, parse_string_literal,
 };
 
 pub type PrefixParseFn = dyn Fn(&mut Parser) -> Option<Box<AllExpressions>>;
@@ -80,6 +80,7 @@ impl Parser {
             If => Some(Box::new(parse_if_expression)),
             Function => Some(Box::new(parse_function_literal)),
             Lbracket => Some(Box::new(parse_array_literal)),
+            Null => Some(Box::new(parse_null_literal)),
             _ => None,
         }
     }

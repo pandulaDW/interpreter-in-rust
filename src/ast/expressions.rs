@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use super::{statements::BlockStatement, Node};
-use crate::lexer::token;
+use crate::lexer::{keywords, token};
 
 #[derive(Clone)]
 pub enum AllExpressions {
@@ -15,6 +15,7 @@ pub enum AllExpressions {
     FunctionLiteral(FunctionLiteral),
     CallExpression(CallExpression),
     ArrayLiteral(ArrayLiteral),
+    NullLiteral,
 }
 
 impl Display for AllExpressions {
@@ -30,6 +31,7 @@ impl Display for AllExpressions {
             AllExpressions::FunctionLiteral(v) => v.to_string(),
             AllExpressions::CallExpression(v) => v.to_string(),
             AllExpressions::ArrayLiteral(v) => v.to_string(),
+            AllExpressions::NullLiteral => keywords::NULL.to_string(),
         };
         write!(f, "{}", out)
     }

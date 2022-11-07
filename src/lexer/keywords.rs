@@ -5,3 +5,4 @@ pub const ELSE: &str = "else";
 pub const RETURN: &str = "return";
 pub const TRUE: &str = "true";
 pub const FALSE: &str = "false";
+pub const NULL: &str = "null";

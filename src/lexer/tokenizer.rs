@@ -203,6 +203,7 @@ mod tests {
                 "foobar"
                 "foo bar"
                 [1, 2];
+                let x = null;
                 "#;
         let mut l = Lexer::new(input);
 
@@ -287,6 +288,11 @@ mod tests {
             new_token(Comma, ","),
             new_token(Int, "2"),
             new_token(Rbracket, "]"),
+            new_token(Semicolon, ';'),
+            new_token(Let, "let"),
+            new_token(Ident, "x"),
+            new_token(Assign, '='),
+            new_token(Null, "null"),
             new_token(Semicolon, ';'),
             new_token(Eof, NULL_CHAR),
         ];

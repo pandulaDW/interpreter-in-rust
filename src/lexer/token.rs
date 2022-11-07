@@ -50,6 +50,7 @@ pub enum TokenType {
     Return,
     True,
     False,
+    Null,
 }
 
 /// A helper function to return an EOF token for initializing the parser
@@ -77,6 +78,7 @@ pub fn look_up_identifier(ident: &str) -> TokenType {
         RETURN => TokenType::Return,
         TRUE => TokenType::True,
         FALSE => TokenType::False,
+        NULL => TokenType::Null,
         _ => TokenType::Ident,
     }
 }

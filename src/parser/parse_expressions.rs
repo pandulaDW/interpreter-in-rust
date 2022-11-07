@@ -92,6 +92,12 @@ pub fn parse_string_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
     Some(Box::new(AllExpressions::StringLiteral(str_literal)))
 }
 
+pub fn parse_null_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
+    let trace_msg = p.tracer.trace("parseNullLiteral");
+    p.tracer.un_trace(trace_msg);
+    Some(Box::new(AllExpressions::NullLiteral))
+}
+
 pub fn parse_boolean_expression(p: &mut Parser) -> Option<Box<AllExpressions>> {
     let trace_msg = p.tracer.trace("parseBooleanLiteral");
     let bool_expr = Boolean {
