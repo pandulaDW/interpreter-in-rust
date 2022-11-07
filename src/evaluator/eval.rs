@@ -1,7 +1,8 @@
 use super::builtins;
 use super::errors;
 use super::helpers::*;
-use crate::object::objects::ArrayObj;
+use crate::ast::expressions::IndexExpression;
+use crate::object::{objects::ArrayObj, ObjectType};
 use crate::{
     ast::{
         expressions::{
@@ -107,7 +108,7 @@ fn eval_expression(exprs: AllExpressions, env: Rc<Environment>) -> Option<AllObj
         AllExpressions::CallExpression(node) => eval_call_expression(node, env),
         AllExpressions::ArrayLiteral(node) => eval_array_literal(node, env),
         AllExpressions::NullLiteral => Some(NULL),
-        AllExpressions::IndexExpression(_) => None,
+        AllExpressions::IndexExpression(node) => eval_index_expression(node, env),
     }
 }
 
@@ -256,6 +257,30 @@ fn eval_array_literal(node: ArrayLiteral, env: Rc<Environment>) -> Option<AllObj
     Some(AllObjects::ArrayObj(ArrayObj {
         elements: Rc::new(RefCell::new(v)),
     }))
+}
+
+fn eval_index_expression(node: IndexExpression, env: Rc<Environment>) -> Option<AllObjects> {
+    let array = match eval(AllNodes::Expressions(*node.left), env.clone())? {
+        AllObjects::ArrayObj(v) => v,
+        other => return Some(errors::unexpected_argument_type(ObjectType::Array, other)),
+    };
+
+    let index = match eval(AllNodes::Expressions(*node.index), env.clone())? {
+        AllObjects::Integer(v) => v,
+        other => return Some(errors::unexpected_argument_type(ObjectType::Integer, other)),
+    };
+
+    let index: usize = match index.value.try_into() {
+        Ok(v) => v,
+        Err(_) => return Some(errors::incorrect_index_argument()),
+    };
+
+    let binding = array.elements.borrow();
+    let Some(val) = binding.get(index) else {
+        return Some(errors::indexing_error());
+    };
+
+    Some(val.clone())
 }
 
 fn eval_expressions(exprs: Vec<AllExpressions>, env: Rc<Environment>) -> Option<Vec<AllObjects>> {

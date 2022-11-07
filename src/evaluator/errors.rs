@@ -55,6 +55,10 @@ pub fn unexpected_argument_type(expected: ObjectType, actual: AllObjects) -> All
     ))
 }
 
-pub fn _indexing_error() -> AllObjects {
-    AllObjects::new_error("IndexError: list index out of range".to_string())
+pub fn indexing_error() -> AllObjects {
+    AllObjects::new_error("list index out of range".to_string())
+}
+
+pub fn incorrect_index_argument() -> AllObjects {
+    AllObjects::new_error("list index argument should be a positive integer".to_string())
 }

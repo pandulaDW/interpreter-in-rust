@@ -335,7 +335,7 @@ mod tests {
     #[test]
     fn test_arrays() {
         let input = r#"
-            let x = [12, "foo", true];
+            let x = [3 * 4, "foo", true];
             push(x, false);            
             push(x, "bar");
             pop(x);
@@ -354,6 +354,33 @@ mod tests {
         helper_test_string_literal(Some(array.remove(0)), "foo");
         helper_test_boolean_obj(Some(array.remove(0)), true);
         helper_test_boolean_obj(Some(array.remove(0)), false);
+    }
+
+    #[test]
+    fn test_array_indexing() {
+        let test_cases = [
+            ("[1, 2, 3][0]", 1),
+            ("[1, 2, 3][1]", 2),
+            ("[1, 2, 3][2]", 3),
+            ("let i = 0; [1][i];", 1),
+            ("[1, 2, 3][1 + 1];", 3),
+            ("let i = 0; [1][i];", 1),
+            ("let myArray = [1, 2, 3]; myArray[2];", 3),
+            (
+                "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+                6,
+            ),
+            ("let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]", 2),
+        ];
+
+        for tc in test_cases {
+            let evaluated = helper_test_eval(tc.0);
+            helper_test_integer_obj(evaluated, tc.1);
+        }
+
+        let input = "[1, 2, 3][3]";
+        let evaluated = helper_test_eval(input);
+        helper_test_error(evaluated, "list index out of range");
     }
 
     #[test]
