@@ -1,11 +1,14 @@
 use super::{program::Parser, Precedence};
 use crate::ast::expressions::{
     self, AllExpressions, ArrayLiteral, Boolean, CallExpression, FunctionLiteral, Identifier,
-    IfExpression, StringLiteral,
+    IfExpression, IndexExpression, StringLiteral,
 };
 use crate::ast::statements::ExpressionStatement;
 use crate::ast::statements::{AllStatements, BlockStatement};
 use crate::lexer::token::TokenType;
+
+/// A type alias for the optional boxed expression type that is commonly used in parser functions
+type BoxedExpression = Option<Box<AllExpressions>>;
 
 impl Parser {
     pub fn parse_expression_statement(&mut self) -> Option<AllStatements> {
@@ -26,7 +29,7 @@ impl Parser {
     }
 
     /// Uses pratt parse technique to parse a given expression.
-    pub fn parse_expression(&mut self, precedence: Precedence) -> Option<Box<AllExpressions>> {
+    pub fn parse_expression(&mut self, precedence: Precedence) -> BoxedExpression {
         let trace_msg = self.tracer.trace("parseExpression");
         let prefix = match Parser::prefix_parse_function(&self.current_token.token_type) {
             Some(v) => v,
@@ -54,7 +57,7 @@ impl Parser {
     }
 }
 
-pub fn parse_identifier(p: &mut Parser) -> Option<Box<AllExpressions>> {
+pub fn parse_identifier(p: &mut Parser) -> BoxedExpression {
     let ident = expressions::Identifier {
         token: p.current_token.clone(),
         value: p.current_token.literal.clone(),
@@ -63,7 +66,7 @@ pub fn parse_identifier(p: &mut Parser) -> Option<Box<AllExpressions>> {
     Some(Box::new(AllExpressions::Identifier(ident)))
 }
 
-pub fn parse_integer_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
+pub fn parse_integer_literal(p: &mut Parser) -> BoxedExpression {
     let trace_msg = p.tracer.trace("parseIntegerLiteral");
     let value = match p.current_token.literal.parse::<i64>() {
         Ok(v) => v,
@@ -83,7 +86,7 @@ pub fn parse_integer_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
     Some(Box::new(AllExpressions::IntegerLiteral(expr)))
 }
 
-pub fn parse_string_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
+pub fn parse_string_literal(p: &mut Parser) -> BoxedExpression {
     let trace_msg = p.tracer.trace("parseStringLiteral");
     let str_literal = StringLiteral {
         token: p.current_token.clone(),
@@ -92,13 +95,13 @@ pub fn parse_string_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
     Some(Box::new(AllExpressions::StringLiteral(str_literal)))
 }
 
-pub fn parse_null_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
+pub fn parse_null_literal(p: &mut Parser) -> BoxedExpression {
     let trace_msg = p.tracer.trace("parseNullLiteral");
     p.tracer.un_trace(trace_msg);
     Some(Box::new(AllExpressions::NullLiteral))
 }
 
-pub fn parse_boolean_expression(p: &mut Parser) -> Option<Box<AllExpressions>> {
+pub fn parse_boolean_expression(p: &mut Parser) -> BoxedExpression {
     let trace_msg = p.tracer.trace("parseBooleanLiteral");
     let bool_expr = Boolean {
         token: p.current_token.clone(),
@@ -108,7 +111,7 @@ pub fn parse_boolean_expression(p: &mut Parser) -> Option<Box<AllExpressions>> {
     Some(Box::new(AllExpressions::Boolean(bool_expr)))
 }
 
-pub fn parse_grouped_expression(p: &mut Parser) -> Option<Box<AllExpressions>> {
+pub fn parse_grouped_expression(p: &mut Parser) -> BoxedExpression {
     let trace_msg = p.tracer.trace("parseGroupedExpression");
     p.next_token();
 
@@ -121,7 +124,7 @@ pub fn parse_grouped_expression(p: &mut Parser) -> Option<Box<AllExpressions>> {
     expr
 }
 
-pub fn parse_prefix_expression(p: &mut Parser) -> Option<Box<AllExpressions>> {
+pub fn parse_prefix_expression(p: &mut Parser) -> BoxedExpression {
     let trace_msg = p.tracer.trace("parsePrefixExpression");
 
     let mut expr = expressions::PrefixExpression {
@@ -139,10 +142,7 @@ pub fn parse_prefix_expression(p: &mut Parser) -> Option<Box<AllExpressions>> {
     Some(Box::new(AllExpressions::PrefixExpression(expr)))
 }
 
-pub fn parse_infix_expression(
-    p: &mut Parser,
-    left: Option<Box<AllExpressions>>,
-) -> Option<Box<AllExpressions>> {
+pub fn parse_infix_expression(p: &mut Parser, left: BoxedExpression) -> BoxedExpression {
     let tracer_msg = format!("parseInfixExpression {:?}", &p.current_token.literal);
     let trace_msg = p.tracer.trace(tracer_msg.as_str());
 
@@ -161,7 +161,7 @@ pub fn parse_infix_expression(
     Some(Box::new(AllExpressions::InfixExpression(expression)))
 }
 
-pub fn parse_if_expression(p: &mut Parser) -> Option<Box<AllExpressions>> {
+pub fn parse_if_expression(p: &mut Parser) -> BoxedExpression {
     let token_literal = p.current_token.clone();
 
     if !p.expect_peek(TokenType::Lparen) {
@@ -201,7 +201,7 @@ pub fn parse_if_expression(p: &mut Parser) -> Option<Box<AllExpressions>> {
     Some(Box::new(AllExpressions::IfExpression(if_expr)))
 }
 
-pub fn parse_function_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
+pub fn parse_function_literal(p: &mut Parser) -> BoxedExpression {
     let token = p.current_token.clone();
 
     if !p.expect_peek(TokenType::Lparen) {
@@ -226,10 +226,7 @@ pub fn parse_function_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
     Some(Box::new(AllExpressions::FunctionLiteral(fn_literal)))
 }
 
-pub fn parse_call_expression(
-    p: &mut Parser,
-    left: Option<Box<AllExpressions>>,
-) -> Option<Box<AllExpressions>> {
+pub fn parse_call_expression(p: &mut Parser, left: BoxedExpression) -> BoxedExpression {
     let token = p.current_token.clone(); // (
     let function = left?;
 
@@ -245,7 +242,7 @@ pub fn parse_call_expression(
     Some(Box::new(AllExpressions::CallExpression(expr)))
 }
 
-pub fn parse_array_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
+pub fn parse_array_literal(p: &mut Parser) -> BoxedExpression {
     let token = p.current_token.clone(); // [
 
     let elements = parse_comma_sep_arguments(p, &TokenType::Rbracket)?;
@@ -253,6 +250,24 @@ pub fn parse_array_literal(p: &mut Parser) -> Option<Box<AllExpressions>> {
 
     let array = AllExpressions::ArrayLiteral(ArrayLiteral { token, elements });
     Some(Box::new(array))
+}
+
+pub fn parse_index_expressions(p: &mut Parser, left: BoxedExpression) -> BoxedExpression {
+    let token = p.current_token.clone();
+    p.next_token(); // consume [
+
+    let index = p.parse_expression(Precedence::Lowest);
+    if !p.expect_peek(TokenType::Rbracket) {
+        return None;
+    }
+
+    let expr = IndexExpression {
+        token,
+        left: left?,
+        index: index?,
+    };
+
+    Some(Box::new(AllExpressions::IndexExpression(expr)))
 }
 
 fn parse_fn_literal_parameters(p: &mut Parser) -> Option<Vec<Identifier>> {

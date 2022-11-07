@@ -32,6 +32,11 @@ pub fn get_builtin_function(ident: &Identifier) -> Option<AllObjects> {
             parameters: ParamsType::Fixed(vec!["array".to_string()]),
             func: pop,
         },
+        "is_null" => BuiltinFunction {
+            fn_name: "is_null".to_string(),
+            parameters: ParamsType::Fixed(vec!["value".to_string()]),
+            func: is_null,
+        },
         _ => return None,
     };
 
@@ -116,6 +121,12 @@ pub fn pop(env: Rc<Environment>) -> AllObjects {
     };
 
     popped
+}
+
+/// Checks if the passed value is a null
+pub fn is_null(env: Rc<Environment>) -> AllObjects {
+    let is_null = matches!(get_argument("value", env), AllObjects::Null(_));
+    helpers::get_bool_consts(is_null)
 }
 
 fn get_argument(arg_name: &str, env: Rc<Environment>) -> AllObjects {

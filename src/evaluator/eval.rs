@@ -107,6 +107,7 @@ fn eval_expression(exprs: AllExpressions, env: Rc<Environment>) -> Option<AllObj
         AllExpressions::CallExpression(node) => eval_call_expression(node, env),
         AllExpressions::ArrayLiteral(node) => eval_array_literal(node, env),
         AllExpressions::NullLiteral => Some(NULL),
+        AllExpressions::IndexExpression(_) => None,
     }
 }
 

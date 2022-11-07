@@ -1,16 +1,13 @@
-use super::parse_expressions::{
-    parse_boolean_expression, parse_grouped_expression, parse_identifier, parse_infix_expression,
-    parse_integer_literal, parse_prefix_expression,
-};
-
 use super::tracing::Tracer;
 use crate::ast::expressions::AllExpressions;
 use crate::ast::program::Program;
 use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 use crate::parser::parse_expressions::{
-    parse_array_literal, parse_call_expression, parse_function_literal, parse_if_expression,
-    parse_null_literal, parse_string_literal,
+    parse_array_literal, parse_boolean_expression, parse_call_expression, parse_function_literal,
+    parse_grouped_expression, parse_identifier, parse_if_expression, parse_index_expressions,
+    parse_infix_expression, parse_integer_literal, parse_null_literal, parse_prefix_expression,
+    parse_string_literal,
 };
 
 pub type PrefixParseFn = dyn Fn(&mut Parser) -> Option<Box<AllExpressions>>;
@@ -94,6 +91,7 @@ impl Parser {
                 Some(Box::new(parse_infix_expression))
             }
             Lparen => Some(Box::new(parse_call_expression)),
+            Lbracket => Some(Box::new(parse_index_expressions)),
             _ => None,
         }
     }
@@ -283,6 +281,14 @@ mod tests {
                 "add(a + b + c * d / f + g)",
                 "add((((a + b) + ((c * d) / f)) + g))\n",
             ),
+            (
+                "a * [1, 2, 3, 4][b * c] * d",
+                "((a * ([1, 2, 3, 4][(b * c)])) * d)\n",
+            ),
+            (
+                "add(a * b[2], b[1], 2 * [1, 2][1])",
+                "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))\n",
+            ),
         ];
 
         for tc in tests {
@@ -448,6 +454,21 @@ mod tests {
         };
         assert!(array.elements.is_empty());
     }
+
+    #[test]
+    fn test_parse_index_expressions() {
+        use Literal::Int;
+        let input = "myArray[1 + 1]";
+        let mut program = helper_prepare_parser(input);
+        assert_eq!(program.statements.len(), 1);
+
+        let AllExpressions::IndexExpression(expr) = helper_get_expression(program.statements.remove(0)) else {
+             panic!("{}", EXPECTED_INDEX_EXPRESSION);
+        };
+
+        helper_test_identifier(*expr.left, "myArray");
+        helper_test_infix_expression(*expr.index, Int(1), "+", Int(1));
+    }
 }
 
 /// Contains helper functions and constants useful for testing parsing
@@ -564,4 +585,5 @@ mod test_helpers {
     pub const EXPECTED_EXPRESSION_STATEMENT: &str = "expected an expression statement";
     pub const EXPECTED_EXPRESSION: &str = "expected an expression";
     pub const EXPECTED_ARRAY_LITERAL: &str = "expected an array literal";
+    pub const EXPECTED_INDEX_EXPRESSION: &str = "expected an array index expression";
 }

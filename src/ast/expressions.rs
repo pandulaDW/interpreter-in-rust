@@ -15,6 +15,7 @@ pub enum AllExpressions {
     FunctionLiteral(FunctionLiteral),
     CallExpression(CallExpression),
     ArrayLiteral(ArrayLiteral),
+    IndexExpression(IndexExpression),
     NullLiteral,
 }
 
@@ -32,6 +33,7 @@ impl Display for AllExpressions {
             AllExpressions::CallExpression(v) => v.to_string(),
             AllExpressions::ArrayLiteral(v) => v.to_string(),
             AllExpressions::NullLiteral => keywords::NULL.to_string(),
+            AllExpressions::IndexExpression(v) => v.to_string(),
         };
         write!(f, "{}", out)
     }
@@ -277,6 +279,20 @@ impl Display for ArrayLiteral {
             .join(", ");
 
         let out = format!("[{}]", elements);
+        write!(f, "{}", out)
+    }
+}
+
+#[derive(Clone)]
+pub struct IndexExpression {
+    pub token: token::Token,
+    pub left: Box<AllExpressions>,
+    pub index: Box<AllExpressions>,
+}
+
+impl Display for IndexExpression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let out = format!("({}[{}])", self.left, self.index);
         write!(f, "{}", out)
     }
 }

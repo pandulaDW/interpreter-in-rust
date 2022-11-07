@@ -68,6 +68,9 @@ mod tests {
                 r#" "a slightly long text" == "not so slightly long text" "#,
                 false,
             ),
+            ("is_null(5)", false),
+            ("let x = null; is_null(x)", true),
+            ("let x = 5; !is_null(x)", true),
         ];
 
         for tc in test_cases {

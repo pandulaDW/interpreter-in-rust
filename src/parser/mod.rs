@@ -19,6 +19,7 @@ pub enum Precedence {
     Product = 5,
     Prefix = 6,
     Call = 7,
+    Index = 8,
 }
 
 impl Precedence {
@@ -32,6 +33,7 @@ impl Precedence {
             Plus | Minus => Sum,
             Slash | Asterisk => Product,
             Lparen => Call,
+            Lbracket => Index,
             _ => Lowest,
         }
     }
