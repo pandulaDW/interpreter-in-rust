@@ -12,6 +12,7 @@ pub enum AllStatements {
     Return(ReturnStatement),
     Expression(ExpressionStatement),
     Block(BlockStatement),
+    While(WhileStatement),
 }
 
 impl Node for AllStatements {
@@ -21,6 +22,7 @@ impl Node for AllStatements {
             AllStatements::Return(v) => v.token_literal(),
             AllStatements::Expression(v) => v.token_literal(),
             AllStatements::Block(v) => v.token_literal(),
+            AllStatements::While(v) => v.token_literal(),
         }
     }
 }
@@ -32,6 +34,7 @@ impl Display for AllStatements {
             AllStatements::Return(v) => v.to_string(),
             AllStatements::Expression(v) => v.to_string(),
             AllStatements::Block(v) => v.to_string(),
+            AllStatements::While(v) => v.to_string(),
         };
 
         write!(f, "{}", out)
@@ -127,5 +130,25 @@ impl Display for BlockStatement {
             out.push(stmt.to_string());
         }
         write!(f, "{}", out.join("\n"))
+    }
+}
+
+#[derive(Clone)]
+pub struct WhileStatement {
+    pub token: token::Token,
+    pub condition: Box<AllExpressions>,
+    pub body: BlockStatement,
+}
+
+impl Node for WhileStatement {
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+}
+
+impl Display for WhileStatement {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let out = format!("while ({}) {{\n {} }}", self.condition, self.body);
+        write!(f, "{}", out)
     }
 }

@@ -161,6 +161,26 @@ mod tests {
     }
 
     #[test]
+    fn test_while_statements() {
+        use Literal::*;
+        let input = "
+            while (1 < 2) {
+                let x = 10;
+            }
+            ";
+        let mut program = helper_prepare_parser(input);
+        assert_eq!(program.statements.len(), 1);
+
+        let AllStatements::While(stmt) = program.statements.remove(0) else {
+            panic!("{}", EXPECTED_WHILE);
+        };
+        assert_eq!(stmt.token_literal(), keywords::WHILE);
+        helper_test_infix_expression(*stmt.condition, Int(1), "<", Int(2));
+
+        assert_eq!(stmt.body.statements.len(), 1);
+    }
+
+    #[test]
     fn test_identifier_expression() {
         let mut program = helper_prepare_parser("foobar;");
         assert_eq!(program.statements.len(), 1);
@@ -572,6 +592,7 @@ mod test_helpers {
     pub const EXPECTED_IDENT: &str = "expected an identifier";
     pub const EXPECTED_LET: &str = "expected a let statement";
     pub const EXPECTED_RETURN: &str = "expected a return statement";
+    pub const EXPECTED_WHILE: &str = "expected a while statement";
     pub const EXPECTED_INTEGER: &str = "expected an integer literal";
     pub const EXPECTED_STRING: &str = "expected a string literal";
     pub const EXPECTED_BOOLEAN: &str = "expected a boolean expression";

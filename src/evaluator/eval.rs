@@ -59,6 +59,7 @@ fn eval_statement(stmt: AllStatements, env: Rc<Environment>) -> Option<AllObject
         AllStatements::Return(stmt) => eval_return_statement(stmt, env),
         AllStatements::Expression(stmt) => eval_expression(*stmt.expression?, env),
         AllStatements::Block(block) => eval_block_statement(block, env),
+        AllStatements::While(_) => todo!(),
     }
 }
 

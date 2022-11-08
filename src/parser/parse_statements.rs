@@ -1,7 +1,8 @@
 use crate::ast::expressions::Identifier;
-use crate::ast::statements::{AllStatements, LetStatement, ReturnStatement};
+use crate::ast::statements::{AllStatements, LetStatement, ReturnStatement, WhileStatement};
 use crate::lexer::token::TokenType;
 
+use super::parse_expressions::parse_block_statement;
 use super::{program::Parser, Precedence};
 
 impl Parser {
@@ -12,6 +13,7 @@ impl Parser {
         match self.current_token.token_type {
             Let => self.parse_let_statement(),
             Return => self.parse_return_statement(),
+            While => self.parse_while_statement(),
             _ => self.parse_expression_statement(),
         }
     }
@@ -67,5 +69,35 @@ impl Parser {
         };
 
         Some(AllStatements::Return(stmt))
+    }
+
+    /// Parses `While` statements
+    fn parse_while_statement(&mut self) -> Option<AllStatements> {
+        let token_literal = self.current_token.clone();
+
+        if !self.expect_peek(TokenType::Lparen) {
+            return None;
+        }
+        self.next_token();
+
+        let condition = self.parse_expression(Precedence::Lowest)?;
+
+        if !self.expect_peek(TokenType::Rparen) {
+            return None;
+        }
+
+        if !self.expect_peek(TokenType::Lbrace) {
+            return None;
+        }
+
+        let body = parse_block_statement(self);
+
+        let stmt = WhileStatement {
+            token: token_literal,
+            condition,
+            body,
+        };
+
+        Some(AllStatements::While(stmt))
     }
 }

@@ -313,7 +313,7 @@ fn parse_comma_sep_arguments(p: &mut Parser, end: &TokenType) -> Option<Vec<AllE
     Some(args)
 }
 
-fn parse_block_statement(p: &mut Parser) -> BlockStatement {
+pub fn parse_block_statement(p: &mut Parser) -> BlockStatement {
     let mut block = BlockStatement {
         token: p.current_token.clone(),
         statements: Vec::new(),

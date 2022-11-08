@@ -37,12 +37,15 @@ pub fn start_repl<T: BufRead, U: Write>(input: &mut T, output: &mut U) -> io::Re
 
         input.read_line(&mut text)?;
 
-        if text.trim() == r"\q" {
+        let trimmed = text.trim();
+        if trimmed == r"\q" {
             writeln!(output, "bye")?;
             break;
         }
 
-        execute_program(&text, output, program_env.clone())?;
+        if !trimmed.is_empty() {
+            execute_program(&text, output, program_env.clone())?;
+        }
 
         text.clear();
     }
