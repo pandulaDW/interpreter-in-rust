@@ -181,6 +181,20 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_assignment_expressions() {
+        let input = "x = 10;";
+        let mut program = helper_prepare_parser(input);
+        assert_eq!(program.statements.len(), 1);
+
+        let AllExpressions::Assignment(expr) = helper_get_expression(program.statements.remove(0)) else {
+             panic!("{}", EXPECTED_ARRAY_LITERAL)
+        };
+
+        assert_eq!(expr.ident.value, "x");
+        helper_test_integer_literal(*expr.value, 10);
+    }
+
+    #[test]
     fn test_identifier_expression() {
         let mut program = helper_prepare_parser("foobar;");
         assert_eq!(program.statements.len(), 1);

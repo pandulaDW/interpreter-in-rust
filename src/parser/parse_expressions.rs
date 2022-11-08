@@ -1,7 +1,7 @@
 use super::{program::Parser, Precedence};
 use crate::ast::expressions::{
-    self, AllExpressions, ArrayLiteral, Boolean, CallExpression, FunctionLiteral, Identifier,
-    IfExpression, IndexExpression, StringLiteral,
+    self, AllExpressions, ArrayLiteral, AssignmentExpression, Boolean, CallExpression,
+    FunctionLiteral, Identifier, IfExpression, IndexExpression, StringLiteral,
 };
 use crate::ast::statements::ExpressionStatement;
 use crate::ast::statements::{AllStatements, BlockStatement};
@@ -11,6 +11,10 @@ use crate::lexer::token::TokenType;
 type BoxedExpression = Option<Box<AllExpressions>>;
 
 impl Parser {
+    /// Parses expression statements.
+    ///
+    /// Assignment expressions are checked first and returned as they follow a rigid pattern
+    /// that is different from other expressions.
     pub fn parse_expression_statement(&mut self) -> Option<AllStatements> {
         let trace_msg = self.tracer.trace("parseExpressionStatement");
         let mut stmt = ExpressionStatement {
@@ -18,7 +22,11 @@ impl Parser {
             expression: None,
         };
 
-        stmt.expression = self.parse_expression(Precedence::Lowest);
+        if self.current_token_is(&TokenType::Ident) && self.peek_token_is(&TokenType::Assign) {
+            stmt.expression = self.parse_assignment_expressions();
+        } else {
+            stmt.expression = self.parse_expression(Precedence::Lowest);
+        }
 
         if self.peek_token_is(&TokenType::Semicolon) {
             self.next_token();
@@ -28,7 +36,7 @@ impl Parser {
         Some(AllStatements::Expression(stmt))
     }
 
-    /// Uses pratt parse technique to parse a given expression.
+    /// Parses expressions using an operator precedence based approach (pratt parsing)
     pub fn parse_expression(&mut self, precedence: Precedence) -> BoxedExpression {
         let trace_msg = self.tracer.trace("parseExpression");
         let prefix = match Parser::prefix_parse_function(&self.current_token.token_type) {
@@ -54,6 +62,30 @@ impl Parser {
 
         self.tracer.un_trace(trace_msg);
         left_expr
+    }
+
+    // parse assignment expressions at the start of an expression statement
+    fn parse_assignment_expressions(&mut self) -> BoxedExpression {
+        let token = self.current_token.clone();
+
+        let ident = expressions::Identifier {
+            token: self.current_token.clone(),
+            value: self.current_token.literal.clone(),
+        };
+
+        // consumes the ident and =
+        self.next_token();
+        self.next_token();
+
+        let value = self.parse_expression(Precedence::Lowest)?;
+
+        let expr = AssignmentExpression {
+            token,
+            ident,
+            value,
+        };
+
+        Some(Box::new(AllExpressions::Assignment(expr)))
     }
 }
 

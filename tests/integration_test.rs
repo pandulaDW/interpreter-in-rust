@@ -9,6 +9,10 @@ fn input_works() {
             "tests/testfiles/higher_order_functions.mok",
             "hello Vimu! bye Vimu!",
         ),
+        (
+            "tests/testfiles/increment_array.mok",
+            "[100, 110, 120, 130, 140, 150]",
+        ),
     ];
 
     for tc in test_cases {

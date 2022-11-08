@@ -398,6 +398,42 @@ mod tests {
         let evaluated = helper_test_eval(input);
         helper_test_null(evaluated);
     }
+
+    #[test]
+    fn test_assignment_expression() {
+        let test_cases = [
+            ("let x = 12; x = 25;", 25),
+            ("let x = 9; x = x + 1;", 10),
+            ("let x = 12; if(true) { x = 13; }; x;", 13),
+            ("let x = 12; if(true) { let x = 13; x = x + 1;}; x;", 12), // testing scope
+        ];
+
+        for tc in test_cases {
+            let evaluated = helper_test_eval(tc.0);
+            helper_test_integer_obj(evaluated, tc.1);
+        }
+
+        let input = "y = 10";
+        let evaluated = helper_test_eval(input);
+        helper_test_error(evaluated, "identifier not found: y");
+    }
+
+    #[test]
+    fn test_while_statement() {
+        let input = "
+            let i = 1;
+            let x = 0;
+
+            while(i < 6) {
+                x = x + 10;
+                i = i + 1;
+            }
+
+            x;
+        ";
+        let evaluated = helper_test_eval(input);
+        helper_test_integer_obj(evaluated, 50);
+    }
 }
 
 #[cfg(test)]

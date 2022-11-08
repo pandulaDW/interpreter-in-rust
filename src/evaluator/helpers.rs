@@ -26,7 +26,7 @@ pub fn new_function_literal(node: FunctionLiteral, env: Rc<Environment>) -> AllO
     })
 }
 
-pub fn is_truthy(obj: AllObjects) -> bool {
+pub fn is_truthy(obj: &AllObjects) -> bool {
     match obj {
         AllObjects::Boolean(v) => v.value,
         AllObjects::Null(_) => false,

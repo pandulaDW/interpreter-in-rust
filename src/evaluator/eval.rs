@@ -1,7 +1,10 @@
 use super::builtins;
 use super::errors;
+use super::helpers;
 use super::helpers::*;
+use crate::ast::expressions::AssignmentExpression;
 use crate::ast::expressions::IndexExpression;
+use crate::ast::statements::WhileStatement;
 use crate::object::{objects::ArrayObj, ObjectType};
 use crate::{
     ast::{
@@ -59,7 +62,7 @@ fn eval_statement(stmt: AllStatements, env: Rc<Environment>) -> Option<AllObject
         AllStatements::Return(stmt) => eval_return_statement(stmt, env),
         AllStatements::Expression(stmt) => eval_expression(*stmt.expression?, env),
         AllStatements::Block(block) => eval_block_statement(block, env),
-        AllStatements::While(_) => todo!(),
+        AllStatements::While(stmt) => eval_while_statement(stmt, env),
     }
 }
 
@@ -96,11 +99,37 @@ fn eval_return_statement(stmt: ReturnStatement, env: Rc<Environment>) -> Option<
     Some(AllObjects::ReturnValue(Box::new(evaluated)))
 }
 
+fn eval_while_statement(stmt: WhileStatement, env: Rc<Environment>) -> Option<AllObjects> {
+    let mut condition = eval(AllNodes::Expressions(*stmt.condition.clone()), env.clone())?;
+    if condition.is_error() {
+        return Some(condition);
+    }
+
+    let new_env = Environment::new_enclosed_environment(env.clone());
+
+    while is_truthy(&condition) {
+        let result = eval_block_statement(stmt.body.clone(), new_env.clone())?;
+
+        match result {
+            AllObjects::ReturnValue(_) | AllObjects::Error(_) => return Some(result),
+            _ => {}
+        }
+
+        condition = eval(AllNodes::Expressions(*stmt.condition.clone()), env.clone())?;
+        if condition.is_error() {
+            return Some(condition);
+        }
+    }
+
+    Some(helpers::NULL)
+}
+
 fn eval_expression(exprs: AllExpressions, env: Rc<Environment>) -> Option<AllObjects> {
     match exprs {
         AllExpressions::IntegerLiteral(node) => Some(get_int_object(node)),
         AllExpressions::StringLiteral(node) => Some(get_string_object(node)),
         AllExpressions::Boolean(node) => Some(get_bool_consts(node.value)),
+        AllExpressions::Assignment(node) => eval_assignment_expression(node, env),
         AllExpressions::PrefixExpression(node) => eval_prefix_expression(node, env),
         AllExpressions::InfixExpression(node) => eval_infix_expression(node, env),
         AllExpressions::IfExpression(node) => eval_if_expression(node, env),
@@ -110,6 +139,19 @@ fn eval_expression(exprs: AllExpressions, env: Rc<Environment>) -> Option<AllObj
         AllExpressions::ArrayLiteral(node) => eval_array_literal(node, env),
         AllExpressions::NullLiteral => Some(NULL),
         AllExpressions::IndexExpression(node) => eval_index_expression(node, env),
+    }
+}
+
+fn eval_assignment_expression(
+    node: AssignmentExpression,
+    env: Rc<Environment>,
+) -> Option<AllObjects> {
+    let ident = node.ident;
+    let evaluated = eval(AllNodes::Expressions(*node.value), env.clone())?;
+
+    match env.replace(&ident.value, evaluated) {
+        Some(v) => Some(v),
+        None => Some(errors::identifier_not_found(&ident.value)),
     }
 }
 
@@ -168,7 +210,7 @@ fn eval_if_expression(expr: IfExpression, env: Rc<Environment>) -> Option<AllObj
     }
 
     let new_env = Environment::new_enclosed_environment(env);
-    if is_truthy(condition) {
+    if is_truthy(&condition) {
         return eval_block_statement(expr.consequence, new_env);
     }
 
@@ -266,7 +308,7 @@ fn eval_index_expression(node: IndexExpression, env: Rc<Environment>) -> Option<
         other => return Some(errors::unexpected_argument_type(ObjectType::Array, other)),
     };
 
-    let index = match eval(AllNodes::Expressions(*node.index), env.clone())? {
+    let index = match eval(AllNodes::Expressions(*node.index), env)? {
         AllObjects::Integer(v) => v,
         other => return Some(errors::unexpected_argument_type(ObjectType::Integer, other)),
     };

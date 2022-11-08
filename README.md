@@ -9,8 +9,8 @@ The interpreter is built from scratch which includes a lexer (tokenizer), a pars
 
 - The language supports int, string and boolean data types.
 - Supports common operators like +, -, ==, !=, <, > etc.
-- Supports let and return statements.
-- Supports If/else expressions and function expressions.
+- Supports let, return and while statements.
+- Supports assignments, if/else expressions and function expressions.
 - Supports higher order functions and closures.
 - Have a range of built-in functions such as len, print, push, sleep etc.
 - Supports composite data types: Arrays and HashMaps.

@@ -51,7 +51,7 @@ impl Environment {
         result
     }
 
-    /// Inserts a identifier-object pair into the store and return the passed object.
+    /// Inserts a new identifier-object pair into the store and return the passed object.
     ///
     /// The passed object will be cloned while inserting as they need to be persisted throughout life of the environment.
     pub fn set(&self, name: String, value: AllObjects) -> AllObjects {
@@ -59,10 +59,71 @@ impl Environment {
         value
     }
 
+    /// Replaces an existing var with the passed value and return the same value if it was replaced successfully and
+    /// return None if the scope chain doesn't have the key present.
+    ///
+    /// To avoid panics on mutable borrows, values are inserted are then dropped immediately when checking availability.
+    pub fn replace(&self, name: &str, value: AllObjects) -> Option<AllObjects> {
+        let obj = self
+            .store
+            .borrow_mut()
+            .insert(name.to_string(), value.clone());
+
+        match obj.is_none() {
+            true => self.store.borrow_mut().remove(name),
+            false => return Some(value),
+        };
+
+        if obj.is_none() && self.outer.is_some() {
+            if let Some(ref outer) = self.outer {
+                return outer.replace(name, value);
+            }
+        }
+
+        None
+    }
+
     /// Returns a list of all variables in the environment. Useful for variadic functions.
     pub fn all_vars(&self) -> Vec<String> {
         let mut v = self.store.borrow().keys().cloned().collect::<Vec<_>>();
         v.sort();
         v
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::object::objects::Integer;
+
+    #[test]
+    fn test_replace_store() {
+        let env = Environment::new();
+        let val = AllObjects::Integer(Integer { value: 12 });
+
+        let result = env.replace("x", val.clone());
+        assert!(result.is_none());
+
+        env.store.borrow_mut().insert("x".to_string(), val.clone());
+        let result = env.replace("x", val.clone());
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn test_replace_outer() {
+        let val = AllObjects::Integer(Integer { value: 12 });
+        let outer = Environment::new();
+        outer
+            .store
+            .borrow_mut()
+            .insert("x".to_string(), val.clone());
+
+        let env = Environment {
+            store: RefCell::new(HashMap::new()),
+            outer: Some(outer),
+        };
+
+        let result = env.replace("x", val.clone());
+        assert!(result.is_some());
     }
 }

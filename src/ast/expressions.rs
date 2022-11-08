@@ -11,6 +11,7 @@ pub enum AllExpressions {
     PrefixExpression(PrefixExpression),
     InfixExpression(InfixExpression),
     Boolean(Boolean),
+    Assignment(AssignmentExpression),
     IfExpression(IfExpression),
     FunctionLiteral(FunctionLiteral),
     CallExpression(CallExpression),
@@ -34,6 +35,7 @@ impl Display for AllExpressions {
             AllExpressions::ArrayLiteral(v) => v.to_string(),
             AllExpressions::NullLiteral => keywords::NULL.to_string(),
             AllExpressions::IndexExpression(v) => v.to_string(),
+            AllExpressions::Assignment(v) => v.to_string(),
         };
         write!(f, "{}", out)
     }
@@ -161,6 +163,25 @@ impl Node for Boolean {
 impl Display for Boolean {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.token_literal())
+    }
+}
+
+#[derive(Clone)]
+pub struct AssignmentExpression {
+    pub token: token::Token,
+    pub ident: Identifier,
+    pub value: Box<AllExpressions>,
+}
+
+impl Node for AssignmentExpression {
+    fn token_literal(&self) -> String {
+        self.token.literal.clone()
+    }
+}
+
+impl Display for AssignmentExpression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} = {}", self.ident, self.value)
     }
 }
 
