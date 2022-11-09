@@ -1,4 +1,4 @@
-use super::{statements::AllStatements, AllNodes, Node};
+use super::{statements::AllStatements, AllNodes};
 use std::fmt::Display;
 
 /// Program node is going to be the root node of every AST that the parser produces
@@ -15,16 +15,6 @@ impl Program {
     /// Return the program as a variant of AllNodes to be evaluated by the evaluator
     pub fn make_node(self) -> AllNodes {
         AllNodes::Program(self)
-    }
-}
-
-impl Node for Program {
-    /// Returns the token literal of the first statement
-    fn token_literal(&self) -> String {
-        match self.statements.get(0) {
-            Some(s) => s.token_literal(),
-            None => String::new(),
-        }
     }
 }
 

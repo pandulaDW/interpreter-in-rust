@@ -2,17 +2,7 @@ pub mod expressions;
 pub mod program;
 pub mod statements;
 
-use std::fmt::Display;
-
 use self::{expressions::AllExpressions, program::Program, statements::AllStatements};
-
-/// Every node in the AST has to implement the Node interface, meaning it has
-/// to provide a TokenLiteral() method that returns the literal value of
-/// the token it’s associated with.
-pub trait Node: Display {
-    /// Return the token literal as a String
-    fn token_literal(&self) -> String;
-}
 
 /// A Wrapper around the program node, statement nodes and expression nodes
 ///

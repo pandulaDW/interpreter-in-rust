@@ -1,10 +1,7 @@
 use std::fmt::Display;
 
-use super::{
-    expressions::{self, AllExpressions},
-    Node,
-};
-use crate::lexer::{keywords, token};
+use super::expressions::{self, AllExpressions};
+use crate::lexer::token;
 
 #[derive(Clone)]
 pub enum AllStatements {
@@ -13,18 +10,6 @@ pub enum AllStatements {
     Expression(ExpressionStatement),
     Block(BlockStatement),
     While(WhileStatement),
-}
-
-impl Node for AllStatements {
-    fn token_literal(&self) -> String {
-        match self {
-            AllStatements::Let(v) => v.token_literal(),
-            AllStatements::Return(v) => v.token_literal(),
-            AllStatements::Expression(v) => v.token_literal(),
-            AllStatements::Block(v) => v.token_literal(),
-            AllStatements::While(v) => v.token_literal(),
-        }
-    }
 }
 
 impl Display for AllStatements {
@@ -48,12 +33,6 @@ pub struct LetStatement {
     pub value: Box<AllExpressions>,
 }
 
-impl Node for LetStatement {
-    fn token_literal(&self) -> String {
-        keywords::LET.to_string()
-    }
-}
-
 impl Display for LetStatement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut out = String::new();
@@ -70,12 +49,6 @@ impl Display for LetStatement {
 pub struct ReturnStatement {
     pub token: token::Token, // Return token
     pub return_value: Box<AllExpressions>,
-}
-
-impl Node for ReturnStatement {
-    fn token_literal(&self) -> String {
-        keywords::RETURN.to_string()
-    }
 }
 
 impl Display for ReturnStatement {
@@ -96,12 +69,6 @@ pub struct ExpressionStatement {
     pub expression: Option<Box<AllExpressions>>,
 }
 
-impl Node for ExpressionStatement {
-    fn token_literal(&self) -> String {
-        self.token.literal.to_string()
-    }
-}
-
 impl Display for ExpressionStatement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(v) = &self.expression {
@@ -115,12 +82,6 @@ impl Display for ExpressionStatement {
 pub struct BlockStatement {
     pub token: token::Token,
     pub statements: Vec<AllStatements>,
-}
-
-impl Node for BlockStatement {
-    fn token_literal(&self) -> String {
-        self.token.literal.to_string()
-    }
 }
 
 impl Display for BlockStatement {
@@ -138,12 +99,6 @@ pub struct WhileStatement {
     pub token: token::Token,
     pub condition: Box<AllExpressions>,
     pub body: BlockStatement,
-}
-
-impl Node for WhileStatement {
-    fn token_literal(&self) -> String {
-        self.token.literal.clone()
-    }
 }
 
 impl Display for WhileStatement {

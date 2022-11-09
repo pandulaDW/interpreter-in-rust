@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use super::{statements::BlockStatement, Node};
+use super::statements::BlockStatement;
 use crate::lexer::{keywords, token};
 
 #[derive(Clone)]
@@ -47,12 +47,6 @@ pub struct Identifier {
     pub value: String,
 }
 
-impl Node for Identifier {
-    fn token_literal(&self) -> String {
-        self.token.literal.clone()
-    }
-}
-
 impl Display for Identifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
@@ -63,12 +57,6 @@ impl Display for Identifier {
 pub struct IntegerLiteral {
     pub token: token::Token, // Int token
     pub value: i64,
-}
-
-impl Node for IntegerLiteral {
-    fn token_literal(&self) -> String {
-        self.token.literal.clone()
-    }
 }
 
 impl Display for IntegerLiteral {
@@ -82,12 +70,6 @@ pub struct StringLiteral {
     pub token: token::Token, // String token
 }
 
-impl Node for StringLiteral {
-    fn token_literal(&self) -> String {
-        self.token.literal.clone()
-    }
-}
-
 impl Display for StringLiteral {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.token.literal)
@@ -99,12 +81,6 @@ pub struct PrefixExpression {
     pub token: token::Token, // The prefix token, e.g. !
     pub operator: String,
     pub right: Option<Box<AllExpressions>>,
-}
-
-impl Node for PrefixExpression {
-    fn token_literal(&self) -> String {
-        self.token.literal.clone()
-    }
 }
 
 impl Display for PrefixExpression {
@@ -122,12 +98,6 @@ pub struct InfixExpression {
     pub left: Option<Box<AllExpressions>>,
     pub operator: String,
     pub right: Option<Box<AllExpressions>>,
-}
-
-impl Node for InfixExpression {
-    fn token_literal(&self) -> String {
-        self.token.literal.clone()
-    }
 }
 
 impl Display for InfixExpression {
@@ -154,15 +124,9 @@ pub struct Boolean {
     pub value: bool,
 }
 
-impl Node for Boolean {
-    fn token_literal(&self) -> String {
-        self.token.literal.clone()
-    }
-}
-
 impl Display for Boolean {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.token_literal())
+        write!(f, "{}", self.token.literal)
     }
 }
 
@@ -171,12 +135,6 @@ pub struct AssignmentExpression {
     pub token: token::Token,
     pub ident: Identifier,
     pub value: Box<AllExpressions>,
-}
-
-impl Node for AssignmentExpression {
-    fn token_literal(&self) -> String {
-        self.token.literal.clone()
-    }
 }
 
 impl Display for AssignmentExpression {
@@ -191,12 +149,6 @@ pub struct IfExpression {
     pub condition: Box<AllExpressions>,
     pub consequence: BlockStatement,
     pub alternative: Option<BlockStatement>,
-}
-
-impl Node for IfExpression {
-    fn token_literal(&self) -> String {
-        self.token.literal.clone()
-    }
 }
 
 impl Display for IfExpression {
@@ -224,25 +176,11 @@ pub struct FunctionLiteral {
     pub body: BlockStatement,
 }
 
-impl Node for FunctionLiteral {
-    fn token_literal(&self) -> String {
-        self.token.literal.clone()
-    }
-}
-
 impl Display for FunctionLiteral {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let params: Vec<String> = self.parameters.iter().map(|v| v.to_string()).collect();
         let mut out = String::new();
-        out.push_str(
-            format!(
-                "{}({}){}",
-                self.token_literal(),
-                params.join(","),
-                self.body
-            )
-            .as_str(),
-        );
+        out.push_str(format!("{}({}){}", self.token.literal, params.join(","), self.body).as_str());
 
         write!(f, "{}", out)
     }
@@ -253,12 +191,6 @@ pub struct CallExpression {
     pub token: token::Token,           // ( LPAREN
     pub function: Box<AllExpressions>, // Identifier or FunctionLiteral
     pub arguments: Vec<AllExpressions>,
-}
-
-impl Node for CallExpression {
-    fn token_literal(&self) -> String {
-        self.token.literal.clone()
-    }
 }
 
 impl Display for CallExpression {
@@ -282,12 +214,6 @@ impl Display for CallExpression {
 pub struct ArrayLiteral {
     pub token: token::Token,
     pub elements: Vec<AllExpressions>,
-}
-
-impl Node for ArrayLiteral {
-    fn token_literal(&self) -> String {
-        self.token.literal.clone()
-    }
 }
 
 impl Display for ArrayLiteral {
@@ -314,6 +240,20 @@ pub struct IndexExpression {
 impl Display for IndexExpression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let out = format!("({}[{}])", self.left, self.index);
+        write!(f, "{}", out)
+    }
+}
+
+#[derive(Clone)]
+pub struct RangeExpression {
+    pub token: token::Token,
+    pub left: Box<AllExpressions>,
+    pub right: Box<AllExpressions>,
+}
+
+impl Display for RangeExpression {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let out = format!("({}:{})", self.left, self.right);
         write!(f, "{}", out)
     }
 }

@@ -102,7 +102,6 @@ mod tests {
     use super::test_helpers::*;
     use crate::ast::expressions::AllExpressions;
     use crate::ast::statements::AllStatements;
-    use crate::ast::Node;
     use crate::lexer::keywords;
 
     #[test]
@@ -122,9 +121,9 @@ mod tests {
             let AllStatements::Let(let_stmt) = program.statements.remove(0) else {
                 panic!("{}", EXPECTED_LET);    
             };
-            assert_eq!(let_stmt.token_literal(), keywords::LET);
+            assert_eq!(let_stmt.token.literal, keywords::LET);
             assert_eq!(let_stmt.name.value, tc.1);
-            assert_eq!(let_stmt.name.token_literal(), tc.1);
+            assert_eq!(let_stmt.name.token.literal, tc.1);
             helper_test_literal(tc.2, *let_stmt.value);
         }
     }
@@ -147,7 +146,7 @@ mod tests {
             let AllStatements::Return(return_stmt) = program.statements.remove(0) else {
                 panic!("{}", EXPECTED_RETURN);    
             };
-            assert_eq!(return_stmt.token_literal(), keywords::RETURN);
+            assert_eq!(return_stmt.token.literal, keywords::RETURN);
             helper_test_literal(tc.1, *return_stmt.return_value);
         }
 
@@ -174,7 +173,7 @@ mod tests {
         let AllStatements::While(stmt) = program.statements.remove(0) else {
             panic!("{}", EXPECTED_WHILE);
         };
-        assert_eq!(stmt.token_literal(), keywords::WHILE);
+        assert_eq!(stmt.token.literal, keywords::WHILE);
         helper_test_infix_expression(*stmt.condition, Int(1), "<", Int(2));
 
         assert_eq!(stmt.body.statements.len(), 1);
@@ -512,7 +511,6 @@ mod test_helpers {
     use crate::ast::expressions::AllExpressions;
     use crate::ast::program::Program;
     use crate::ast::statements::AllStatements;
-    use crate::ast::Node;
 
     pub enum Literal<'a> {
         Int(i64),
@@ -539,7 +537,7 @@ mod test_helpers {
             panic!("{}", EXPECTED_INTEGER);
         };
         assert_eq!(integer_literal.value, value);
-        assert_eq!(integer_literal.token_literal(), format!("{}", value));
+        assert_eq!(integer_literal.token.literal, format!("{}", value));
     }
 
     pub fn helper_test_string_literal(expr: AllExpressions, value: &str) {
@@ -554,7 +552,7 @@ mod test_helpers {
             panic!("{}", EXPECTED_IDENT);
         };
         assert_eq!(identifier.value, value);
-        assert_eq!(identifier.token_literal(), format!("{}", value));
+        assert_eq!(identifier.token.literal, format!("{}", value));
     }
 
     pub fn helper_test_boolean_literal(expr: AllExpressions, value: bool) {
@@ -562,7 +560,7 @@ mod test_helpers {
             panic!("{}", EXPECTED_BOOLEAN);
         };
         assert_eq!(boolean.value, value);
-        assert_eq!(boolean.token_literal(), value.to_string());
+        assert_eq!(boolean.token.literal, value.to_string());
     }
 
     pub fn helper_test_infix_expression(

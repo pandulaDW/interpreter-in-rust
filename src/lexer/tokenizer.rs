@@ -58,6 +58,7 @@ impl Lexer {
             '"' => new_token(TokenType::String, self.read_string()),
             '[' => new_token(TokenType::Lbracket, self.ch),
             ']' => new_token(TokenType::Rbracket, self.ch),
+            ':' => new_token(TokenType::Colon, self.ch),
             NULL_CHAR => new_token(TokenType::Eof, NULL_CHAR),
             _ => {
                 if is_letter(self.ch) {
@@ -204,6 +205,7 @@ mod tests {
                 "foo bar"
                 [1, 2];
                 let x = null;
+                {"foo": "bar"}
                 "#;
         let mut l = Lexer::new(input);
 
@@ -294,6 +296,11 @@ mod tests {
             new_token(Assign, '='),
             new_token(Null, "null"),
             new_token(Semicolon, ';'),
+            new_token(Lbrace, '{'),
+            new_token(String, "foo"),
+            new_token(Colon, ':'),
+            new_token(String, "bar"),
+            new_token(Rbrace, '}'),
             new_token(Eof, NULL_CHAR),
         ];
 
