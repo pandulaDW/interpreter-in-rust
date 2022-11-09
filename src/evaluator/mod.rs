@@ -419,6 +419,22 @@ mod tests {
     }
 
     #[test]
+    fn test_range_expressions() {
+        let input = "let x = [12,4,5,6,1]; x[1:4];";
+
+        let binding = match helper_test_eval(input).expect(EXPECTED_OBJECT) {
+            AllObjects::ArrayObj(v) => v,
+            _ => panic!("{}", EXPECTED_ARRAY),
+        };
+
+        let mut array = binding.elements.borrow_mut();
+        assert_eq!(array.len(), 3);
+        helper_test_integer_obj(Some(array.remove(0)), 4);
+        helper_test_integer_obj(Some(array.remove(0)), 5);
+        helper_test_integer_obj(Some(array.remove(0)), 6);
+    }
+
+    #[test]
     fn test_while_statement() {
         let input = "
             let i = 1;

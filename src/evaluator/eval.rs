@@ -2,23 +2,22 @@ use super::builtins;
 use super::errors;
 use super::helpers;
 use super::helpers::*;
-use crate::ast::expressions::AssignmentExpression;
-use crate::ast::expressions::IndexExpression;
-use crate::ast::statements::WhileStatement;
-use crate::object::{objects::ArrayObj, ObjectType};
+
 use crate::{
     ast::{
         expressions::{
-            AllExpressions, ArrayLiteral, CallExpression, Identifier, IfExpression,
-            InfixExpression, PrefixExpression,
+            AllExpressions, ArrayLiteral, AssignmentExpression, CallExpression, Identifier,
+            IfExpression, IndexExpression, InfixExpression, PrefixExpression, RangeExpression,
         },
-        statements::{AllStatements, BlockStatement, LetStatement, ReturnStatement},
+        statements::{
+            AllStatements, BlockStatement, LetStatement, ReturnStatement, WhileStatement,
+        },
         AllNodes,
     },
     object::{
         environment::Environment,
-        objects::{Boolean, Integer, ParamsType, StringObj},
-        AllObjects,
+        objects::{ArrayObj, Boolean, Integer, ParamsType, StringObj},
+        AllObjects, ObjectType,
     },
 };
 use std::cell::RefCell;
@@ -139,6 +138,7 @@ fn eval_expression(exprs: AllExpressions, env: Rc<Environment>) -> Option<AllObj
         AllExpressions::ArrayLiteral(node) => eval_array_literal(node, env),
         AllExpressions::NullLiteral => Some(NULL),
         AllExpressions::IndexExpression(node) => eval_index_expression(node, env),
+        AllExpressions::RangeExpression(node) => eval_range_expression(node, env),
     }
 }
 
@@ -324,6 +324,45 @@ fn eval_index_expression(node: IndexExpression, env: Rc<Environment>) -> Option<
     };
 
     Some(val.clone())
+}
+
+/// Evaluate range expressions and returns a clone of the indexed slice of an array
+fn eval_range_expression(node: RangeExpression, env: Rc<Environment>) -> Option<AllObjects> {
+    let array = match eval(AllNodes::Expressions(*node.left), env.clone())? {
+        AllObjects::ArrayObj(v) => v,
+        other => return Some(errors::unexpected_argument_type(ObjectType::Array, other)),
+    };
+
+    let left = match eval(AllNodes::Expressions(*node.left_index), env.clone())? {
+        AllObjects::Integer(v) => v,
+        other => return Some(errors::unexpected_argument_type(ObjectType::Integer, other)),
+    };
+
+    let right = match eval(AllNodes::Expressions(*node.right_index), env)? {
+        AllObjects::Integer(v) => v,
+        other => return Some(errors::unexpected_argument_type(ObjectType::Integer, other)),
+    };
+
+    let Ok(left_index) = TryInto::<usize>::try_into(left.value) else {
+        return Some(errors::incorrect_index_argument());
+    };
+
+    let Ok(right_index) = TryInto::<usize>::try_into(right.value) else {
+        return Some(errors::incorrect_index_argument());
+    };
+
+    let binding = array.elements.borrow();
+    let Some(slice) = binding.get(left_index..right_index) else {
+        return Some(errors::indexing_error());
+    };
+
+    let cloned_slice = Rc::new(RefCell::new(slice.to_vec()));
+
+    let cloned = AllObjects::ArrayObj(ArrayObj {
+        elements: cloned_slice,
+    });
+
+    Some(cloned)
 }
 
 fn eval_expressions(exprs: Vec<AllExpressions>, env: Rc<Environment>) -> Option<Vec<AllObjects>> {

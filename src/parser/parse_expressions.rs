@@ -1,7 +1,7 @@
 use super::{program::Parser, Precedence};
 use crate::ast::expressions::{
     self, AllExpressions, ArrayLiteral, AssignmentExpression, Boolean, CallExpression,
-    FunctionLiteral, Identifier, IfExpression, IndexExpression, StringLiteral,
+    FunctionLiteral, Identifier, IfExpression, IndexExpression, RangeExpression, StringLiteral,
 };
 use crate::ast::statements::ExpressionStatement;
 use crate::ast::statements::{AllStatements, BlockStatement};
@@ -289,17 +289,32 @@ pub fn parse_index_expressions(p: &mut Parser, left: BoxedExpression) -> BoxedEx
     p.next_token(); // consume [
 
     let index = p.parse_expression(Precedence::Lowest);
+    let mut right = None;
+
+    if p.peek_token_is(&TokenType::Colon) {
+        p.next_token();
+        p.next_token();
+        right = p.parse_expression(Precedence::Lowest);
+    }
+
     if !p.expect_peek(TokenType::Rbracket) {
         return None;
     }
 
-    let expr = IndexExpression {
+    if right.is_none() {
+        return Some(Box::new(AllExpressions::IndexExpression(IndexExpression {
+            token,
+            left: left?,
+            index: index?,
+        })));
+    }
+
+    Some(Box::new(AllExpressions::RangeExpression(RangeExpression {
         token,
         left: left?,
-        index: index?,
-    };
-
-    Some(Box::new(AllExpressions::IndexExpression(expr)))
+        left_index: index?,
+        right_index: right?,
+    })))
 }
 
 fn parse_fn_literal_parameters(p: &mut Parser) -> Option<Vec<Identifier>> {

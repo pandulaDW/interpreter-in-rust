@@ -502,6 +502,22 @@ mod tests {
         helper_test_identifier(*expr.left, "myArray");
         helper_test_infix_expression(*expr.index, Int(1), "+", Int(1));
     }
+
+    #[test]
+    fn test_parse_range_expressions() {
+        use Literal::{Ident, Int};
+        let input = "myArray[1+1 : x-20]";
+        let mut program = helper_prepare_parser(input);
+        assert_eq!(program.statements.len(), 1);
+
+        let AllExpressions::RangeExpression(expr) = helper_get_expression(program.statements.remove(0)) else {
+             panic!("{}", EXPECTED_RANGE_EXPRESSION);
+        };
+
+        helper_test_identifier(*expr.left, "myArray");
+        helper_test_infix_expression(*expr.left_index, Int(1), "+", Int(1));
+        helper_test_infix_expression(*expr.right_index, Ident("x"), "-", Int(20));
+    }
 }
 
 /// Contains helper functions and constants useful for testing parsing
@@ -619,4 +635,5 @@ mod test_helpers {
     pub const EXPECTED_EXPRESSION: &str = "expected an expression";
     pub const EXPECTED_ARRAY_LITERAL: &str = "expected an array literal";
     pub const EXPECTED_INDEX_EXPRESSION: &str = "expected an array index expression";
+    pub const EXPECTED_RANGE_EXPRESSION: &str = "expected an array index range expression";
 }

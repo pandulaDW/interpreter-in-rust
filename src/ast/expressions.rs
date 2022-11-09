@@ -17,6 +17,7 @@ pub enum AllExpressions {
     CallExpression(CallExpression),
     ArrayLiteral(ArrayLiteral),
     IndexExpression(IndexExpression),
+    RangeExpression(RangeExpression),
     NullLiteral,
 }
 
@@ -36,6 +37,7 @@ impl Display for AllExpressions {
             AllExpressions::NullLiteral => keywords::NULL.to_string(),
             AllExpressions::IndexExpression(v) => v.to_string(),
             AllExpressions::Assignment(v) => v.to_string(),
+            AllExpressions::RangeExpression(v) => v.to_string(),
         };
         write!(f, "{}", out)
     }
@@ -248,12 +250,13 @@ impl Display for IndexExpression {
 pub struct RangeExpression {
     pub token: token::Token,
     pub left: Box<AllExpressions>,
-    pub right: Box<AllExpressions>,
+    pub left_index: Box<AllExpressions>,
+    pub right_index: Box<AllExpressions>,
 }
 
 impl Display for RangeExpression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let out = format!("({}:{})", self.left, self.right);
+        let out = format!("({}[{}:{}])", self.left, self.left_index, self.right_index);
         write!(f, "{}", out)
     }
 }
