@@ -3,21 +3,18 @@ use interpreter_lib::read_file;
 #[test]
 fn input_works() {
     let test_cases = vec![
-        ("tests/testfiles/basic_functions.mok", "1054"),
-        ("tests/testfiles/if_statements.mok", "8750"),
-        (
-            "tests/testfiles/higher_order_functions.mok",
-            "hello Vimu! bye Vimu!",
-        ),
-        (
-            "tests/testfiles/increment_array.mok",
-            "[100, 110, 120, 130, 140, 150]",
-        ),
+        ("basic_functions.mok", "1054"),
+        ("if_statements.mok", "8750"),
+        ("higher_order_functions.mok", "hello Vimu! bye Vimu!"),
+        ("array_map.mok", "[11, 21, 31, 41, 51]"),
+        ("array_filter.mok", "[4, 10, 120, 90]"),
+        ("array_reduce.mok", "38"),
     ];
+    let base_path = "tests/testfiles";
 
     for tc in test_cases {
         let mut output: Vec<u8> = Vec::new();
-        if let Err(e) = read_file(tc.0.to_string(), &mut output) {
+        if let Err(e) = read_file(format!("{}/{}", base_path, tc.0), &mut output) {
             panic!("{}", e);
         }
 

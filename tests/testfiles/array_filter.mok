@@ -1,0 +1,22 @@
+let filter = fn(arr, predicate) {
+    let filtered = [];
+    let i = 0;
+
+    while (i < len(arr)) {
+        let is_included = predicate(arr[i]);
+        if (is_included) {
+            push(filtered, arr[i]);
+        }
+        i = i + 1;
+    }
+
+    return filtered;
+}
+
+let filter_out_odd = fn(x) {
+    let division_result = x / 2;
+    return division_result * 2 == x;
+}
+
+let arr = [4, 7, 10, 120, 5, 21, 90];
+filter(arr, filter_out_odd);

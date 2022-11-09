@@ -1,0 +1,15 @@
+let reduce = fn(arr, callback, initial) {
+    let i = 0;
+
+    while (i < len(arr)) {
+        initial = callback(initial, arr[i]);
+        i = i + 1;
+    }
+
+    return initial;
+}
+
+let arr = [4, 7, 10, 12, 5];
+let sum = reduce(arr, fn(x, y) { x + y; }, 0);
+
+sum;
