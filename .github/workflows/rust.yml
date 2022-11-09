@@ -18,7 +18,7 @@ jobs:
     - run: rustup update nightly && rustup default nightly
     - run: rustup component add clippy
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --release --verbose
     - name: Lint
       run: cargo clippy
     - name: Run tests
