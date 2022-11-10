@@ -312,7 +312,7 @@ mod tests {
         let evaluated = helper_test_eval(input);
         helper_test_error(
             evaluated,
-            "expected a STRING argument, but received a INTEGER",
+            "expected a STRING argument, but received an INTEGER",
         );
     }
 
@@ -381,6 +381,10 @@ mod tests {
         let input = "[1, 2, 3][3]";
         let evaluated = helper_test_eval(input);
         helper_test_error(evaluated, "list index out of range");
+
+        let input = r#"let x = "foobar"; x[0] + "bar"[2]"#;
+        let evaluated = helper_test_eval(input);
+        helper_test_string_literal(evaluated, "fr");
     }
 
     #[test]
@@ -432,6 +436,10 @@ mod tests {
         helper_test_integer_obj(Some(array.remove(0)), 4);
         helper_test_integer_obj(Some(array.remove(0)), 5);
         helper_test_integer_obj(Some(array.remove(0)), 6);
+
+        let input = r#" "foobar"[0:3] "#;
+        let evaluated = helper_test_eval(input);
+        helper_test_string_literal(evaluated, "foo");
     }
 
     #[test]

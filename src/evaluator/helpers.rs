@@ -1,13 +1,14 @@
 use crate::{
     ast::expressions::{FunctionLiteral, IntegerLiteral, StringLiteral},
     object::{
-        objects::{Boolean, Function, Integer, Null, StringObj},
+        objects::{ArrayObj, Boolean, Function, Integer, Null, StringObj},
         AllObjects,
     },
     Environment,
 };
 
-use std::rc::Rc;
+use super::errors;
+use std::{cell::RefCell, rc::Rc};
 use uuid::Uuid;
 
 // constants that can be reused without extra allocations
@@ -62,4 +63,53 @@ pub fn eval_bang_operator(right: AllObjects) -> AllObjects {
         NULL => TRUE,
         _ => FALSE,
     }
+}
+
+pub fn get_array_index_value(
+    array: ArrayObj,
+    left_index: usize,
+    right_index: Option<usize>,
+) -> AllObjects {
+    let binding = array.elements.borrow();
+
+    if let Some(right) = right_index {
+        let Some(slice) = binding.get(left_index..right) else {
+            return errors::indexing_error();
+        };
+        let cloned_slice = Rc::new(RefCell::new(slice.to_vec()));
+        return AllObjects::ArrayObj(ArrayObj {
+            elements: cloned_slice,
+        });
+    }
+
+    let Some(val) = binding.get(left_index) else {
+        return errors::indexing_error();
+    };
+
+    val.clone()
+}
+
+pub fn get_string_index_value(
+    str: StringObj,
+    left_index: usize,
+    right_index: Option<usize>,
+) -> AllObjects {
+    let mut chars = str.value.chars();
+
+    if let Some(right) = right_index {
+        let Some(str_slice) = str.value.get(left_index..right) else {
+            return errors::indexing_error();
+        };
+        return AllObjects::StringObj(StringObj {
+            value: Rc::new(str_slice.to_string()),
+        });
+    }
+
+    let Some(ch) = chars.nth(left_index) else {
+        return errors::indexing_error();
+    };
+
+    AllObjects::StringObj(StringObj {
+        value: Rc::new(ch.to_string()),
+    })
 }

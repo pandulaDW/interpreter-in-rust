@@ -47,11 +47,15 @@ pub fn argument_not_found(expected_arg: &str, expected_arg_type: ObjectType) -> 
     ))
 }
 
-pub fn unexpected_argument_type(expected: ObjectType, actual: AllObjects) -> AllObjects {
+pub fn unexpected_argument_type(expected: &str, actual: AllObjects) -> AllObjects {
+    let expected = expected.to_string();
+    let actual = actual.object_type().to_string();
+
     AllObjects::new_error(format!(
-        "expected a {} argument, but received a {}",
+        "expected {} argument, but received {} {}",
         expected,
-        actual.object_type()
+        a_or_an(&actual),
+        actual
     ))
 }
 
@@ -61,4 +65,17 @@ pub fn indexing_error() -> AllObjects {
 
 pub fn incorrect_index_argument() -> AllObjects {
     AllObjects::new_error("list index argument should be a positive integer".to_string())
+}
+
+const A: &str = "a";
+const AN: &str = "an";
+
+fn a_or_an(word: &str) -> &'static str {
+    match word.chars().next() {
+        Some(c) => match c {
+            'A' | 'E' | 'I' | 'O' | 'U' => AN,
+            _ => A,
+        },
+        None => A,
+    }
 }

@@ -53,7 +53,7 @@ pub fn len(env: Rc<Environment>) -> AllObjects {
         AllObjects::StringObj(v) => v.value.len(),
         AllObjects::ArrayObj(v) => v.elements.borrow().len(),
         AllObjects::Error(_) => return value,
-        v => return errors::unexpected_argument_type(ObjectType::String, v),
+        v => return errors::unexpected_argument_type("a STRING", v),
     };
 
     // panic of conversion from usize to i64 is highly unlikely
@@ -94,7 +94,7 @@ pub fn push(env: Rc<Environment>) -> AllObjects {
 
     let array = match array {
         AllObjects::ArrayObj(v) => v,
-        v => return errors::unexpected_argument_type(ObjectType::Array, v),
+        v => return errors::unexpected_argument_type("an ARRAY", v),
     };
 
     // since all array borrows are temporary, this wouldn't cause a panic.
@@ -111,7 +111,7 @@ pub fn pop(env: Rc<Environment>) -> AllObjects {
 
     let array = match array {
         AllObjects::ArrayObj(v) => v,
-        v => return errors::unexpected_argument_type(ObjectType::Array, v),
+        v => return errors::unexpected_argument_type("an ARRAY", v),
     };
 
     // since all array borrows are temporary, this wouldn't cause a panic.
