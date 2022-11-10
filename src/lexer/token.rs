@@ -1,6 +1,6 @@
 use super::keywords;
 
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub literal: String,

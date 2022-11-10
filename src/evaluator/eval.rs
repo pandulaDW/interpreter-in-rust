@@ -138,6 +138,7 @@ fn eval_expression(exprs: AllExpressions, env: Rc<Environment>) -> Option<AllObj
         AllExpressions::NullLiteral => Some(NULL),
         AllExpressions::IndexExpression(node) => eval_index_expression(node, env),
         AllExpressions::RangeExpression(node) => eval_range_expression(node, env),
+        AllExpressions::HashLiteral(_) => todo!(),
     }
 }
 

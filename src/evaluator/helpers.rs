@@ -94,8 +94,6 @@ pub fn get_string_index_value(
     left_index: usize,
     right_index: Option<usize>,
 ) -> AllObjects {
-    let mut chars = str.value.chars();
-
     if let Some(right) = right_index {
         let Some(str_slice) = str.value.get(left_index..right) else {
             return errors::indexing_error();
@@ -105,6 +103,7 @@ pub fn get_string_index_value(
         });
     }
 
+    let mut chars = str.value.chars();
     let Some(ch) = chars.nth(left_index) else {
         return errors::indexing_error();
     };

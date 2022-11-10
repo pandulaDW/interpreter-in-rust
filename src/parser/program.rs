@@ -99,6 +99,7 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
+
     use super::test_helpers::*;
     use crate::ast::expressions::AllExpressions;
     use crate::ast::statements::AllStatements;
@@ -518,6 +519,20 @@ mod tests {
         helper_test_infix_expression(*expr.left_index, Int(1), "+", Int(1));
         helper_test_infix_expression(*expr.right_index, Ident("x"), "-", Int(20));
     }
+
+    #[test]
+    #[ignore = "reason"]
+    fn test_parse_hash_literal() {
+        let input = r#"{"one": 1, "two": 2, "three": 3}"#;
+        let mut program = helper_prepare_parser(input);
+        assert_eq!(program.statements.len(), 1);
+
+        let AllExpressions::HashLiteral(expr) = helper_get_expression(program.statements.remove(0)) else {
+            panic!("{}", EXPECTED_HASH_LITERAL);
+       };
+
+        assert_eq!(expr.pairs.len(), 3);
+    }
 }
 
 /// Contains helper functions and constants useful for testing parsing
@@ -636,4 +651,5 @@ mod test_helpers {
     pub const EXPECTED_ARRAY_LITERAL: &str = "expected an array literal";
     pub const EXPECTED_INDEX_EXPRESSION: &str = "expected an array index expression";
     pub const EXPECTED_RANGE_EXPRESSION: &str = "expected an array index range expression";
+    pub const EXPECTED_HASH_LITERAL: &str = "expected a hash literal";
 }

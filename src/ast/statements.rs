@@ -3,7 +3,7 @@ use std::fmt::Display;
 use super::expressions::{self, AllExpressions};
 use crate::lexer::token;
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub enum AllStatements {
     Let(LetStatement),
     Return(ReturnStatement),
@@ -26,7 +26,7 @@ impl Display for AllStatements {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct LetStatement {
     pub token: token::Token, // Let token
     pub name: expressions::Identifier,
@@ -45,7 +45,7 @@ impl Display for LetStatement {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct ReturnStatement {
     pub token: token::Token, // Return token
     pub return_value: Box<AllExpressions>,
@@ -63,7 +63,7 @@ impl Display for ReturnStatement {
 
 /// ExpressionStatement is not really a distinct statement; it’s a statement that
 /// consists solely of one expression
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct ExpressionStatement {
     pub token: token::Token,
     pub expression: Option<Box<AllExpressions>>,
@@ -78,7 +78,7 @@ impl Display for ExpressionStatement {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct BlockStatement {
     pub token: token::Token,
     pub statements: Vec<AllStatements>,
@@ -94,7 +94,7 @@ impl Display for BlockStatement {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct WhileStatement {
     pub token: token::Token,
     pub condition: Box<AllExpressions>,

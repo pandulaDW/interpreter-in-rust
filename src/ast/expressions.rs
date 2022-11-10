@@ -1,9 +1,9 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display, hash::Hash};
 
 use super::statements::BlockStatement;
 use crate::lexer::{keywords, token};
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub enum AllExpressions {
     Identifier(Identifier),
     IntegerLiteral(IntegerLiteral),
@@ -18,6 +18,7 @@ pub enum AllExpressions {
     ArrayLiteral(ArrayLiteral),
     IndexExpression(IndexExpression),
     RangeExpression(RangeExpression),
+    HashLiteral(HashLiteral),
     NullLiteral,
 }
 
@@ -38,12 +39,13 @@ impl Display for AllExpressions {
             AllExpressions::IndexExpression(v) => v.to_string(),
             AllExpressions::Assignment(v) => v.to_string(),
             AllExpressions::RangeExpression(v) => v.to_string(),
+            AllExpressions::HashLiteral(v) => v.to_string(),
         };
         write!(f, "{}", out)
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct Identifier {
     pub token: token::Token, // Ident token
     pub value: String,
@@ -55,7 +57,7 @@ impl Display for Identifier {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct IntegerLiteral {
     pub token: token::Token, // Int token
     pub value: i64,
@@ -67,7 +69,7 @@ impl Display for IntegerLiteral {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct StringLiteral {
     pub token: token::Token, // String token
 }
@@ -78,7 +80,7 @@ impl Display for StringLiteral {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct PrefixExpression {
     pub token: token::Token, // The prefix token, e.g. !
     pub operator: String,
@@ -94,7 +96,7 @@ impl Display for PrefixExpression {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct InfixExpression {
     pub token: token::Token, // The infix token, e.g. !
     pub left: Option<Box<AllExpressions>>,
@@ -120,7 +122,7 @@ impl Display for InfixExpression {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct Boolean {
     pub token: token::Token,
     pub value: bool,
@@ -132,7 +134,7 @@ impl Display for Boolean {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct AssignmentExpression {
     pub token: token::Token,
     pub ident: Identifier,
@@ -145,7 +147,7 @@ impl Display for AssignmentExpression {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct IfExpression {
     pub token: token::Token,
     pub condition: Box<AllExpressions>,
@@ -171,7 +173,7 @@ impl Display for IfExpression {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct FunctionLiteral {
     pub token: token::Token,
     pub parameters: Vec<Identifier>,
@@ -188,7 +190,7 @@ impl Display for FunctionLiteral {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct CallExpression {
     pub token: token::Token,           // ( LPAREN
     pub function: Box<AllExpressions>, // Identifier or FunctionLiteral
@@ -212,7 +214,7 @@ impl Display for CallExpression {
 
 // Cloning this structure is not a problem, as it is only the user defined portion of the (usually small) arrays
 // that will get cloned across the program.
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct ArrayLiteral {
     pub token: token::Token,
     pub elements: Vec<AllExpressions>,
@@ -232,7 +234,7 @@ impl Display for ArrayLiteral {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct IndexExpression {
     pub token: token::Token,
     pub left: Box<AllExpressions>,
@@ -246,7 +248,7 @@ impl Display for IndexExpression {
     }
 }
 
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct RangeExpression {
     pub token: token::Token,
     pub left: Box<AllExpressions>,
@@ -258,5 +260,30 @@ impl Display for RangeExpression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let out = format!("({}[{}:{}])", self.left, self.left_index, self.right_index);
         write!(f, "{}", out)
+    }
+}
+
+#[derive(PartialEq, Eq, Clone)]
+pub struct HashLiteral {
+    pub token: token::Token,
+    pub pairs: HashMap<AllExpressions, AllExpressions>,
+}
+
+impl Hash for HashLiteral {
+    fn hash<H: std::hash::Hasher>(&self, _state: &mut H) {
+        panic!("A hash-map itself cannot be used as the key for another map");
+    }
+}
+
+impl Display for HashLiteral {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let pairs = self
+            .pairs
+            .iter()
+            .map(|(key, item)| format!("{}:{}", key, item))
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        write!(f, "{{{}}}", pairs)
     }
 }
