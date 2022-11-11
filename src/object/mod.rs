@@ -41,7 +41,7 @@ impl Display for ObjectType {
 /// A thin wrapper for all objects that implements `Object`.
 ///
 /// This is the main structure that will be returned by all the evaluators.
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub enum AllObjects {
     Integer(objects::Integer),
     StringObj(objects::StringObj),

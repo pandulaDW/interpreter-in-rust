@@ -1,14 +1,17 @@
-use super::{program::Parser, Precedence};
+use std::collections::HashMap;
+
+use super::{
+    program::{BoxedExpression, Parser},
+    Precedence,
+};
 use crate::ast::expressions::{
     self, AllExpressions, ArrayLiteral, AssignmentExpression, Boolean, CallExpression,
-    FunctionLiteral, Identifier, IfExpression, IndexExpression, RangeExpression, StringLiteral,
+    FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, RangeExpression,
+    StringLiteral,
 };
 use crate::ast::statements::ExpressionStatement;
 use crate::ast::statements::{AllStatements, BlockStatement};
 use crate::lexer::token::TokenType;
-
-/// A type alias for the optional boxed expression type that is commonly used in parser functions
-type BoxedExpression = Option<Box<AllExpressions>>;
 
 impl Parser {
     /// Parses expression statements.
@@ -377,4 +380,35 @@ pub fn parse_block_statement(p: &mut Parser) -> BlockStatement {
     }
 
     block
+}
+
+pub fn parse_hash_literal(p: &mut Parser) -> BoxedExpression {
+    let token = p.current_token.clone();
+    let mut pairs = HashMap::new();
+
+    while !p.peek_token_is(&TokenType::Rbrace) {
+        p.next_token();
+        let key = p.parse_expression(Precedence::Lowest)?;
+
+        if !p.expect_peek(TokenType::Colon) {
+            return None;
+        }
+        p.next_token();
+
+        let value = p.parse_expression(Precedence::Lowest)?;
+
+        pairs.insert(*key, *value);
+
+        if !p.peek_token_is(&TokenType::Rbrace) && !p.expect_peek(TokenType::Comma) {
+            return None;
+        }
+    }
+
+    if !p.expect_peek(TokenType::Rbrace) {
+        return None;
+    }
+
+    let map = HashLiteral { token, pairs };
+
+    Some(Box::new(AllExpressions::HashLiteral(map)))
 }

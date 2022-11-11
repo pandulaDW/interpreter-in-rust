@@ -270,8 +270,8 @@ pub struct HashLiteral {
 }
 
 impl Hash for HashLiteral {
-    fn hash<H: std::hash::Hasher>(&self, _state: &mut H) {
-        panic!("A hash-map itself cannot be used as the key for another map");
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        format!("{}", self).hash(state)
     }
 }
 

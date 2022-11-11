@@ -1,8 +1,8 @@
 use super::{environment::Environment, AllObjects, Object};
 use crate::ast::{expressions::Identifier, statements::BlockStatement};
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, hash::Hash, rc::Rc};
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct Integer {
     pub value: i64,
 }
@@ -13,7 +13,7 @@ impl Object for Integer {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct StringObj {
     pub value: Rc<String>,
 }
@@ -24,7 +24,7 @@ impl Object for StringObj {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct Boolean {
     pub value: bool,
 }
@@ -35,7 +35,7 @@ impl Object for Boolean {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct Null;
 
 impl Object for Null {
@@ -44,7 +44,7 @@ impl Object for Null {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct Error {
     pub message: String,
 }
@@ -78,6 +78,12 @@ impl PartialEq for Function {
 
 impl Eq for Function {}
 
+impl Hash for Function {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
+}
+
 impl Object for Function {
     fn inspect(&self) -> String {
         let params = self
@@ -91,14 +97,14 @@ impl Object for Function {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct BuiltinFunction {
     pub fn_name: String,
     pub parameters: ParamsType,
     pub func: fn(Rc<Environment>) -> AllObjects,
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub enum ParamsType {
     Fixed(Vec<String>),
     Variadic,
@@ -115,6 +121,12 @@ pub struct ArrayObj {
     pub elements: Rc<RefCell<Vec<AllObjects>>>,
 }
 
+impl Hash for ArrayObj {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.inspect().hash(state)
+    }
+}
+
 impl Object for ArrayObj {
     fn inspect(&self) -> String {
         format!(
@@ -126,5 +138,29 @@ impl Object for ArrayObj {
                 .collect::<Vec<String>>()
                 .join(", ")
         )
+    }
+}
+
+#[derive(PartialEq, Eq, Clone)]
+pub struct HashMapObj {
+    pub map: Rc<RefCell<HashMap<AllObjects, AllObjects>>>,
+}
+
+impl Hash for HashMapObj {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.inspect().hash(state)
+    }
+}
+
+impl Object for HashMapObj {
+    fn inspect(&self) -> String {
+        let binding = self.map.borrow();
+        let out = binding
+            .iter()
+            .map(|(k, v)| format!("{}:{}", k.inspect(), v.inspect()))
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        format!("[{}]", out)
     }
 }

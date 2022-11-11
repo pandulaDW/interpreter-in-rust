@@ -5,14 +5,16 @@ use crate::lexer::token::{eof_token, Token, TokenType};
 use crate::lexer::Lexer;
 use crate::parser::parse_expressions::{
     parse_array_literal, parse_boolean_expression, parse_call_expression, parse_function_literal,
-    parse_grouped_expression, parse_identifier, parse_if_expression, parse_index_expressions,
-    parse_infix_expression, parse_integer_literal, parse_null_literal, parse_prefix_expression,
-    parse_string_literal,
+    parse_grouped_expression, parse_hash_literal, parse_identifier, parse_if_expression,
+    parse_index_expressions, parse_infix_expression, parse_integer_literal, parse_null_literal,
+    parse_prefix_expression, parse_string_literal,
 };
 
-pub type PrefixParseFn = dyn Fn(&mut Parser) -> Option<Box<AllExpressions>>;
-pub type InfixParseFn =
-    dyn Fn(&mut Parser, Option<Box<AllExpressions>>) -> Option<Box<AllExpressions>>;
+/// A type alias for the optional boxed expression type that is commonly used in parser functions
+pub type BoxedExpression = Option<Box<AllExpressions>>;
+
+pub type PrefixParseFn = dyn Fn(&mut Parser) -> BoxedExpression;
+pub type InfixParseFn = dyn Fn(&mut Parser, BoxedExpression) -> BoxedExpression;
 
 /// Parser represents the main structure which advances the lexer and parses the tokens as needed
 /// into AST statements.
@@ -77,6 +79,7 @@ impl Parser {
             If => Some(Box::new(parse_if_expression)),
             Function => Some(Box::new(parse_function_literal)),
             Lbracket => Some(Box::new(parse_array_literal)),
+            Lbrace => Some(Box::new(parse_hash_literal)),
             Null => Some(Box::new(parse_null_literal)),
             _ => None,
         }
@@ -99,6 +102,8 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
+
+    use std::collections::HashMap;
 
     use super::test_helpers::*;
     use crate::ast::expressions::AllExpressions;
@@ -191,7 +196,7 @@ mod tests {
         };
 
         assert_eq!(expr.ident.value, "x");
-        helper_test_integer_literal(*expr.value, 10);
+        helper_test_integer_literal(&*expr.value, 10);
     }
 
     #[test]
@@ -209,7 +214,7 @@ mod tests {
         assert_eq!(program.statements.len(), 1);
 
         let expr = helper_get_expression(program.statements.remove(0));
-        helper_test_integer_literal(expr, 5);
+        helper_test_integer_literal(&expr, 5);
     }
 
     #[test]
@@ -238,7 +243,7 @@ mod tests {
             assert_eq!(prefix_exp.operator, tc.1);
             let right_expr = prefix_exp.right.expect(EXPECTED_RIGHT);
 
-            helper_test_integer_literal(*right_expr, tc.2);
+            helper_test_integer_literal(&*right_expr, tc.2);
         }
     }
 
@@ -443,7 +448,7 @@ mod tests {
 
         let mut args = call_expr.arguments;
         assert_eq!(args.len(), 4);
-        helper_test_integer_literal(args.remove(0), 1);
+        helper_test_integer_literal(&args.remove(0), 1);
         helper_test_infix_expression(args.remove(0), Literal::Int(2), "*", Literal::Int(3));
         helper_test_infix_expression(args.remove(0), Literal::Int(4), "+", Literal::Int(5));
         helper_test_identifier(args.remove(0), "x");
@@ -473,7 +478,7 @@ mod tests {
         };
 
         assert_eq!(array.elements.len(), 3);
-        helper_test_integer_literal(array.elements.remove(0), 1);
+        helper_test_integer_literal(&array.elements.remove(0), 1);
         helper_test_infix_expression(array.elements.remove(0), Int(2), "*", Int(3));
         helper_test_infix_expression(array.elements.remove(0), Int(3), "+", Int(3));
 
@@ -521,7 +526,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "reason"]
     fn test_parse_hash_literal() {
         let input = r#"{"one": 1, "two": 2, "three": 3}"#;
         let mut program = helper_prepare_parser(input);
@@ -529,9 +533,27 @@ mod tests {
 
         let AllExpressions::HashLiteral(expr) = helper_get_expression(program.statements.remove(0)) else {
             panic!("{}", EXPECTED_HASH_LITERAL);
-       };
-
+        };
         assert_eq!(expr.pairs.len(), 3);
+
+        let expected = HashMap::from([("one", 1), ("two", 2), ("three", 3)]);
+
+        for entry in expr.pairs.iter() {
+            let AllExpressions::StringLiteral(key) = entry.0 else {
+                panic!("{}", EXPECTED_STRING);
+            };
+            let expected_int = expected.get(key.token.literal.as_str()).unwrap();
+            helper_test_integer_literal(entry.1, *expected_int);
+        }
+
+        // assert empty hash literal working correctly
+        let input = "{}";
+        let mut program = helper_prepare_parser(input);
+        assert_eq!(program.statements.len(), 1);
+        let AllExpressions::HashLiteral(expr) = helper_get_expression(program.statements.remove(0)) else {
+            panic!("{}", EXPECTED_HASH_LITERAL);
+        };
+        assert_eq!(expr.pairs.len(), 0);
     }
 }
 
@@ -563,7 +585,7 @@ mod test_helpers {
         panic!("parser has {} error(s)\n{}", errors.len(), err_msg);
     }
 
-    pub fn helper_test_integer_literal(expr: AllExpressions, value: i64) {
+    pub fn helper_test_integer_literal(expr: &AllExpressions, value: i64) {
         let AllExpressions::IntegerLiteral(integer_literal) = expr else {
             panic!("{}", EXPECTED_INTEGER);
         };
@@ -625,7 +647,7 @@ mod test_helpers {
 
     pub fn helper_test_literal(expected: Literal, expr: AllExpressions) {
         match expected {
-            Literal::Int(val) => helper_test_integer_literal(expr, val),
+            Literal::Int(val) => helper_test_integer_literal(&expr, val),
             Literal::Bool(val) => helper_test_boolean_literal(expr, val),
             Literal::Ident(val) => helper_test_identifier(expr, val),
             Literal::Str(val) => helper_test_string_literal(expr, val),
