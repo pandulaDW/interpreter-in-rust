@@ -1,7 +1,7 @@
 use crate::{
     ast::expressions::{FunctionLiteral, IntegerLiteral, StringLiteral},
     object::{
-        objects::{ArrayObj, Boolean, Function, Integer, Null, StringObj},
+        objects::{ArrayObj, Boolean, Function, HashMapObj, Integer, Null, StringObj},
         AllObjects,
     },
     Environment,
@@ -111,4 +111,11 @@ pub fn get_string_index_value(
     AllObjects::StringObj(StringObj {
         value: Rc::new(ch.to_string()),
     })
+}
+
+pub fn get_hash_map_value(m: &HashMapObj, key: &AllObjects) -> AllObjects {
+    if let Some(v) = m.map.borrow().get(key) {
+        return v.clone();
+    }
+    NULL
 }

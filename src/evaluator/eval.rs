@@ -2,11 +2,13 @@ use super::builtins;
 use super::errors;
 use super::helpers::{self, *};
 
+use crate::object::objects::HashMapObj;
 use crate::{
     ast::{
         expressions::{
-            AllExpressions, ArrayLiteral, AssignmentExpression, CallExpression, Identifier,
-            IfExpression, IndexExpression, InfixExpression, PrefixExpression, RangeExpression,
+            AllExpressions, ArrayLiteral, AssignmentExpression, CallExpression, HashLiteral,
+            Identifier, IfExpression, IndexExpression, InfixExpression, PrefixExpression,
+            RangeExpression,
         },
         statements::{
             AllStatements, BlockStatement, LetStatement, ReturnStatement, WhileStatement,
@@ -20,6 +22,7 @@ use crate::{
     },
 };
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 /// eval takes in any type of node and applies the appropriate evaluation logic
@@ -138,7 +141,7 @@ fn eval_expression(exprs: AllExpressions, env: Rc<Environment>) -> Option<AllObj
         AllExpressions::NullLiteral => Some(NULL),
         AllExpressions::IndexExpression(node) => eval_index_expression(node, env),
         AllExpressions::RangeExpression(node) => eval_range_expression(node, env),
-        AllExpressions::HashLiteral(_) => todo!(),
+        AllExpressions::HashLiteral(node) => eval_hash_map(node, env),
     }
 }
 
@@ -303,7 +306,14 @@ fn eval_array_literal(node: ArrayLiteral, env: Rc<Environment>) -> Option<AllObj
 }
 
 fn eval_index_expression(node: IndexExpression, env: Rc<Environment>) -> Option<AllObjects> {
-    let index = match eval(AllNodes::Expressions(*node.index), env.clone())? {
+    let evaluated_left = eval(AllNodes::Expressions(*node.left), env.clone())?;
+    let evaluated_index = eval(AllNodes::Expressions(*node.index), env)?;
+
+    if let AllObjects::HashMap(v) = &evaluated_left {
+        return Some(get_hash_map_value(v, &evaluated_index));
+    }
+
+    let index = match evaluated_index {
         AllObjects::Integer(v) => v,
         other => return Some(errors::unexpected_argument_type("an INTEGER", other)),
     };
@@ -313,7 +323,7 @@ fn eval_index_expression(node: IndexExpression, env: Rc<Environment>) -> Option<
         Err(_) => return Some(errors::incorrect_index_argument()),
     };
 
-    let val = match eval(AllNodes::Expressions(*node.left), env)? {
+    let val = match evaluated_left {
         AllObjects::ArrayObj(v) => get_array_index_value(v, index, None),
         AllObjects::StringObj(v) => get_string_index_value(v, index, None),
         other => {
@@ -359,6 +369,20 @@ fn eval_range_expression(node: RangeExpression, env: Rc<Environment>) -> Option<
     };
 
     Some(val)
+}
+
+fn eval_hash_map(node: HashLiteral, env: Rc<Environment>) -> Option<AllObjects> {
+    let mut map = HashMap::new();
+
+    for pair in node.pairs {
+        let key = eval(AllNodes::Expressions(pair.0), env.clone())?;
+        let value = eval(AllNodes::Expressions(pair.1), env.clone())?;
+        map.insert(key, value);
+    }
+
+    Some(AllObjects::HashMap(HashMapObj {
+        map: Rc::new(RefCell::new(map)),
+    }))
 }
 
 fn eval_expressions(exprs: Vec<AllExpressions>, env: Rc<Environment>) -> Option<Vec<AllObjects>> {

@@ -357,7 +357,7 @@ mod tests {
     }
 
     #[test]
-    fn test_array_indexing() {
+    fn test_indexing() {
         let test_cases = [
             ("[1, 2, 3][0]", 1),
             ("[1, 2, 3][1]", 2),
@@ -426,12 +426,12 @@ mod tests {
     fn test_range_expressions() {
         let input = "let x = [12,4,5,6,1]; x[1:4];";
 
-        let binding = match helper_test_eval(input).expect(EXPECTED_OBJECT) {
+        let arr_obj = match helper_test_eval(input).expect(EXPECTED_OBJECT) {
             AllObjects::ArrayObj(v) => v,
             _ => panic!("{}", EXPECTED_ARRAY),
         };
 
-        let mut array = binding.elements.borrow_mut();
+        let mut array = arr_obj.elements.borrow_mut();
         assert_eq!(array.len(), 3);
         helper_test_integer_obj(Some(array.remove(0)), 4);
         helper_test_integer_obj(Some(array.remove(0)), 5);
@@ -440,6 +440,21 @@ mod tests {
         let input = r#" "foobar"[0:3] "#;
         let evaluated = helper_test_eval(input);
         helper_test_string_literal(evaluated, "foo");
+    }
+
+    #[test]
+    fn test_hash_maps() {
+        let input = r#"let m = {"foo": 4, "bar": 5}; m["foo"] + m["bar"]"#;
+        let evaluated = helper_test_eval(input);
+        helper_test_integer_obj(evaluated, 9);
+
+        let input = r#"let m = {"foo": 4}; m["bar"]"#;
+        let evaluated = helper_test_eval(input);
+        helper_test_null(evaluated);
+
+        let input = r#"let m = {true: 40 * 2}; m[true]"#;
+        let evaluated = helper_test_eval(input);
+        helper_test_integer_obj(evaluated, 80);
     }
 
     #[test]

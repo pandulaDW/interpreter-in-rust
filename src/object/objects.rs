@@ -177,6 +177,6 @@ impl Object for HashMapObj {
             .collect::<Vec<String>>()
             .join(", ");
 
-        format!("[{}]", out)
+        format!("{{ {} }}", out)
     }
 }
