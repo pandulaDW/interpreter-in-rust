@@ -452,7 +452,7 @@ mod tests {
         let evaluated = helper_test_eval(input);
         helper_test_null(evaluated);
 
-        let input = r#"let m = {true: 40 * 2}; m[true]"#;
+        let input = r#"let key=true; let m = {key: 40 * 2}; m[key]"#;
         let evaluated = helper_test_eval(input);
         helper_test_integer_obj(evaluated, 80);
     }
