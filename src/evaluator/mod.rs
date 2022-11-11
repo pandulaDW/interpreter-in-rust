@@ -458,6 +458,31 @@ mod tests {
     }
 
     #[test]
+    fn test_map_builtins() {
+        let input = "
+            let m = {};
+            let i = 0;
+            while (i < 10) {
+                insert(m, i, 10 * i);
+                i = i + 1;
+            }
+            m
+        ";
+        let map = match helper_test_eval(input).expect(EXPECTED_HASH_MAP) {
+            AllObjects::HashMap(v) => v,
+            _ => panic!("{}", EXPECTED_HASH_MAP),
+        };
+        assert_eq!(map.map.borrow().len(), 10);
+
+        let input = r#"let m = {"foo": 4, "bar": 5}; delete(m, "bar"); m;"#;
+        let map = match helper_test_eval(input).expect(EXPECTED_HASH_MAP) {
+            AllObjects::HashMap(v) => v,
+            _ => panic!("{}", EXPECTED_HASH_MAP),
+        };
+        assert_eq!(map.map.borrow().len(), 1);
+    }
+
+    #[test]
     fn test_while_statement() {
         let input = "
             let i = 1;
@@ -532,6 +557,7 @@ mod test_helpers {
     pub const EXPECTED_OBJECT: &str = "expected an object";
     pub const EXPECTED_FUNCTION: &str = "expected a function";
     pub const EXPECTED_ARRAY: &str = "expected an array";
+    pub const EXPECTED_HASH_MAP: &str = "expected a hash map";
     const EXPECTED_INT_OBJECT: &str = "expected an integer object";
     const EXPECTED_BOOLEAN_OBJECT: &str = "expected a boolean object";
     const EXPECTED_STRING_OBJECT: &str = "expected a string object";

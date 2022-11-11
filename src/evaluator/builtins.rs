@@ -37,6 +37,20 @@ pub fn get_builtin_function(ident: &Identifier) -> Option<AllObjects> {
             parameters: ParamsType::Fixed(vec!["value".to_string()]),
             func: is_null,
         },
+        "insert" => BuiltinFunction {
+            fn_name: "insert".to_string(),
+            parameters: ParamsType::Fixed(vec![
+                "map".to_string(),
+                "key".to_string(),
+                "value".to_string(),
+            ]),
+            func: insert,
+        },
+        "delete" => BuiltinFunction {
+            fn_name: "delete".to_string(),
+            parameters: ParamsType::Fixed(vec!["map".to_string(), "key".to_string()]),
+            func: delete,
+        },
         _ => return None,
     };
 
@@ -127,6 +141,46 @@ pub fn pop(env: Rc<Environment>) -> AllObjects {
 pub fn is_null(env: Rc<Environment>) -> AllObjects {
     let is_null = matches!(get_argument("value", env), AllObjects::Null(_));
     helpers::get_bool_consts(is_null)
+}
+
+/// Inserts a key-value pair into the map.
+///
+/// If the map did not have this key present, Null is returned.
+///
+/// If the map did have this key present, the value is updated, and the old value is returned
+pub fn insert(env: Rc<Environment>) -> AllObjects {
+    let map_arg = get_argument("map", env.clone());
+    let key = get_argument("key", env.clone());
+    let value = get_argument("value", env);
+
+    let m = match map_arg {
+        AllObjects::HashMap(v) => v,
+        v => return errors::unexpected_argument_type("a hash map", v),
+    };
+
+    if let Some(v) = m.map.borrow_mut().insert(key, value) {
+        return v;
+    }
+
+    helpers::NULL
+}
+
+/// Removes a key from the map, returning the value at the key if the key was previously in the map and
+/// returns Null otherwise
+pub fn delete(env: Rc<Environment>) -> AllObjects {
+    let map_arg = get_argument("map", env.clone());
+    let key = get_argument("key", env.clone());
+
+    let m = match map_arg {
+        AllObjects::HashMap(v) => v,
+        v => return errors::unexpected_argument_type("a hash map", v),
+    };
+
+    if let Some(v) = m.map.borrow_mut().remove(&key) {
+        return v;
+    }
+
+    helpers::NULL
 }
 
 fn get_argument(arg_name: &str, env: Rc<Environment>) -> AllObjects {
