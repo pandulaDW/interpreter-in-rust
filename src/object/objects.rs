@@ -116,10 +116,18 @@ impl Object for BuiltinFunction {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub struct ArrayObj {
     pub elements: Rc<RefCell<Vec<AllObjects>>>,
 }
+
+impl PartialEq for ArrayObj {
+    fn eq(&self, other: &Self) -> bool {
+        self.elements == other.elements
+    }
+}
+
+impl Eq for ArrayObj {}
 
 impl Hash for ArrayObj {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -141,10 +149,18 @@ impl Object for ArrayObj {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub struct HashMapObj {
     pub map: Rc<RefCell<HashMap<AllObjects, AllObjects>>>,
 }
+
+impl PartialEq for HashMapObj {
+    fn eq(&self, other: &Self) -> bool {
+        self.inspect() == other.inspect()
+    }
+}
+
+impl Eq for HashMapObj {}
 
 impl Hash for HashMapObj {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {

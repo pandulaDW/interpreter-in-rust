@@ -263,11 +263,19 @@ impl Display for RangeExpression {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone)]
 pub struct HashLiteral {
     pub token: token::Token,
     pub pairs: HashMap<AllExpressions, AllExpressions>,
 }
+
+impl PartialEq for HashLiteral {
+    fn eq(&self, other: &Self) -> bool {
+        format!("{}", self) == format!("{}", other)
+    }
+}
+
+impl Eq for HashLiteral {}
 
 impl Hash for HashLiteral {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
