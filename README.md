@@ -19,9 +19,9 @@ The interpreter is built from scratch which includes a lexer (tokenizer), a pars
 
 ## Usage
 
-- Download the zip file relevant to your platform from the bins directory.
+- Download the asset file relevant to your platform from the latest release.
 - Extract the zip and run the executable to start the REPL.
-- Run the executable and give a filename as an argument to execute a script file.
+- Run the executable with relative filepath as an argument to execute a script file.
 
 ## Example Code
 
