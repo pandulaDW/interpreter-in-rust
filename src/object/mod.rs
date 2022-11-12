@@ -51,8 +51,8 @@ pub enum AllObjects {
     Null(objects::Null),
     Error(objects::Error),
     ReturnValue(Box<AllObjects>),
-    Function(objects::Function),
-    BuiltinFunction(objects::BuiltinFunction),
+    Function(objects::FunctionObj),
+    BuiltinFunction(objects::BuiltinFunctionObj),
     ArrayObj(objects::ArrayObj),
     HashMap(objects::HashMapObj),
 }

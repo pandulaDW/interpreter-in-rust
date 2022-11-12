@@ -2,19 +2,11 @@ use super::builtins;
 use super::errors;
 use super::helpers::{self, *};
 
+use crate::object::objects::BuiltinFunctionObj;
+use crate::object::objects::FunctionObj;
 use crate::object::objects::HashMapObj;
 use crate::{
-    ast::{
-        expressions::{
-            AllExpressions, ArrayLiteral, AssignmentExpression, CallExpression, HashLiteral,
-            Identifier, IfExpression, IndexExpression, InfixExpression, PrefixExpression,
-            RangeExpression,
-        },
-        statements::{
-            AllStatements, BlockStatement, LetStatement, ReturnStatement, WhileStatement,
-        },
-        AllNodes,
-    },
+    ast::{expressions::*, statements::*, AllNodes},
     object::{
         environment::Environment,
         objects::{ArrayObj, Boolean, Integer, ParamsType, StringObj},
@@ -252,45 +244,53 @@ fn eval_call_expression(node: CallExpression, env: Rc<Environment>) -> Option<Al
     }
 
     if let AllObjects::Function(f) = function {
-        let func_env = Environment::new_enclosed_environment(f.env);
-
-        if f.parameters.len() != args.len() {
-            return Some(errors::incorrect_arg_num(f.parameters.len(), args.len()));
-        }
-
-        for (param_idx, param) in f.parameters.iter().enumerate() {
-            func_env.set(param.value.clone(), args[param_idx].clone());
-        }
-
-        let evaluated = eval_block_statement(f.body, func_env);
-
-        if let Some(AllObjects::ReturnValue(r_val)) = evaluated {
-            return Some(*r_val);
-        }
-        return evaluated;
+        return eval_user_defined_function_call(f, args);
     }
 
     if let AllObjects::BuiltinFunction(f) = function {
-        let new_env = Environment::new();
-
-        match f.parameters {
-            ParamsType::Fixed(v) => {
-                if v.len() != args.len() {
-                    return Some(errors::incorrect_arg_num(v.len(), args.len()));
-                }
-                v.iter().enumerate().for_each(|(param_idx, param)| {
-                    new_env.set(param.clone(), args[param_idx].clone());
-                })
-            }
-            ParamsType::Variadic => args.into_iter().enumerate().for_each(|(i, arg)| {
-                new_env.set(format!("arg_{}", i), arg);
-            }),
-        }
-
-        return Some((f.func)(new_env));
+        return eval_builtin_function_calls(f, args);
     }
 
     None
+}
+
+fn eval_user_defined_function_call(f: FunctionObj, args: Vec<AllObjects>) -> Option<AllObjects> {
+    let func_env = Environment::new_enclosed_environment(f.env);
+
+    if f.parameters.len() != args.len() {
+        return Some(errors::incorrect_arg_num(f.parameters.len(), args.len()));
+    }
+
+    for (param_idx, param) in f.parameters.iter().enumerate() {
+        func_env.set(param.value.clone(), args[param_idx].clone());
+    }
+
+    let evaluated = eval_block_statement(f.body, func_env);
+
+    if let Some(AllObjects::ReturnValue(r_val)) = evaluated {
+        return Some(*r_val);
+    }
+    return evaluated;
+}
+
+fn eval_builtin_function_calls(f: BuiltinFunctionObj, args: Vec<AllObjects>) -> Option<AllObjects> {
+    let new_env = Environment::new();
+
+    match f.parameters {
+        ParamsType::Fixed(v) => {
+            if v.len() != args.len() {
+                return Some(errors::incorrect_arg_num(v.len(), args.len()));
+            }
+            v.iter().enumerate().for_each(|(param_idx, param)| {
+                new_env.set(param.clone(), args[param_idx].clone());
+            })
+        }
+        ParamsType::Variadic => args.into_iter().enumerate().for_each(|(i, arg)| {
+            new_env.set(format!("arg_{}", i), arg);
+        }),
+    }
+
+    return Some((f.func)(new_env));
 }
 
 fn eval_array_literal(node: ArrayLiteral, env: Rc<Environment>) -> Option<AllObjects> {
@@ -390,11 +390,9 @@ fn eval_expressions(exprs: Vec<AllExpressions>, env: Rc<Environment>) -> Option<
 
     for expr in exprs {
         let evaluated = eval(AllNodes::Expressions(expr), env.clone())?;
-
         if evaluated.is_error() {
             return Some(vec![evaluated]);
         }
-
         v.push(evaluated);
     }
 

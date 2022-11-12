@@ -1,7 +1,7 @@
 use crate::{
     ast::expressions::{FunctionLiteral, IntegerLiteral, StringLiteral},
     object::{
-        objects::{ArrayObj, Boolean, Function, HashMapObj, Integer, Null, StringObj},
+        objects::{ArrayObj, Boolean, FunctionObj, HashMapObj, Integer, Null, StringObj},
         AllObjects,
     },
     Environment,
@@ -19,7 +19,7 @@ pub const NULL: AllObjects = AllObjects::Null(Null);
 pub fn new_function_literal(node: FunctionLiteral, env: Rc<Environment>) -> AllObjects {
     let name = format!("fn_{}", Uuid::new_v4());
 
-    AllObjects::Function(Function {
+    AllObjects::Function(FunctionObj {
         name,
         body: node.body,
         env,

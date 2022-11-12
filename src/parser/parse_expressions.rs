@@ -409,6 +409,5 @@ pub fn parse_hash_literal(p: &mut Parser) -> BoxedExpression {
     }
 
     let map = HashLiteral { token, pairs };
-
     Some(Box::new(AllExpressions::HashLiteral(map)))
 }

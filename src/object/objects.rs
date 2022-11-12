@@ -63,28 +63,28 @@ impl Object for Error {
 /// own environment with them. That allows for closures, which “close over” the environment they’re
 /// defined in and can later access it.
 #[derive(Clone)]
-pub struct Function {
+pub struct FunctionObj {
     pub name: String,
     pub body: BlockStatement,
     pub parameters: Vec<Identifier>,
     pub env: Rc<Environment>,
 }
 
-impl PartialEq for Function {
+impl PartialEq for FunctionObj {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
     }
 }
 
-impl Eq for Function {}
+impl Eq for FunctionObj {}
 
-impl Hash for Function {
+impl Hash for FunctionObj {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
     }
 }
 
-impl Object for Function {
+impl Object for FunctionObj {
     fn inspect(&self) -> String {
         let params = self
             .parameters
@@ -98,7 +98,7 @@ impl Object for Function {
 }
 
 #[derive(PartialEq, Eq, Hash, Clone)]
-pub struct BuiltinFunction {
+pub struct BuiltinFunctionObj {
     pub fn_name: String,
     pub parameters: ParamsType,
     pub func: fn(Rc<Environment>) -> AllObjects,
@@ -110,7 +110,7 @@ pub enum ParamsType {
     Variadic,
 }
 
-impl Object for BuiltinFunction {
+impl Object for BuiltinFunctionObj {
     fn inspect(&self) -> String {
         self.fn_name.to_string()
     }

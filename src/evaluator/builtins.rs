@@ -2,7 +2,7 @@ use super::{errors, helpers};
 use crate::{
     ast::expressions::Identifier,
     object::{
-        objects::{BuiltinFunction, ParamsType},
+        objects::{BuiltinFunctionObj, ParamsType},
         AllObjects, Object, ObjectType,
     },
     Environment,
@@ -12,32 +12,32 @@ use std::rc::Rc;
 /// Return the associated builtin function based on the function name
 pub fn get_builtin_function(ident: &Identifier) -> Option<AllObjects> {
     let func = match ident.value.as_str() {
-        "len" => BuiltinFunction {
+        "len" => BuiltinFunctionObj {
             fn_name: "len".to_string(),
             parameters: ParamsType::Fixed(vec!["value".to_string()]),
             func: len,
         },
-        "print" => BuiltinFunction {
+        "print" => BuiltinFunctionObj {
             fn_name: "print".to_string(),
             parameters: ParamsType::Variadic,
             func: print,
         },
-        "push" => BuiltinFunction {
+        "push" => BuiltinFunctionObj {
             fn_name: "push".to_string(),
             parameters: ParamsType::Fixed(vec!["array".to_string(), "element".to_string()]),
             func: push,
         },
-        "pop" => BuiltinFunction {
+        "pop" => BuiltinFunctionObj {
             fn_name: "pop".to_string(),
             parameters: ParamsType::Fixed(vec!["array".to_string()]),
             func: pop,
         },
-        "is_null" => BuiltinFunction {
+        "is_null" => BuiltinFunctionObj {
             fn_name: "is_null".to_string(),
             parameters: ParamsType::Fixed(vec!["value".to_string()]),
             func: is_null,
         },
-        "insert" => BuiltinFunction {
+        "insert" => BuiltinFunctionObj {
             fn_name: "insert".to_string(),
             parameters: ParamsType::Fixed(vec![
                 "map".to_string(),
@@ -46,7 +46,7 @@ pub fn get_builtin_function(ident: &Identifier) -> Option<AllObjects> {
             ]),
             func: insert,
         },
-        "delete" => BuiltinFunction {
+        "delete" => BuiltinFunctionObj {
             fn_name: "delete".to_string(),
             parameters: ParamsType::Fixed(vec!["map".to_string(), "key".to_string()]),
             func: delete,
