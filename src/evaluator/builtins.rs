@@ -8,6 +8,7 @@ use crate::{
     Environment,
 };
 use std::rc::Rc;
+use std::{thread, time::Duration};
 
 /// Return the associated builtin function based on the function name
 pub fn get_builtin_function(ident: &Identifier) -> Option<AllObjects> {
@@ -50,6 +51,11 @@ pub fn get_builtin_function(ident: &Identifier) -> Option<AllObjects> {
             fn_name: "delete".to_string(),
             parameters: ParamsType::Fixed(vec!["map".to_string(), "key".to_string()]),
             func: delete,
+        },
+        "sleep" => BuiltinFunctionObj {
+            fn_name: "sleep".to_string(),
+            parameters: ParamsType::Fixed(vec!["seconds".to_string()]),
+            func: sleep,
         },
         _ => return None,
     };
@@ -179,6 +185,22 @@ pub fn delete(env: Rc<Environment>) -> AllObjects {
     if let Some(v) = m.map.borrow_mut().remove(&key) {
         return v;
     }
+
+    helpers::NULL
+}
+
+/// Puts the main thread to sleep for at least the specified amount of time given in seconds
+pub fn sleep(env: Rc<Environment>) -> AllObjects {
+    let seconds = match get_argument("seconds", env.clone()) {
+        AllObjects::Integer(n) => n,
+        v => return errors::unexpected_argument_type("an integer", v),
+    };
+
+    let Ok(seconds) = TryInto::<u64>::try_into(seconds.value) else {
+        return errors::sleep_arg_error();
+    };
+
+    thread::sleep(Duration::from_secs(seconds));
 
     helpers::NULL
 }

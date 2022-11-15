@@ -90,8 +90,10 @@ impl AllObjects {
         }
     }
 
-    pub fn new_error(message: String) -> Self {
-        Self::Error(objects::Error { message })
+    pub fn new_error(message: &str) -> Self {
+        Self::Error(objects::Error {
+            message: message.to_string(),
+        })
     }
 
     pub fn is_integer(&self) -> bool {
